@@ -1,1 +1,8 @@
+# Precompiled py files
 *.pyc
+
+# Folders
+old/*
+
+# Debug files
+helloworld.py

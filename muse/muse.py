@@ -1,8 +1,8 @@
-import bitstring
-import pygatt
-import numpy as np
 from time import time, sleep
 from sys import platform
+import numpy as np
+import bitstring
+import pygatt
 
 
 class Muse():
