@@ -19,4 +19,4 @@ Put on the headband, go to http://localhost:8888 and visualize the live muse dat
 Python 3.5, Muse headband 2016.
 
 Python libraries:
-* flask (stream the data to js client)
+* flask: streams data to js client
