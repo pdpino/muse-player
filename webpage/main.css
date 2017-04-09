@@ -1,0 +1,56 @@
+body{
+  /*background-color: gainsboro;*/
+  background-color: lightsteelblue;
+  font-family: "Courier New", Courier, monospace;
+}
+
+footer{
+  padding-bottom: 1em;
+}
+
+.jumbotron {
+  background-color: powderblue;
+}
+
+
+/*
+.grafico-titulo{
+  height: 1.5em;
+}
+.graficos-row{
+  height: 20em;
+}
+
+#tt-wcloud{
+  height:22em;
+  width:100%;
+  border:1px solid black;
+}
+#wcloud-row{
+  margin-top:4em;
+}
+
+#table-row{
+  margin-top:5em;
+}
+
+#table-container {
+  overflow:scroll;
+  height:20em;
+  width:100%;
+  border:1px solid black;
+}
+.table-striped > thead > tr:nth-child(2n+1) > th { background-color: skyblue; }
+.table-striped > tbody > tr:nth-child(2n) > td { background-color: skyblue; }
+.table-striped > tbody > tr:nth-child(2n+1) > td { background-color: lightcyan; }
+
+#tt-mapa {
+  height: 300px;
+  border:1px solid black;
+  margin-bottom: 1em;
+}
+
+.resetButton {
+  font-size:14px;
+  font-weight:normal;
+}*/
