@@ -25,12 +25,15 @@ $(document).ready( function() {
         }
       };
 
-      Plotly.plot('tester', lines, layout);
+      Plotly.newPlot('tester', lines, layout);
 
     };
 
     function update_graph(x, y){
       // TODO: make animation smoother // pq es tan lento?
+      // FIXME: se atrasa al plotear? lleva segundos corriendo y graficos va en 0.2 //revisar si esta bien la escala
+      // FIXME: datos se desordenan
+
       var xmin = x - 2;
       var xmax = x + 2;
 
@@ -38,16 +41,17 @@ $(document).ready( function() {
       y_data.push(y);
 
       // Tomar los ultimos 10 puntos
-      x_data = x_data.slice(-10);
-      y_data = y_data.slice(-10);
+      var n_points = 10;
+      x_data = x_data.slice(-n_points);
+      y_data = y_data.slice(-n_points);
 
       Plotly.animate('tester', { data: [{x: x_data, y: y_data}] }, {
         transition: {
-          duration: 0.5
+          duration: 1,
+          easing: 'cubic-in-out'
         },
         frame: {
-          duration: 0,
-          easing: 'cubic-in-out'
+          duration: 1
         },
         layout: {
           // xaxis: {range: [xmin, xmax]}

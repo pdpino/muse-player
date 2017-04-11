@@ -24,9 +24,10 @@ def perror(text, exit_code=1, **kwargs):
         sys.exit(exit_code)
 
 
+
+# TODO: stream all channels, different streams? asi javascript escoge cuales escuchar
+# TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho
 # TODO: Interrumpir todos threads con un solo ctrl+c # use signal handler?
-# TODO: stream all channels
-    # different streams? asi javascript escoge cuales escuchar
 
 
 if __name__ == "__main__":

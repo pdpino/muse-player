@@ -20,3 +20,6 @@ Python 3.5, Muse headband 2016.
 
 Python libraries:
 * flask: streams data to js client
+
+## Reconocimientos
+* Muse module: alexandre barachant (link repo TODO)
