@@ -32,7 +32,7 @@ def perror(text, exit_code=1, **kwargs):
 
 if __name__ == "__main__":
     ##### Parsear argumentos
-    parser = argparse.ArgumentParser(description='Record muse data to .csv', usage='%(prog)s [options]')
+    parser = argparse.ArgumentParser(description='Send muse data to client and save to .csv', usage='%(prog)s [options]')
     parser.add_argument('-t', '--time', default=None, type=float,
                         help="Seconds to record data (aprox)")
     parser.add_argument('-a', '--address', default="00:55:DA:B3:20:D7", type=str,
@@ -74,8 +74,8 @@ if __name__ == "__main__":
 
 
     ##### Stream datos
-    app = Flask(__name__)
-    CORS(app)
+    app = Flask(__name__) # iniciar app de Flask
+    CORS(app) # para que cliente pueda acceder a este puerto
     @app.route('/data/prueba')
     def stream_data():
         def event_stream():
@@ -88,6 +88,7 @@ if __name__ == "__main__":
 
             # Stream
             while True:
+                # sleep(0.1)
                 lock_queues.acquire()
                 if(len(q_time) == 0 or len(q_data) == 0): # ambas len debiesen ser iguales siempre
                     # No data, continue
@@ -99,10 +100,10 @@ if __name__ == "__main__":
                 lock_queues.release()
 
                 # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an exception
-                for i in range(12):
+                for i in range(1): # cambiar por 12 para stream all data
                     tt = t[i] - t_init
                     ch = 0
-                    yield "data: {}, {}, {}\n\n".format(ch, tt, d[ch][i])
+                    yield "data: {}, {}\n\n".format(tt, d[ch][i])
                     # for ch in range(5):
                     #     yield "data: {}, {}, {}\n\n".format(ch, tt, d[ch][i])
 
@@ -123,7 +124,7 @@ if __name__ == "__main__":
     muse.start()
     stream.start() # app.run(host='localhost', port=8889)
 
-    print("Started receiving...")
+    print("Started receiving muse data...")
     if args.time is None:
         print("\tpress ctrl+c to stop it")
         while 1:
@@ -138,7 +139,7 @@ if __name__ == "__main__":
 
     muse.stop()
     muse.disconnect()
-    print("Stopped receiving")
+    print("Stopped receiving muse data")
 
 
     ##### Guardar todo

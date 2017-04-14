@@ -22,4 +22,4 @@ Python libraries:
 * flask: streams data to js client
 
 ## Reconocimientos
-* Muse module: alexandre barachant (link repo TODO)
+* Muse module: alexandre barachant, muse-lsl (https://github.com/alexandrebarachant/muse-lsl)

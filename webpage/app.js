@@ -30,34 +30,47 @@ $(document).ready( function() {
     };
 
     function update_graph(x, y){
-      // TODO: make animation smoother // pq es tan lento?
-      // FIXME: se atrasa al plotear? lleva segundos corriendo y graficos va en 0.2 //revisar si esta bien la escala
-      // FIXME: datos se desordenan
+      // FIXME: data delay
+        // probar solo añadir un dato a grafico y mover eje, en vez de añadir todos los datos de nuevo
+        // probar cambiar a d3
 
-      var xmin = x - 2;
-      var xmax = x + 2;
+      // FIXME: datos se desordenan (pocas veces)
 
       x_data.push(x);
       y_data.push(y);
 
       // Tomar los ultimos 10 puntos
       var n_points = 10;
-      x_data = x_data.slice(-n_points);
+      x_data = x_data.slice(-n_points); //splice?
       y_data = y_data.slice(-n_points);
+      // if(x_data.length > 10){
+      //   x_data.pop();
+      //   y_data.pop();
+      // }
 
-      Plotly.animate('tester', { data: [{x: x_data, y: y_data}] }, {
+
+      Plotly.animate('tester', { data: [{x: x_data, y: y_data}] }
+      , {
         transition: {
-          duration: 1,
+          duration: 0,
           easing: 'cubic-in-out'
         },
         frame: {
-          duration: 1
-        },
-        layout: {
-          // xaxis: {range: [xmin, xmax]}
-          // yaxis: {range: [ymin, ymax]}
+          duration: 0,
         }
-      });
+      }
+      );
+      // Plotly.update('tester', { data: [{x: x_data, y: y_data}] }
+      // , {
+      //   transition: {
+      //     duration: 0,
+      //     easing: 'cubic-in-out'
+      //   },
+      //   frame: {
+      //     duration: 0,
+      //   }
+      // }
+      // );
     }
 
     crear_grafico_simple();
@@ -72,13 +85,10 @@ $(document).ready( function() {
 
     stream.onmessage = function (e) {
       var arr = e.data.split(",");
-      var ch = parseInt(arr[0]); //Canal
-      var x = parseFloat(arr[1]);
-      var y = parseFloat(arr[2]);
+      var x = parseFloat(arr[0]);
+      var y = parseFloat(arr[1]);
 
-      if(ch == 0){
-        update_graph(x, y);
-      }
+      update_graph(x, y);
     };
 
     stream.onerror = function (e) {
@@ -90,7 +100,10 @@ $(document).ready( function() {
     $("#close-con-btn").click(function(){
       console.log("Closing connection.\nReload the page to reconnect to the server")
       stream.close();
-      // FIXME: al cerrar conexion sigue actualizando grafico
+      // Plotly.purge('tester'); //Eliminar el grafico //A la mala
+      Plotly.deleteTraces('tester', 0); //Eliminar trace 0 del grafico
+      // FIXME: al cerrar conexion sigue actualizando grafico //es pq grafico va (muy) atrasado
+      //Arreglado a la mala purge del grafico
     });
 
   }
