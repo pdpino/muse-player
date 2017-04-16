@@ -1,3 +1,5 @@
+// version 1: usa plotly
+
 $(document).ready( function() {
     // Crear grafico
     var x_data = [];

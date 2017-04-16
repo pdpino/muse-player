@@ -79,6 +79,11 @@ if __name__ == "__main__":
     @app.route('/data/prueba')
     def stream_data():
         def event_stream():
+            # DEBUG:
+            t_act = 0
+            t_old = 0
+            dt = 1 # print cada 1 seg
+
             # Drop old data
             lock_queues.acquire()
             q_time.clear()
@@ -99,13 +104,30 @@ if __name__ == "__main__":
                 d = q_data.popleft()
                 lock_queues.release()
 
-                # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an exception
-                for i in range(1): # cambiar por 12 para stream all data
+                # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an index exception
+
+                ch = 1
+                for i in range(12): # NOTE: cambiar por 12 para stream all data
                     tt = t[i] - t_init
-                    ch = 0
                     yield "data: {}, {}\n\n".format(tt, d[ch][i])
+                    # DEBUG:
+                    t_act = tt
+                    if(t_act - t_old >= dt): # 1 second passed
+                        print(t_act)
+                        t_old = t_act
                     # for ch in range(5):
                     #     yield "data: {}, {}, {}\n\n".format(ch, tt, d[ch][i])
+
+                # # Calcular promedio de puntos -> stream promedio
+                # tt = t.mean() - t_init
+                # dd = d[ch].mean()
+                # yield "data: {}, {}\n\n".format(tt, dd)
+                #
+                # # DEBUG:
+                # t_act = tt
+                # if(t_act - t_old >= dt): # 1 second passed
+                #     print(t_act)
+                #     t_old = t_act
 
         return Response(event_stream(), mimetype="text/event-stream")
 
@@ -134,7 +156,7 @@ if __name__ == "__main__":
                 print("Interrupted")
                 break
     else:
-        print("\t for (aprox) {} seconds".format(args.time))
+        print("\t for (aprox) {} seconds".format(args.time)) # HACK
         sleep(args.time)
 
     muse.stop()
@@ -172,6 +194,7 @@ if __name__ == "__main__":
         # Guardar a csv
         print("Saving to file {}".format(filename))
         res.to_csv(filename, float_format='%.3f')
+        print("Saved to file")
 
     # Matar todos threads
     sys.exit(0)
