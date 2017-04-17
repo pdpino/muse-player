@@ -34,7 +34,6 @@ $(document).ready( function() {
     function update_graph(x, y){
       // FIXME: data delay
         // probar solo añadir un dato a grafico y mover eje, en vez de añadir todos los datos de nuevo
-        // probar cambiar a d3
 
       // FIXME: datos se desordenan (pocas veces)
 
@@ -103,9 +102,8 @@ $(document).ready( function() {
       console.log("Closing connection.\nReload the page to reconnect to the server")
       stream.close();
       // Plotly.purge('tester'); //Eliminar el grafico //A la mala
-      Plotly.deleteTraces('tester', 0); //Eliminar trace 0 del grafico
       // FIXME: al cerrar conexion sigue actualizando grafico //es pq grafico va (muy) atrasado
-      //Arreglado a la mala purge del grafico
+      Plotly.deleteTraces('tester', 0); //HACK: Eliminar trace 0 del grafico
     });
 
   }
