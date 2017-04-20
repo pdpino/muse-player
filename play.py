@@ -26,7 +26,11 @@ def perror(text, exit_code=1, **kwargs):
 
 
 # TODO: stream all channels, different streams? asi javascript escoge cuales escuchar
+    # TODO: revisar flask docs: add_url_rule()
+    # TODO: buscar como crear funciones dinamicamente en python (con distints nombres) #parece que no es necesario si se usa la funcion add_url_rule()
+
 # TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho
+
 # TODO: Interrumpir todos threads con un solo ctrl+c # use signal handler?
 
 

@@ -6,3 +6,4 @@ old/*
 
 # Debug files
 debug.*
+play_debug.py
