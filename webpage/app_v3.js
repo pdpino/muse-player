@@ -1,4 +1,5 @@
 // Version 3: usa d3 para plotear
+//TODO
 
 $(document).ready( function() {
 
