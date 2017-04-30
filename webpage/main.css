@@ -1,6 +1,6 @@
 body{
   background-color: lightsteelblue;
-  /*font-family: "Courier New", Courier, monospace;*/
+  font-family: "Courier New", Courier, monospace;
 }
 
 footer{
@@ -8,27 +8,29 @@ footer{
 }
 
 .jumbotron {
-  /*background-color: gainsboro;*/
   /*background-color: powderblue;*/
+  /*background-color: gainsboro;*/
 }
 
 #chart_container {
-        display: inline-block;
-        font-family: Arial, Helvetica, sans-serif;
+  display: inline-block;
+  font-family: Arial, Helvetica, sans-serif;
+  /*border: 2px solid black;*/
+  /*border-radius: 2px;*/
 }
 #chart {
-        float: left;
+  float: left;
 }
 #legend {
-        float: left;
-        margin-left: 15px;
+  float: left;
+  margin-left: 15px;
 }
 #offset_form {
-        float: left;
-        margin: 2em 0 0 15px;
-        font-size: 13px;
+  float: left;
+  margin: 2em 0 0 15px;
+  font-size: 13px;
 }
 #y_axis {
-        float: left;
-        width: 40px;
+  float: left;
+  width: 40px;
 }

@@ -28,13 +28,4 @@ Python libraries:
 
 
 ## Developing
-There are mutiple app_*.js files. Each one of those implements a different library to plot the data.
-* app.js: Plotly -- too slow
-* app_v2.js: Canvas JS -- slow
-* app_v3.js: d3 -- developing
-* app_v4.js: rickshaw -- developing
-  - necesita d3 v3, v4 cambio API
-
-There are multiple index.html files
-* index_v1.html: for every app.js version, except v4 (rickshaw)
-* index.html: currently using for rickshaw debugging
+See README_develop file for more info.

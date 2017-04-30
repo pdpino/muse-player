@@ -5,8 +5,13 @@
   <meta charset="utf-8"/>
   <!-- Imports-->
   <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
-  <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"> -->
-  <link rel="stylesheet" type="text/css" href="webpage/main.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+
+  <!-- <link rel="stylesheet" type="text/css" href="webpage/main.css"> -->
+  <script>
+  document.write('<link rel="stylesheet" type="text/css" href="webpage/main.css?dev=' + Math.floor(Math.random()*100) + '"\>');
+  </script>
 
   <!-- Graph libraries -->
   <!-- <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
@@ -22,24 +27,43 @@
 
 </head>
 <body>
+  <header class="container">
+    <div class="row text-center">
+      <h2>Título</h2>
+      <h3>Subtítulo</h3>
+    </div>
+  </header>
+  <section class="jumbotron">
+    <div class="container">
+      <div class="row">
+        <button id="close-con-btn" type="button">Close Connection</button>
+      </div>
+      <div class="row">
+        <div id="chart_container">
+                <div id="y_axis"></div>
+                <div id="chart"></div>
+                <!-- <div id="x_axis"></div> -->
+                <div id="legend"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer class="container text-center">
+    <h4>Footer</h4>
+  </footer>
 
-  <div id="chart_container">
-          <div id="y_axis"></div>
-          <div id="chart"></div>
-          <div id="legend"></div>
-          <form id="offset_form" class="toggler">
-                  <input type="radio" name="offset" id="lines" value="lines" checked>
-                  <label class="lines" for="lines">lines</label><br>
-                  <input type="radio" name="offset" id="stack" value="zero">
-                  <label class="stack" for="stack">stack</label>
-          </form>
-  </div>
 
 
   <!-- <script type="text/javascript" src="webpage/debug.js"></script> -->
   <!-- <script type="text/javascript" src="webpage/app.js"></script> -->
   <!-- <script type="text/javascript" src="webpage/app_v2.js"></script> -->
   <!-- <script type="text/javascript" src="webpage/app_v3.js"></script> -->
-  <script type="text/javascript" src="webpage/app_v4.js"></script>
+  <!-- <script type="text/javascript" src="webpage/app_v4.js"></script> -->
+
+  <!-- Escribir numero al azar para que no cachee pagina when developing-->
+  <script>
+  document.write('<script type="text/javascript" src="webpage/app_v4.js?dev=' + Math.floor(Math.random() * 100) + '"\><\/script>');
+  </script>
+
 </body>
 </html>

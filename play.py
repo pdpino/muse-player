@@ -113,11 +113,11 @@ if __name__ == "__main__":
                 ch = 1
                 for i in range(12): # NOTE: cambiar por 12 para stream all data
                     tt = t[i] - t_init
-                    yield "data: {}, {}\n\n".format(tt, d[ch][i])
+                    yield "data: {}, {}\n\n".format(tt, d[ch][i]) # REVIEW: pasar datos mas eficientemente
                     # DEBUG:
                     t_act = tt
                     if(t_act - t_old >= dt): # 1 second passed
-                        print(t_act)
+                        # print(t_act)
                         t_old = t_act
                     # for ch in range(5):
                     #     yield "data: {}, {}, {}\n\n".format(ch, tt, d[ch][i])
