@@ -8,27 +8,28 @@ $(document).ready( function() {
       width = 600 - margin.left - margin.right,
       height = 270 - margin.top - margin.bottom;
 
-  // Parse the date / time
-  var parseDate = d3.time.format("%d-%b-%y").parse;
+  // Parse the time to seconds
+  // var parseTime = d3.time.format("%S").parse;
 
-  // Set the ranges
-  var x = d3.time.scale().range([0, width]);
+  // Set the ranges of the axis
+  // var x = d3.time.scale().range([0, width]);
+  var x = d3.scale.linear().range([0, width]);
   var y = d3.scale.linear().range([height, 0]);
 
   // Define the axes
   var xAxis = d3.svg.axis().scale(x)
-      .orient("bottom").ticks(5);
+      .orient("bottom").ticks(10);
 
   var yAxis = d3.svg.axis().scale(y)
       .orient("left").ticks(5);
 
   // Define the line
   var valueline = d3.svg.line()
-      .x(function(d) { return x(d.date); })
-      .y(function(d) { return y(d.close); });
+      .x(function(d) { return x(d.timestamps); })
+      .y(function(d) { return y(d.AF7); });
 
   // Adds the svg canvas
-  var svg = d3.select("body")
+  var svg = d3.select("#chart_container")
       .append("svg")
           .attr("width", width + margin.left + margin.right)
           .attr("height", height + margin.top + margin.bottom)
@@ -37,15 +38,18 @@ $(document).ready( function() {
                 "translate(" + margin.left + "," + margin.top + ")");
 
   // Get the data
-  d3.csv("data/dump.csv", function(error, data) {
+  d3.csv("data/dump3.csv", function(error, data) {
       data.forEach(function(d) {
-          d.TP9 = parseDate(d.date);
-          d.AF7 = +d.close;
+          d.timestamps = +d.timestamps;
+          d.AF7 = +d.AF7; // + ensures a number
+          // console.log(d.timestamps, d.AF7);
       });
 
       // Scale the range of the data
-      x.domain(d3.extent(data, function(d) { return d.date; }));
-      y.domain([0, d3.max(data, function(d) { return d.close; })]);
+      x.domain(d3.extent(data, function(d) { return d.timestamps; }));
+      // x.domain([0, d3.max(data, function(d) { return d.timestamps; })]);
+      // y.domain([0, d3.max(data, function(d) { return d.AF7; })]);
+      y.domain(d3.extent(data, function(d) { return d.AF7; }));
 
       // Add the valueline path.
       svg.append("path")

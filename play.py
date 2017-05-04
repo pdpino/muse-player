@@ -111,7 +111,7 @@ if __name__ == "__main__":
                 # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an index exception
 
                 ch = 1
-                for i in range(12): # NOTE: cambiar por 12 para stream all data
+                for i in range(1): # NOTE: cambiar por 12 para stream all data
                     tt = t[i] - t_init
                     yield "data: {}, {}\n\n".format(tt, d[ch][i]) # REVIEW: pasar datos mas eficientemente
                     # DEBUG:

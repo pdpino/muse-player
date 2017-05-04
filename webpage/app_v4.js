@@ -10,8 +10,8 @@ $(document).ready( function() {
   var palette = new Rickshaw.Color.Palette();
   var graph = new Rickshaw.Graph( {
           element: document.getElementById("chart"),
-          width: 700,
-          height: 240,
+          // width: 700,
+          // height: 240,
           renderer: 'line',
           series: [
                   {
@@ -36,11 +36,11 @@ $(document).ready( function() {
                   }
           ]
   } );
-  var x_axis = new Rickshaw.Graph.Axis.Time({ graph: graph });
+  var x_axis = new Rickshaw.Graph.Axis.X({ graph: graph });
   var y_axis = new Rickshaw.Graph.Axis.Y( {
     graph: graph,
     orientation: 'left',
-    tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+    // tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
     element: document.getElementById('y_axis'),
   } );
   var legend = new Rickshaw.Graph.Legend( {
