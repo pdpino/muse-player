@@ -74,7 +74,7 @@ class Muse():
         self.adapter.stop()
 
     def suscribe_something(self, handle, data):
-        """Test to find battery and other channels in muse"""
+        """DEBUG: Test to find battery and other channels in muse"""
 
         aa = bitstring.Bits(bytes=data)
         pattern1 = "uint:12,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8, \
@@ -84,15 +84,15 @@ class Muse():
         res1 = aa.unpack(pattern1)
         res2 = aa.unpack(pattern2)
 
-        print("handle: {}".format(handle))
-        print("data: {}".format(data))
-        print("res1: {}".format(res1))
-        print("res2: {}".format(res2))
-        print("")
+        # print("handle: {}".format(handle))
+        # print("data: {}".format(data))
+        # print("res1: {}".format(res1))
+        # print("res2: {}".format(res2))
+        # print("")
 
     def _subscribe_eeg(self):
         """subscribe to eeg stream."""
-        # testeo:
+        # DEBUG:
         self.device.subscribe('273e0001-4c4d-454d-96be-f03bac821358',
                               callback=self.suscribe_something)
 

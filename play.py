@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Play muse data
 
-Connects with a muse device, stream the data through a text/event-stream and save the data to a csv"""
+Connects with a muse (2016) device, stream the data through a text/event-stream and save the data to a csv"""
 
 import sys
 import os
@@ -25,13 +25,18 @@ def perror(text, exit_code=1, **kwargs):
 
 
 
-# TODO: stream all channels, different streams? asi javascript escoge cuales escuchar
-    # TODO: revisar flask docs: add_url_rule()
-    # TODO: buscar como crear funciones dinamicamente en python (con distints nombres) #parece que no es necesario si se usa la funcion add_url_rule()
-
-# TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho
-
+# Next TODOs:
+# TODO: plot all channels
 # TODO: Interrumpir todos threads con un solo ctrl+c # use signal handler?
+# TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho # opcion para guardarlas como dump o no
+# TODO: dejar opcion para stream promedio o todos los datos
+# IDEA: probar qué tanta información se pierde en mandar promedio, un dato o todos
+    # calcular cov o odispersion de 12 samples (?)
+
+# Not urgent
+# TODO: ordenar README_develop seccion "headband en estado normal"
+# IDEA: expandir muse module para que chequee estado bateria y reciba aceletrometro, etc
+
 
 
 if __name__ == "__main__":
@@ -99,17 +104,18 @@ if __name__ == "__main__":
             while True:
                 # sleep(0.1)
                 lock_queues.acquire()
-                if(len(q_time) == 0 or len(q_data) == 0): # ambas len debiesen ser iguales siempre
+                if(len(q_time) == 0 or len(q_data) == 0): # NOTE: ambas length debiesen ser iguales siempre
                     # No data, continue
                     lock_queues.release()
                     continue
 
+                # Tomar dato que viene
                 t = q_time.popleft()
                 d = q_data.popleft()
                 lock_queues.release()
 
-                # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an index exception
 
+                # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an index exception
                 ch = 1
                 ch2 = 2
                 for i in range(1): # NOTE: cambiar por 12 para stream all data

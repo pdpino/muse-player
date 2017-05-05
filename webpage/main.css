@@ -12,26 +12,23 @@ footer{
   /*background-color: gainsboro;*/
 }
 
-/*Static graph of d3*/
+/*Graph of d3*/
 path {
   stroke: steelblue;
   stroke-width: 2;
   fill: none;
 }
-.axis path,
-.axis line {
+.axis path, .axis line {
   fill: none;
   stroke: black;
   stroke-width: 1;
   /*shape-rendering: crispEdges;*/
 }
-
 .line {
   fill: none;
   stroke: black;
   stroke-width: 1.5px;
 }
-
 .grid .tick {
   stroke: lightgrey;
   stroke-opacity: 0.7;
@@ -41,28 +38,11 @@ path {
   stroke-width: 0;
 }
 
-
-/*Graph containers*/
+/*Graph container in html*/
 #chart_container {
   /*display: inline-block;*/
   /*font-family: Arial, Helvetica, sans-serif;*/
   border: 2px solid black;
   padding: 1em;
   /*border-radius: 2px;*/
-}
-#chart {
-  /*float: left;*/
-}
-#legend {
-  /*float: left;*/
-  /*margin-left: 15px;*/
-}
-#offset_form {
-  /*float: left;*/
-  /*margin: 2em 0 0 15px;*/
-  /*font-size: 13px;*/
-}
-#y_axis {
-  /*float: left;*/
-  /*width: 40px;*/
 }

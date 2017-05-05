@@ -1,6 +1,9 @@
 # Developing Info
 
-## Channel order
+## Headband 2016
+* When it is on and disconnected (advertising?) the lights blink rather fast. When connected they blink a bit slower. When streaming data they don't blink at all.
+
+## Channel order (segun barachant)
 * 0: TP9
 * 1: AF7
 * 2: AF8
@@ -9,18 +12,15 @@
 
 * Resto???
 
-## js files
-There are mutiple app_*.js files. Each one of those implements a different library to plot the data.
-* app.js: Plotly -- too slow
+## js old files
+In the old/ folder (may not be up in the repo) there are mutiple app_*.js files. Each one of those is a different implementation to plot the data.
+* app_v1.js: Plotly -- too slow
 * app_v2.js: Canvas JS -- slow
-* app_v3.js: d3 v3 -- developing
-* app_v4.js: d3 v4 -- developing
-* app_v5.js: rickshaw -- developing
-* app_v6.js: d3 v3 -- the best
-  - necesita d3 v3 (v4 the API changed)
+* app_v3.js: d3 v3
+* app_v4.js: d3 v4
+* app_v5.js: rickshaw
+* app_v6.js: d3 v3 -- the best -- version actual app.js
 
-## Headband 2016
-* When it is on and disconnected (advertising?) the lights blink rather fast. When connected they blink a bit slower. When streaming data they don't blink at all.
 
 
 ## Headband extraña, probando con gatttool

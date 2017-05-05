@@ -2,7 +2,7 @@
 *.pyc
 
 # Folders
-old/*
+old/
 
 # Debug files
 debug.*
