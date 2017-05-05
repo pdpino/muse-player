@@ -1,9 +1,20 @@
-## Developing
+# Developing Info
+
+## Channel order
+* 0: TP9
+* 1: AF7
+* 2: AF8
+* 3: TP10
+* 4: Right AUX
+
+## js files
 There are mutiple app_*.js files. Each one of those implements a different library to plot the data.
 * app.js: Plotly -- too slow
 * app_v2.js: Canvas JS -- slow
-* app_v3.js: d3 -- developing
-* app_v4.js: rickshaw -- developing
+* app_v3.js: d3 v3 -- developing
+* app_v4.js: d3 v4 -- developing
+* app_v5.js: rickshaw -- developing
+* app_v6.js: d3 v3 -- the best
   - necesita d3 v3 (v4 the API changed)
 
 ## Headband 2016
