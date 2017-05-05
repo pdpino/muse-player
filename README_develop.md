@@ -7,6 +7,8 @@
 * 3: TP10
 * 4: Right AUX
 
+* Resto???
+
 ## js files
 There are mutiple app_*.js files. Each one of those implements a different library to plot the data.
 * app.js: Plotly -- too slow
@@ -58,6 +60,7 @@ byte1: char properties (8bits). Bits:
   - 5: indicate
   - 6: auth signed writes
   - 7: extended properties
+  - endianess?
 byte2-3: characteristic value handle (16bits)
 byte4-5-beyond?: characteristic uuid (gatt_uuid)
 

@@ -118,7 +118,7 @@ if __name__ == "__main__":
                     # DEBUG:
                     t_act = tt
                     if(t_act - t_old >= dt): # 1 second passed
-                        print(t_act)
+                        # print(t_act)
                         t_old = t_act
                     # for ch in range(5):
                     #     yield "data: {}, {}, {}\n\n".format(ch, tt, d[ch][i])
