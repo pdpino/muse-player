@@ -128,25 +128,26 @@ def main():
 
 
                 # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an index exception
-                ch = 1
-                ch2 = 2
                 for i in range(1): # NOTE: cambiar por 12 para stream all data
                     tt = t[i] - t_init
-                    yield "data: {}, {}, {}\n\n".format(tt, d[ch][i], d[ch2][i]) # REVIEW: pasar datos mas eficientemente
+                    yield "data: {}, {}, {}, {}, {}, {}\n\n".format(tt, \
+                                    d[0][i], \
+                                    d[1][i], \
+                                    d[2][i], \
+                                    d[3][i], \
+                                    d[4][i])
+                    ### REVIEW: pasar datos mas eficientemente
                     # DEBUG:
-                    t_act = tt
-                    if(t_act - t_old >= dt): # 1 second passed
+                    # t_act = tt
+                    #if(t_act - t_old >= dt): # 1 second passed
                         # print(t_act)
-                        t_old = t_act
-                    # for ch in range(5):
-                    #     yield "data: {}, {}, {}\n\n".format(ch, tt, d[ch][i])
+                        #t_old = t_act
 
-                # # Calcular promedio de puntos -> stream promedio
+                ## Calcular promedio de puntos -> stream promedio
                 # tt = t.mean() - t_init
-                # dd = d[ch].mean()
-                # yield "data: {}, {}\n\n".format(tt, dd)
-                #
-                # # DEBUG:
+                # yield "data: {}, {}, {}\n\n".format(tt, d[0].mean(), d[1].mean())
+
+                # DEBUG: # print en que segundo va
                 # t_act = tt
                 # if(t_act - t_old >= dt): # 1 second passed
                 #     print(t_act)

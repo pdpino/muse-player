@@ -37,12 +37,30 @@ path {
 .grid path {
   stroke-width: 0;
 }
+.legend {
+  font-size: 12px;
+}
+rect {
+  stroke-width: 2;
+}
 
 /*Graph container in html*/
 #chart_container {
   /*display: inline-block;*/
   /*font-family: Arial, Helvetica, sans-serif;*/
+  /*border: 2px solid black;*/
+  padding: 1em;
+  /*border-radius: 2px;*/
+}
+#legend_container {
+  /*display: inline-block;*/
+  /*font-family: Arial, Helvetica, sans-serif;*/
   border: 2px solid black;
   padding: 1em;
   /*border-radius: 2px;*/
+}
+
+.legend-rect{
+  height: inherit;
+  width: inherit;
 }

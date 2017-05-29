@@ -24,23 +24,49 @@
 <body>
   <header class="container">
     <div class="row text-center">
-      <h2>Título</h2>
-      <h3>Subtítulo</h3>
+      <h2>Muse data</h2>
+      <h3>Streaming live from your brain</h3>
     </div>
   </header>
+
+
   <section class="jumbotron">
     <div class="container">
       <div class="row">
         <button id="close-con-btn" type="button">Close connection</button>
-        <button id="data-btn" type="button">Random data</button>
       </div>
       <div class="row">
-        <div id="chart_container"> </div>
+        <div class="col-md-8">
+          <div id="chart_container"> </div>
+        </div>
+        <div class="col-md-4">
+          <div class="row">
+            <form>
+              <svg width="12" height="12"> <rect class="legend-rect" id="ch1-rect" /> </svg>
+              <input id="ch1" type="checkbox" checked> TP9 <br>
+
+              <svg width="12" height="12"> <rect class="legend-rect" id="ch2-rect" /> </svg>
+              <input id="ch2" type="checkbox" checked> AF7 <br>
+
+              <svg width="12" height="12"> <rect class="legend-rect" id="ch3-rect" /> </svg>
+              <input id="ch3" type="checkbox" checked> AF8 <br>
+
+              <svg width="12" height="12"> <rect class="legend-rect" id="ch4-rect" /> </svg>
+              <input id="ch4" type="checkbox" checked> TP10 <br>
+
+              <svg width="12" height="12"> <rect class="legend-rect" id="ch5-rect" /> </svg>
+              <input id="ch5" type="checkbox" checked> Right Aux <br>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   </section>
+
+
   <footer class="container text-center">
-    <h4>Footer</h4>
+    <h5>Denis Parra</h5>
+    <h5>Pablo Pino</h5>
   </footer>
 
 
