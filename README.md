@@ -18,8 +18,9 @@ Put on the headband, go to http://localhost:8888 and visualize the live muse dat
 Python 3.5, Muse headband 2016.
 
 Python libraries:
+* numpy, pandas
 * flask, flask_cors: stream data to js client
-* pygatt: bluetooth connection
+* pygatt, pexpect: bluetooth connection
 * bitstring: unpack bytes
 
 

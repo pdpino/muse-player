@@ -3,6 +3,10 @@
 ## Headband 2016
 * When it is on and disconnected (advertising?) the lights blink rather fast. When connected they blink a bit slower. When streaming data they don't blink at all.
 
+## MAC Addresses
+* MAC de antena bluetooth: 00:1B:DC:06:B1:FB
+* MAC de muse: 00:55:DA:B3:20:D7
+
 ## Channel order (segun barachant)
 * 0: TP9
 * 1: AF7

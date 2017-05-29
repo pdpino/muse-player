@@ -6,11 +6,11 @@ Connects with a muse (2016) device, stream the data through a text/event-stream 
 import sys
 import os
 from time import sleep, time
-import numpy as np
-import pandas as pd
 import argparse
 import threading
 from collections import deque
+import numpy as np
+import pandas as pd
 from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
@@ -38,20 +38,32 @@ def perror(text, exit_code=1, **kwargs):
 # IDEA: expandir muse module para que chequee estado bateria y reciba aceletrometro, etc
 
 
-
-if __name__ == "__main__":
-    ##### Parsear argumentos
+def create_parser():
+    """ Create the console arguments parser"""
     parser = argparse.ArgumentParser(description='Send muse data to client and save to .csv', usage='%(prog)s [options]')
-    parser.add_argument('-t', '--time', default=None, type=float,
-                        help="Seconds to record data (aprox)")
-    parser.add_argument('-a', '--address', default="00:55:DA:B3:20:D7", type=str,
+
+    group_conn = parser.add_argument_group(title="Bluetooth connection", description=None)
+    group_conn.add_argument('-i', '--interface', default=None, type=str,
+                        help="Bluetooth interface")
+    group_conn.add_argument('-a', '--address', default="00:55:DA:B3:20:D7", type=str,
                         help="Device's MAC address")
-    parser.add_argument('-s', '--save_csv', action="store_true",
+
+    group_data = parser.add_argument_group(title="Data arguments")
+    group_data.add_argument('-t', '--time', default=None, type=float,
+                        help="Seconds to record data (aprox)")
+    group_data.add_argument('-s', '--save_csv', action="store_true",
                         help="Whether to save a .csv file with the data or not")
-    parser.add_argument('-f', '--filename', default="dump", type=str,
+    group_data.add_argument('-f', '--filename', default="dump", type=str,
                         help="Name to store the .csv file. Only useful with -s")
-    parser.add_argument('-d', '--dir', default="data", type=str,
+    group_data.add_argument('-d', '--dir', default="data", type=str,
                         help="Subfolder to save the .csv file. Only useful with -s")
+
+    return parser
+
+def main():
+    """Connect with muse and stream the data"""
+    # Parse args
+    parser = create_parser()
     args = parser.parse_args()
 
 
@@ -144,7 +156,7 @@ if __name__ == "__main__":
 
 
     ##### Start muse
-    muse = Muse(args.address, process_muse_data)
+    muse = Muse(args.address, process_muse_data, interface=args.interface)
     status = muse.connect()
     if status != 0:
         perror("Can't connect to muse band", exit_code=status)
@@ -209,3 +221,7 @@ if __name__ == "__main__":
 
     # Matar todos threads
     sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
