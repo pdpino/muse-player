@@ -24,7 +24,7 @@ Python libraries:
 * bitstring: unpack bytes
 
 
-## Acknowledgments
+## Acknowledgment
 * Muse module: alexandre barachant, muse-lsl (https://github.com/alexandrebarachant/muse-lsl)
 
 
