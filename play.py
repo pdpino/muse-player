@@ -145,7 +145,7 @@ def main():
 
                 ## Calcular promedio de puntos -> stream promedio
                 # tt = t.mean() - t_init
-                # yield "data: {}, {}, {}\n\n".format(tt, d[0].mean(), d[1].mean())
+                # yield "data: {}, {}, {}, {}, {}, {}\n\n".format(tt, d[0].mean(), d[1].mean(), d[2].mean(), d[3].mean(), d[4].mean())
 
                 # DEBUG: # print en que segundo va
                 # t_act = tt
@@ -188,6 +188,15 @@ def main():
     print("Stopped receiving muse data")
 
 
+
+    # DEBUG:
+    a = sys.getsizeof(full_time)
+    b = sys.getsizeof(full_data)
+
+    print("tamano: {}, {}".format(a, b))
+
+
+
     ##### Guardar todo
     # Concat y normalizar timestamps
     full_time = np.concatenate(full_time)
@@ -221,7 +230,8 @@ def main():
         print("Saved to file")
 
     # Matar todos threads
-    sys.exit(0)
+    #sys.exit(0)
+    return 0
 
 
 if __name__ == "__main__":
