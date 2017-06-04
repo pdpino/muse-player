@@ -7,6 +7,9 @@
 * MAC de antena bluetooth: 00:1B:DC:06:B1:FB
 * MAC de muse: 00:55:DA:B3:20:D7
 
+## Channels and brain waves
+Los canales traen raw waves, es necesario pasarlas a ondas alfa, beta, gamma, delta, theta, usando transformaciones de fourier. Ver links:
+
 ## Channel order (segun barachant)
 * 0: TP9
 * 1: AF7
@@ -14,7 +17,31 @@
 * 3: TP10
 * 4: Right AUX
 
-* Resto???
+Segun el datasheet de muse (http://developer.choosemuse.com/hardware-firmware/hardware-specifications)
+* TP9 -- atrás oreja izquierda
+* AF7 -- lado izquierdo frente
+* AF8 -- lado derecho frente
+* TP10 -- atrás oreja derecha
+* Right AUX -- medio frente (reference)
+Esto está de acuerdo con un sistema/estándar/método internacional para usar eléctrodos en la cabeza.
+Ver https://en.wikipedia.org/wiki/10%E2%80%9320_system_(EEG)
+
+
+## Datasheet de muse dice que libreria (no muse solo) trae:
+* raw EEG data
+* raw accelerometer data
+* raw spectra
+    * delta (1-4Hz)
+    * theta (4-8Hz)
+    * alpha (8-13Hz)
+    * beta (13-30Hz)
+    * gamma (30-44Hz)
+* total power
+* artifact detection (eye blink, jaw clench)
+* Fast Fourier Transform (FFT) coecients
+* experimental brain-state classifiers
+
+
 
 ## js old files
 In the old/ folder (may not be up in the repo) there are mutiple app_*.js files. Each one of those is a different implementation to plot the data.

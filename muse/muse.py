@@ -73,28 +73,28 @@ class Muse():
         self.device.disconnect()
         self.adapter.stop()
 
-    def suscribe_something(self, handle, data):
-        """DEBUG: Test to find battery and other channels in muse"""
-
-        aa = bitstring.Bits(bytes=data)
-        pattern1 = "uint:12,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8, \
-                   uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
-        pattern2 = "uint:8,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12,\
-                   uint:12,uint:12,uint:12,uint:12,uint:12,uint:12"
-        res1 = aa.unpack(pattern1)
-        res2 = aa.unpack(pattern2)
-
-        # print("handle: {}".format(handle))
-        # print("data: {}".format(data))
-        # print("res1: {}".format(res1))
-        # print("res2: {}".format(res2))
-        # print("")
+    # def suscribe_something(self, handle, data):
+    #     """DEBUG: Test to find battery and other channels in muse"""
+    #
+    #     aa = bitstring.Bits(bytes=data)
+    #     pattern1 = "uint:12,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8, \
+    #                uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
+    #     pattern2 = "uint:8,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12,\
+    #                uint:12,uint:12,uint:12,uint:12,uint:12,uint:12"
+    #     res1 = aa.unpack(pattern1)
+    #     res2 = aa.unpack(pattern2)
+    #
+    #     # print("handle: {}".format(handle))
+    #     # print("data: {}".format(data))
+    #     # print("res1: {}".format(res1))
+    #     # print("res2: {}".format(res2))
+    #     # print("")
 
     def _subscribe_eeg(self):
         """subscribe to eeg stream."""
         # DEBUG:
-        self.device.subscribe('273e0001-4c4d-454d-96be-f03bac821358',
-                              callback=self.suscribe_something)
+        # self.device.subscribe('273e0001-4c4d-454d-96be-f03bac821358',
+        #                       callback=self.suscribe_something)
 
         # channels:
         self.device.subscribe('273e0003-4c4d-454d-96be-f03bac821358',
@@ -121,7 +121,8 @@ class Muse():
         timestamp = res[0]
         data = res[1:]
         # 12 bits on a 2 mVpp range
-        data = 0.48828125 * (np.array(data) - 2048)
+        # data = 0.48828125 * (np.array(data) - 2048)
+        data = np.array(data) # in microVolts
         return timestamp, data
 
     def _init_sample(self):

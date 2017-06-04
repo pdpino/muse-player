@@ -18,7 +18,7 @@ $(document).ready( function() {
 
   // Rangos de ejes
   var x = d3.scale.linear().domain([-segs, 0]).range([0, width]); // x
-  var y = d3.scale.linear().domain([-1000, 1000]).range([height, 0]); // y // HACK: adaptar eje
+  var y = d3.scale.linear().domain([-100, 4000]).range([height, 0]); // y // HACK: adaptar eje
 
   // Funciones para obtener lineas
   var lineCH1 = d3.svg.line()
@@ -202,31 +202,6 @@ $(document).ready( function() {
     plot_ch5 = this.checked;
     toggle_show_path(pathCH5, this.checked);
   });
-  // $("#ch1").click(function(){
-  //   plot_ch1 = this.checked;
-  //   var opac = this.checked ? 1 : 0;
-  //   pathCH1.style("opacity", opac);
-  // });
-  // $("#ch2").click(function(){
-  //   plot_ch2 = this.checked;
-  //   var opac = this.checked ? 1 : 0;
-  //   pathCH2.style("opacity", opac);
-  // });
-  // $("#ch3").click(function(){
-  //   plot_ch3 = this.checked;
-  //   var opac = this.checked ? 1 : 0;
-  //   pathCH3.style("opacity", opac);
-  // });
-  // $("#ch4").click(function(){
-  //   plot_ch4 = this.checked;
-  //   var opac = this.checked ? 1 : 0;
-  //   pathCH4.style("opacity", opac);
-  // });
-  // $("#ch5").click(function(){
-  //   plot_ch5 = this.checked;
-  //   var opac = this.checked ? 1 : 0;
-  //   pathCH5.style("opacity", opac);
-  // });
 
   // Boton cerrar conexion
   $("#close-con-btn").click(function(){

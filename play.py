@@ -26,17 +26,42 @@ def perror(text, exit_code=1, **kwargs):
 
 
 # Next TODOs:
-# TODO: plot all channels
 # TODO: Interrumpir todos threads con un solo ctrl+c # use signal handler?
 # TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho # opcion para guardarlas como dump o no
 # TODO: dejar opcion para stream promedio o todos los datos
 # IDEA: probar qué tanta información se pierde en mandar promedio, un dato o todos
-    # calcular cov o odispersion de 12 samples (?)
+    # calcular cov o dispersion de 12 samples (?)
 
 # Not urgent
 # TODO: ordenar README_develop seccion "headband en estado normal"
 # IDEA: expandir muse module para que chequee estado bateria y reciba aceletrometro, etc
 
+def save_csv(data, timestamps, fname, folder=""):
+    # Filename para guardar csv
+    filename = ""
+    if folder != "":
+        # concat filename
+        filename = folder + "/"
+        # Checkear que existe carpeta, sino crearla
+        if not os.path.exists(folder):
+            os.makedirs(folder, mode=0o775)
+
+    filename += fname
+    ext = ".csv"
+    if not filename.endswith(ext):
+        filename += ext
+
+    # Concatenar data
+    data = np.concatenate(data, 1).T
+
+    # Pasar a dataframe
+    res = pd.DataFrame(data=data, columns=['TP9', 'AF7', 'AF8', 'TP10', 'Right AUX'])
+    res['timestamps'] = timestamps
+
+    # Guardar a csv
+    print("Saving to file {}".format(filename))
+    res.to_csv(filename, float_format='%f')
+    print("Saved to file")
 
 def create_parser():
     """ Create the console arguments parser"""
@@ -205,32 +230,11 @@ def main():
     print("Received data for {:.2f} seconds".format(full_time[-1]))
 
     if args.save_csv:
-        # Filename para guardar csv
-        filename = ""
-        if args.dir != "":
-            # concat filename
-            filename = args.dir + "/"
-            # Checkear que existe carpeta, sino crearla
-            if not os.path.exists(args.dir):
-                os.makedirs(args.dir, mode=0o775)
+        save_csv(full_data, full_time, args.filename, folder=args.dir)
 
-        filename += args.filename
-        filename += ".csv"
 
-        # Concatenar data
-        full_data = np.concatenate(full_data, 1).T
-
-        # Pasar a dataframe
-        res = pd.DataFrame(data=full_data, columns=['TP9', 'AF7', 'AF8', 'TP10', 'Right AUX'])
-        res['timestamps'] = full_time
-
-        # Guardar a csv
-        print("Saving to file {}".format(filename))
-        res.to_csv(filename, float_format='%.3f')
-        print("Saved to file")
 
     # Matar todos threads
-    #sys.exit(0)
     return 0
 
 
