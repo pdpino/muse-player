@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
+import data_mng
 
 
 """Basado en codigo de: https://github.com/NeuroTechX/bci-workshop"""
-
 def compute_feature_vector(eegdata, Fs):
     """Extract the features from the EEG
     Inputs:
@@ -131,9 +131,28 @@ def compute_feature_vector_one(eegdata, Fs):
 
     return list(feature_vector), good
 
-if __name__ == "__main__":
+def create_parser():
+    """ Create the console arguments parser"""
+    parser = argparse.ArgumentParser(description='Apply FFT to data', usage='%(prog)s [options]')
 
-    df = pd.read_csv("data/data.csv", index_col=0)
+    group_data = parser.add_argument_group(title="Data arguments")
+    group_data.add_argument('-f', '--filename', default="dump", type=str,
+                        help="Name of the .csv file to read")
+    group_data.add_argument('-d', '--dir', default=None, type=str,
+                        help="Subfolder to read the .csv file")
+
+    group_plot = parser.add_argument_group(title="Plot arguments", description=None)
+    group_plot.add_argument('-a', '--all', action="store_true",
+                        help="Plot all the waves in the same figure. Else, use subplots")
+
+    return parser
+
+def main():
+    parser = create_parser()
+    args = parser.parse_args()
+
+    # Read the file
+    df = data_mng.read_data(args.filename, args.dir)
 
     # Some information about the channels
     ch_names = ['TP9', 'AF7', 'AF8', 'TP10']
@@ -142,11 +161,30 @@ if __name__ == "__main__":
     # data = df[ch_names].as_matrix()
     a = df['TP10'].as_matrix()
 
+    t = df['timestamps']
+
+    # tp10 = df['TP10'].as_matrix()
+    # tp9 = df['TP9'].as_matrix()
+    # af7 = df['AF7'].as_matrix()
+    # af8 = df['AF8'].as_matrix()
+    #
+    # # plt.plot(t, tp10, label='tp10')
+    # plt.plot(t, tp9, label='tp9')
+    # plt.plot(t, af7, label='af7')
+    # plt.plot(t, af8, label='af8')
+    #
+    # plt.xlim(20, 40)
+    # plt.legend()
+    # plt.show()
+    #
+    # sys.exit(0)
+
     # Sampling rate
     sample_rate = 256  # Hz
     window = 256 # amount of data to take at once
     step = 25 # Step to move the window each time
     feats = []
+    tiempo = []
     i = 0
     n = len(a)
     contador_malos = 0
@@ -156,11 +194,13 @@ if __name__ == "__main__":
             f, good = compute_feature_vector_one(b, sample_rate)
             if good:
                 feats.append(f)
+                tiempo.append(t[i])
             else:
                 contador_malos += 1
         i += step
 
     feats = np.matrix(feats)
+    tiempo = np.matrix(tiempo)
 
     print("cantidad de veces con solo 0s: {}".format(contador_malos))
 
@@ -171,23 +211,13 @@ if __name__ == "__main__":
     gamma = feats[:, 4]
 
 
-    multiple_graph = False
-    limitx = False
-    limity = False
-
     def plot_wave(data, title, i):
         t = range(len(data))
-        if multiple_graph:
+        if not args.all:
             plt.subplot(3, 2, i)
             plt.title(title)
 
         plt.plot(t, data, label=title)
-
-        if limitx:
-            plt.xlim(200, 400)
-
-        if limity:
-            plt.ylim(1, 4)
 
     plot_wave(delta, "Delta", 1)
     plot_wave(theta, "Theta", 2)
@@ -203,3 +233,6 @@ if __name__ == "__main__":
     # n = len(feats)
     # plt.plot(range(n), feats)
     # plt.show()
+
+if __name__ == "__main__":
+    main()

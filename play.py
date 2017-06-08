@@ -3,25 +3,17 @@
 
 Connects with a muse (2016) device, stream the data through a text/event-stream and save the data to a csv"""
 
-import sys
-import os
 from time import sleep, time
-import argparse
-import threading
 from collections import deque
 import numpy as np
 import pandas as pd
+import argparse
+import threading
 from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
-
-# OTRAS FUNCIONES
-def perror(text, exit_code=1, **kwargs):
-    """ Prints to standard error. If status is non-zero exits """
-
-    print("ERROR: {}".format(text), file=sys.stderr, **kwargs)
-    if exit_code != 0:
-        sys.exit(exit_code)
+import data_mng
+import basic
 
 
 
@@ -36,32 +28,28 @@ def perror(text, exit_code=1, **kwargs):
 # TODO: ordenar README_develop seccion "headband en estado normal"
 # IDEA: expandir muse module para que chequee estado bateria y reciba aceletrometro, etc
 
-def save_csv(data, timestamps, fname, folder=""):
-    # Filename para guardar csv
-    filename = ""
-    if folder != "":
-        # concat filename
-        filename = folder + "/"
-        # Checkear que existe carpeta, sino crearla
-        if not os.path.exists(folder):
-            os.makedirs(folder, mode=0o775)
+def normalize_time(timestamps):
+    """Receive a list of np arrays of timestamps. Return the concatenated and normalized (substract initial time) np array"""
 
-    filename += fname
-    ext = ".csv"
-    if not filename.endswith(ext):
-        filename += ext
+    # Concat y normalizar timestamps
+    timestamps = np.concatenate(timestamps)
+    return timestamps - timestamps[0]
 
+def normalize_data(data):
+    """Return the data concatenated"""
+    return np.concatenate(data, 1).T
+
+def save_csv(data, timestamps, fname, subfolder=None):
+    """Preprocess the data and save it to a csv """
     # Concatenar data
-    data = np.concatenate(data, 1).T
+    data = normalize_data(data)
 
-    # Pasar a dataframe
+    # Juntar en dataframe
     res = pd.DataFrame(data=data, columns=['TP9', 'AF7', 'AF8', 'TP10', 'Right AUX'])
     res['timestamps'] = timestamps
 
     # Guardar a csv
-    print("Saving to file {}".format(filename))
-    res.to_csv(filename, float_format='%f')
-    print("Saved to file")
+    data_mng.save_data(res, fname, subfolder)
 
 def create_parser():
     """ Create the console arguments parser"""
@@ -75,13 +63,21 @@ def create_parser():
 
     group_data = parser.add_argument_group(title="Data arguments")
     group_data.add_argument('-t', '--time', default=None, type=float,
-                        help="Seconds to record data (aprox)")
-    group_data.add_argument('-s', '--save_csv', action="store_true",
+                        help="Seconds to record data (aprox). If none, stop listening only when interrupted")
+    group_data.add_argument('-s', '--save', action="store_true",
                         help="Whether to save a .csv file with the data or not")
-    group_data.add_argument('-f', '--filename', default="dump", type=str,
+    group_data.add_argument('-f', '--fname', default="dump", type=str,
                         help="Name to store the .csv file. Only useful with -s")
-    group_data.add_argument('-d', '--dir', default="data", type=str,
+    group_data.add_argument('-s', '--subfolder', default=None, type=str,
                         help="Subfolder to save the .csv file. Only useful with -s")
+
+    group_stream = parser.add_argument_group(title="Stream connection")
+    group_stream.add_argument('--ip', default="localhost", type=str,
+                        help="Host ip to do the stream. Defaults to 'localhost'")
+    group_stream.add_argument('--port', default=8889, type=int,
+                        help="Port to send the data to. Defaults to 8889")
+    group_stream.add_argument('--url', default="/data/muse", type=str,
+                        help="sub-url to send the data. It will be sent to 'http://ip:port/url'. Defaults to /data/muse")
 
     return parser
 
@@ -91,6 +87,9 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
 
+
+    # Preprocesar argumentos
+    args.url = basic.assure_startswith(args.url, "/")
 
     ##### Queues para stream datos, thread safe
     # Productor: muse
@@ -122,7 +121,7 @@ def main():
     ##### Stream datos
     app = Flask(__name__) # iniciar app de Flask
     CORS(app) # para que cliente pueda acceder a este puerto
-    @app.route('/data/prueba')
+    @app.route(args.url)
     def stream_data():
         def event_stream():
             # DEBUG:
@@ -185,15 +184,16 @@ def main():
     muse = Muse(args.address, process_muse_data, interface=args.interface)
     status = muse.connect()
     if status != 0:
-        perror("Can't connect to muse band", exit_code=status)
+        basic.perror("Can't connect to muse band", exit_code=status)
 
 
-
+    # Thread para streaming
+    stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
+    stream.daemon = True 
 
     ##### Init
-    stream = threading.Thread(target=app.run, kwargs={"host":"localhost", "port":8889})
     muse.start()
-    stream.start() # app.run(host='localhost', port=8889)
+    stream.start()
 
     print("Started receiving muse data...")
     if args.time is None:
@@ -213,24 +213,13 @@ def main():
     print("Stopped receiving muse data")
 
 
-
-    # DEBUG:
-    a = sys.getsizeof(full_time)
-    b = sys.getsizeof(full_data)
-
-    print("tamano: {}, {}".format(a, b))
-
-
-
     ##### Guardar todo
-    # Concat y normalizar timestamps
-    full_time = np.concatenate(full_time)
-    full_time = full_time - full_time[0]
+    full_time = normalize_time(full_time)
 
     print("Received data for {:.2f} seconds".format(full_time[-1]))
 
-    if args.save_csv:
-        save_csv(full_data, full_time, args.filename, folder=args.dir)
+    if args.save:
+        save_csv(full_data, full_time, args.fname, folder=args.subfolder)
 
 
 

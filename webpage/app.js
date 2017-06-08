@@ -18,7 +18,7 @@ $(document).ready( function() {
 
   // Rangos de ejes
   var x = d3.scale.linear().domain([-segs, 0]).range([0, width]); // x
-  var y = d3.scale.linear().domain([-100, 4000]).range([height, 0]); // y // HACK: adaptar eje
+  var y = d3.scale.linear().domain([-1000, 1000]).range([height, 0]); // y // HACK: adaptar eje
 
   // Funciones para obtener lineas
   var lineCH1 = d3.svg.line()
@@ -146,7 +146,7 @@ $(document).ready( function() {
 
 
   // Conectarse con server (python) usando Event Source
-  var dir = 'http://localhost:8889/data/prueba';
+  var dir = 'http://localhost:8889/data/muse';
   var stream = new EventSource(dir); // TODO: usar try catch
   stream.onopen = function (e) {
     console.log("CONNECTED");

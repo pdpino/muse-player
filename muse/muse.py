@@ -121,8 +121,8 @@ class Muse():
         timestamp = res[0]
         data = res[1:]
         # 12 bits on a 2 mVpp range
-        # data = 0.48828125 * (np.array(data) - 2048)
-        data = np.array(data) # in microVolts
+        data = 0.48828125 * (np.array(data) - 2048)
+        # data = np.array(data) # in microVolts
         return timestamp, data
 
     def _init_sample(self):
