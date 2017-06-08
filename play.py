@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import argparse
 import threading
+import signal
 from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
@@ -18,7 +19,6 @@ import basic
 
 
 # Next TODOs:
-# TODO: Interrumpir todos threads con un solo ctrl+c # use signal handler?
 # TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho # opcion para guardarlas como dump o no
 # TODO: dejar opcion para stream promedio o todos los datos
 # IDEA: probar qué tanta información se pierde en mandar promedio, un dato o todos
@@ -68,7 +68,7 @@ def create_parser():
                         help="Whether to save a .csv file with the data or not")
     group_data.add_argument('-f', '--fname', default="dump", type=str,
                         help="Name to store the .csv file. Only useful with -s")
-    group_data.add_argument('-s', '--subfolder', default=None, type=str,
+    group_data.add_argument('--subfolder', default=None, type=str,
                         help="Subfolder to save the .csv file. Only useful with -s")
 
     group_stream = parser.add_argument_group(title="Stream connection")
@@ -180,7 +180,7 @@ def main():
         return Response(event_stream(), mimetype="text/event-stream")
 
 
-    ##### Start muse
+    # Conectar muse
     muse = Muse(args.address, process_muse_data, interface=args.interface)
     status = muse.connect()
     if status != 0:
@@ -189,23 +189,22 @@ def main():
 
     # Thread para streaming
     stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
-    stream.daemon = True 
+    stream.daemon = True
 
-    ##### Init
+    # Capturar ctrl-c
+    catcher = basic.SignalCatcher()
+    signal.signal(signal.SIGINT, catcher.signal_handler)
+
+    ## Iniciar
     muse.start()
     stream.start()
 
     print("Started receiving muse data...")
     if args.time is None:
-        print("\tpress ctrl+c to stop it")
-        while 1:
-            try:
-                sleep(1)
-            except:
-                print("Interrupted")
-                break
+        while catcher.keep_running():
+            sleep(1)
     else:
-        print("\t for (aprox) {} seconds".format(args.time)) # HACK
+        print("\tfor (aprox) {} seconds".format(args.time)) # HACK
         sleep(args.time)
 
     muse.stop()
@@ -219,7 +218,7 @@ def main():
     print("Received data for {:.2f} seconds".format(full_time[-1]))
 
     if args.save:
-        save_csv(full_data, full_time, args.fname, folder=args.subfolder)
+        save_csv(full_data, full_time, args.fname, subfolder=args.subfolder)
 
 
 

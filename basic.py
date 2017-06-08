@@ -14,3 +14,19 @@ def assure_startswith(word, prefix):
     if not word.startswith(prefix):
         word = prefix + word
     return word
+
+
+class SignalCatcher(object):
+    """Catch a ctrl-c signal """
+    def __init__(self, verbose=True):
+        self._keep_running = True
+        self.verbose = True
+
+    def keep_running(self):
+        return self._keep_running
+
+    def signal_handler(self, signum, frame):
+        if self.verbose and self._keep_running:
+            print("You pressed ctrl-c")
+            
+        self._keep_running = False
