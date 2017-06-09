@@ -8,6 +8,7 @@ old/
 
 # Debug files
 debug.*
+zoom.js
 
 # Rickshaw library
 rickshaw*
