@@ -9,7 +9,8 @@ class Muse():
     """Muse 2016 headband"""
 
     def __init__(self, address, callback, eeg=True, accelero=False,
-                 giro=False, backend='auto', interface=None, time_func=time):
+                 giro=False, backend='auto', interface=None, time_func=time,
+                 norm_factor=None, norm_sub=None):
         """Initialize"""
         self.address = address
         self.callback = callback
@@ -18,6 +19,10 @@ class Muse():
         self.giro = giro
         self.interface = interface
         self.time_func = time_func
+
+        # Factores de normalizacion
+        self.norm_factor = 0.48828125 if norm_factor is None else norm_factor
+        self.norm_sub = 2048 if norm_sub is None else norm_sub
 
         if backend in ['auto', 'gatt', 'bgapi']:
             if backend == 'auto':
@@ -120,9 +125,10 @@ class Muse():
         res = aa.unpack(pattern)
         timestamp = res[0]
         data = res[1:]
+
         # 12 bits on a 2 mVpp range
-        data = 0.48828125 * (np.array(data) - 2048)
-        # data = np.array(data) # in microVolts
+        # data = 0.48828125 * (np.array(data) - 2048) # in microVolts # default value chosen by the autor # QUESTION: why?
+        data = self.norm_factor * (np.array(data) - self.norm_sub)
         return timestamp, data
 
     def _init_sample(self):

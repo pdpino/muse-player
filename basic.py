@@ -1,11 +1,14 @@
 """Provide a set of basic functions"""
 import sys
 
-def perror(text, exit_code=1, **kwargs):
+def perror(text, exit_code=1, force_continue=False, **kwargs):
     """ Prints to standard error. If status is non-zero exits """
 
-    print("ERROR: {}".format(text), file=sys.stderr, **kwargs)
-    if exit_code != 0:
+    # See how bad is it
+    bad = "WARN" if force_continue else "ERROR"
+
+    print("{}: {}".format(bad, text), file=sys.stderr, **kwargs)
+    if exit_code != 0 and not force_continue:
         sys.exit(exit_code)
 
 
@@ -28,5 +31,5 @@ class SignalCatcher(object):
     def signal_handler(self, signum, frame):
         if self.verbose and self._keep_running:
             print("You pressed ctrl-c")
-            
+
         self._keep_running = False

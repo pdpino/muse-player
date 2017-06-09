@@ -53,33 +53,57 @@ def save_csv(data, timestamps, fname, subfolder=None):
 
 def create_parser():
     """ Create the console arguments parser"""
-    parser = argparse.ArgumentParser(description='Send muse data to client and save to .csv', usage='%(prog)s [options]')
+    parser = argparse.ArgumentParser(description='Send muse data to client and save to .csv',
+                        usage='%(prog)s [options]', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    group_conn = parser.add_argument_group(title="Bluetooth connection", description=None)
-    group_conn.add_argument('-i', '--interface', default=None, type=str,
+    parser.add_argument('-t', '--time', default=None, type=float,
+                        help="Seconds to record data (aprox). If none, stop listening only when interrupted")
+
+    group_bconn = parser.add_argument_group(title="Bluetooth connection", description=None)
+    group_bconn.add_argument('-i', '--interface', default=None, type=str,
                         help="Bluetooth interface")
-    group_conn.add_argument('-a', '--address', default="00:55:DA:B3:20:D7", type=str,
+    group_bconn.add_argument('-a', '--address', default="00:55:DA:B3:20:D7", type=str,
                         help="Device's MAC address")
 
-    group_data = parser.add_argument_group(title="Data arguments")
-    group_data.add_argument('-t', '--time', default=None, type=float,
-                        help="Seconds to record data (aprox). If none, stop listening only when interrupted")
-    group_data.add_argument('-s', '--save', action="store_true",
+    group_data = parser.add_argument_group(title="Data",
+                        description="Parameters of the processed and streamed data")
+    group_data.add_argument('--stream_mode', choices=["mean", "n", "max", "min"], type=str, default="n",
+                        help="Choose what part of the data to yield to the client. If 'n' is selected consider providing a --stream_n argument as well") # TODO: add to README
+    group_data.add_argument('--stream_n', default=1, type=int,
+                        help="If --stream_mode n is selected, define the amount of data to yield")
+    group_data.add_argument('--norm_sub', default=None, type=int,
+                        help="Normalize substractor. Number to substract to the raw data when incoming, before the factor. If None, it will use the muse module default values") # TODO: add to README
+    group_data.add_argument('--norm_factor', default=None, type=int,
+                        help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default values") # TODO: add to README
+
+
+    group_save = parser.add_argument_group(title="Save data", description=None)
+    group_save.add_argument('-s', '--save', action="store_true",
                         help="Whether to save a .csv file with the data or not")
-    group_data.add_argument('-f', '--fname', default="dump", type=str,
+    group_save.add_argument('-f', '--fname', default="dump", type=str,
                         help="Name to store the .csv file. Only useful with -s")
-    group_data.add_argument('--subfolder', default=None, type=str,
+    group_save.add_argument('--subfolder', default=None, type=str,
                         help="Subfolder to save the .csv file. Only useful with -s")
 
-    group_stream = parser.add_argument_group(title="Stream connection")
-    group_stream.add_argument('--ip', default="localhost", type=str,
-                        help="Host ip to do the stream. Defaults to 'localhost'")
-    group_stream.add_argument('--port', default=8889, type=int,
-                        help="Port to send the data to. Defaults to 8889")
-    group_stream.add_argument('--url', default="/data/muse", type=str,
-                        help="sub-url to send the data. It will be sent to 'http://ip:port/url'. Defaults to /data/muse")
+    group_sconn = parser.add_argument_group(title="Stream connection", description=None)
+    group_sconn.add_argument('--ip', default="localhost", type=str,
+                        help="Host ip to do the stream")
+    group_sconn.add_argument('--port', default=8889, type=int,
+                        help="Port to send the data to")
+    group_sconn.add_argument('--url', default="/data/muse", type=str,
+                        help="sub-url to send the data. It will be sent to 'http://ip:port/url'")
+
+
+
 
     return parser
+
+def notify_stream_mode(mode, n):
+    msg = "You choose to stream the data in the '{}' mode".format(mode)
+    if mode == "n":
+        msg += ", with n = {}".format(n)
+    print(msg)
+
 
 def main():
     """Connect with muse and stream the data"""
@@ -87,9 +111,11 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
 
-
-    # Preprocesar argumentos
+    # Argumentos
     args.url = basic.assure_startswith(args.url, "/")
+    notify_stream_mode(args.stream_mode, args.stream_n)
+
+
 
     ##### Queues para stream datos, thread safe
     # Productor: muse
@@ -104,25 +130,105 @@ def main():
     full_data = []
 
     def process_muse_data(data, timestamps):
-        """Stores and enqueues the incoming muse data"""
+        """Stores and enqueues the incoming muse data
 
-        # data viene en ndarrays de 5x12 # 5 canales x 12 muestras
-        # timestamps viene en ndarrays de 12x1 # 12 muestras
+        - data comes in ndarrays of 5x12, 5 channels and 12 samples
+        - timestamps comes in ndarrays of 12x1, 12 samples"""
+
+        # Agregar a full lists
         full_time.append(timestamps)
         full_data.append(data)
 
         # Agregar datos a queue
-        lock_queues.acquire()
-        q_time.append(timestamps)
-        q_data.append(data)
-        lock_queues.release()
+        with lock_queues:
+            q_time.append(timestamps)
+            q_data.append(data)
+
+    # Conectar muse
+    muse = Muse(args.address, process_muse_data, interface=args.interface,
+        norm_factor=args.norm_factor, norm_sub=args.norm_sub) # factores para normalizar
+    status = muse.connect()
+    if status != 0:
+        basic.perror("Can't connect to muse band", exit_code=status)
 
 
-    ##### Stream datos
+
+    # Generador para streaming
     app = Flask(__name__) # iniciar app de Flask
     CORS(app) # para que cliente pueda acceder a este puerto
     @app.route(args.url)
     def stream_data():
+        """ """
+
+        # String para hacer yield
+        yield_string = "data: {}, {}, {}, {}, {}, {}\n\n"
+            # Siempre se envia (timestamp, ch0, ch1, ch2, ch3, ch4)
+
+        def get_data_mean(tt, t_init, data, dummy=None):
+            """Yield the mean in the 12 samples for each channel separately"""
+            yield yield_string.format( \
+                    tt.mean() - t_init, \
+                    data[0].mean(), \
+                    data[1].mean(), \
+                    data[2].mean(), \
+                    data[3].mean(), \
+                    data[4].mean() )
+
+        def get_data_max(tt, t_init, data, dummy=None):
+            """Yield the max of the 12 samples for each channel separately"""
+            # NOTE: use tt.max(), tt.mean()?
+            yield yield_string.format( \
+                    tt.max() - t_init, \
+                    data[0].max(), \
+                    data[1].max(), \
+                    data[2].max(), \
+                    data[3].max(), \
+                    data[4].max() )
+
+        def get_data_min(tt, t_init, data, dummy=None):
+            """Yield the min of the 12 samples for each channel separately"""
+            yield yield_string.format( \
+                    tt.min() - t_init, \
+                    data[0].min(), \
+                    data[1].min(), \
+                    data[2].min(), \
+                    data[3].min(), \
+                    data[4].min() )
+
+        def get_data_n(tt, t_init, data, n):
+            """Yield n out of the 12  """
+            for i in range(n):
+                ttt = tt[i] - t_init
+                yield yield_string.format(
+                    ttt, \
+                    data[0][i], \
+                    data[1][i], \
+                    data[2][i], \
+                    data[3][i], \
+                    data[4][i] )
+
+        # Escoger yielder
+        yielders = {
+            "mean": get_data_mean,
+            "min": get_data_min,
+            "max": get_data_max,
+            "n": get_data_n
+        }
+
+        try:
+            get_data = yielders[args.stream_mode]
+        except:
+            basic.perror("yielder: {} not found".format(args.stream_mode), force_continue=True)
+            get_data = get_data_n
+
+        # Cap the amount of data to yield
+        if args.stream_n > 12:
+            args.stream_n = 12
+        elif args.stream_n <= 0:
+            args.stream_n = 1
+
+        n_data = args.stream_n # Usado para hacer yield de cierta cantidad de datos del total
+
         def event_stream():
             # DEBUG:
             t_act = 0
@@ -130,11 +236,10 @@ def main():
             dt = 1 # print cada 1 seg
 
             # Drop old data
-            lock_queues.acquire()
-            q_time.clear()
-            q_data.clear()
-            t_init = time() # Set an initial time as marker
-            lock_queues.release()
+            with lock_queues:
+                q_time.clear()
+                q_data.clear()
+                t_init = time() # Set an initial time as marker
 
             # Stream
             while True:
@@ -150,46 +255,23 @@ def main():
                 d = q_data.popleft()
                 lock_queues.release()
 
-
                 # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an index exception
-                for i in range(1): # NOTE: cambiar por 12 para stream all data
-                    tt = t[i] - t_init
-                    yield "data: {}, {}, {}, {}, {}, {}\n\n".format(tt, \
-                                    d[0][i], \
-                                    d[1][i], \
-                                    d[2][i], \
-                                    d[3][i], \
-                                    d[4][i])
-                    ### REVIEW: pasar datos mas eficientemente
-                    # DEBUG:
-                    # t_act = tt
-                    #if(t_act - t_old >= dt): # 1 second passed
-                        # print(t_act)
-                        #t_old = t_act
+                yield from get_data(t, t_init, d, n_data)
 
-                ## Calcular promedio de puntos -> stream promedio
-                # tt = t.mean() - t_init
-                # yield "data: {}, {}, {}, {}, {}, {}\n\n".format(tt, d[0].mean(), d[1].mean(), d[2].mean(), d[3].mean(), d[4].mean())
-
-                # DEBUG: # print en que segundo va
-                # t_act = tt
+                # DEBUG printing time:
+                # t_act = t[-1]
                 # if(t_act - t_old >= dt): # 1 second passed
                 #     print(t_act)
                 #     t_old = t_act
 
         return Response(event_stream(), mimetype="text/event-stream")
 
-
-    # Conectar muse
-    muse = Muse(args.address, process_muse_data, interface=args.interface)
-    status = muse.connect()
-    if status != 0:
-        basic.perror("Can't connect to muse band", exit_code=status)
-
-
     # Thread para streaming
     stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
     stream.daemon = True
+
+
+
 
     # Capturar ctrl-c
     catcher = basic.SignalCatcher()
