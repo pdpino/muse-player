@@ -1,5 +1,7 @@
 # Precompiled py files
+__pycache__/
 *.pyc
+
 
 # Folders
 old/

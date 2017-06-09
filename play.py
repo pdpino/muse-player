@@ -13,7 +13,7 @@ import signal
 from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
-import data_mng
+from basic.data_manager import save_data
 import basic
 
 
@@ -48,7 +48,7 @@ def save_csv(data, timestamps, fname, subfolder=None):
     res['timestamps'] = timestamps
 
     # Guardar a csv
-    data_mng.save_data(res, fname, subfolder)
+    save_data(res, fname, subfolder)
 
 def create_parser():
     """ Create the console arguments parser"""
@@ -60,7 +60,7 @@ def create_parser():
 
     group_bconn = parser.add_argument_group(title="Bluetooth connection", description=None)
     group_bconn.add_argument('-i', '--interface', default=None, type=str,
-                        help="Bluetooth interface")
+                        help="Bluetooth interface, e.g: hci0, hci1")
     group_bconn.add_argument('-a', '--address', default="00:55:DA:B3:20:D7", type=str,
                         help="Device's MAC address")
 
@@ -71,28 +71,26 @@ def create_parser():
     group_data.add_argument('--stream_n', default=1, type=int,
                         help="If --stream_mode n is selected, define the amount of data to yield")
     group_data.add_argument('--norm_sub', default=None, type=int,
-                        help="Normalize substractor. Number to substract to the raw data when incoming, before the factor. If None, it will use the muse module default values") # TODO: add to README
+                        help="Normalize substractor. Number to substract to the raw data when incoming, before the factor. If None, it will use the muse module default value") # TODO: add to README
     group_data.add_argument('--norm_factor', default=None, type=int,
-                        help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default values") # TODO: add to README
+                        help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default value") # TODO: add to README
 
 
     group_save = parser.add_argument_group(title="File arguments", description=None)
     group_save.add_argument('-s', '--save', action="store_true",
-                        help="Whether to save a .csv file with the data or not")
+                        help="Save a .csv with the raw data")
     group_save.add_argument('-f', '--fname', default="dump", type=str,
-                        help="Name to store the .csv file. Only useful with -s")
+                        help="Name to store the .csv file")
     group_save.add_argument('--subfolder', default=None, type=str,
-                        help="Subfolder to save the .csv file. Only useful with -s")
+                        help="Subfolder to save the .csv file")
 
     group_sconn = parser.add_argument_group(title="Stream connection", description=None)
     group_sconn.add_argument('--ip', default="localhost", type=str,
-                        help="Host ip to do the stream")
+                        help="Host ip to do the streaming")
     group_sconn.add_argument('--port', default=8889, type=int,
                         help="Port to send the data to")
     group_sconn.add_argument('--url', default="/data/muse", type=str,
-                        help="sub-url to send the data. It will be sent to 'http://ip:port/url'")
-
-
+                        help="Path in the client to send the data, so it will be sent to 'http://ip:port/url'")
 
 
     return parser
@@ -111,9 +109,6 @@ def main():
 
     # Argumentos
     args.url = basic.assure_startswith(args.url, "/")
-    notify_stream_mode(args.stream_mode, args.stream_n)
-
-
 
     ##### Queues para stream datos, thread safe
     # Productor: muse
@@ -300,9 +295,6 @@ def main():
     if args.save:
         save_csv(full_data, full_time, args.fname, subfolder=args.subfolder)
 
-
-
-    # Matar todos threads
     return 0
 
 

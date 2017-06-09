@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
-import data_mng
+from basic.data_manager import read_data
 
 
 """Basado en codigo de: https://github.com/NeuroTechX/bci-workshop"""
@@ -237,7 +237,7 @@ def main():
     args = parser.parse_args()
 
     # Read the file
-    df = data_mng.read_data(args.fname, args.subfolder)
+    df = read_data(args.fname, args.subfolder)
 
     # Tomar data
     channel = df[args.channel].as_matrix()
