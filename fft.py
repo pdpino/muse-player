@@ -120,7 +120,6 @@ def compute_feature_vector_one(eegdata, Fs):
 
     feature_vector = np.array([delta, theta, alpha, beta, gamma])
 
-
     good = True
 
     # Revisar si son 0, log tira error
@@ -131,37 +130,101 @@ def compute_feature_vector_one(eegdata, Fs):
 
     return list(feature_vector), good
 
-def create_parser():
+def plot_fft(t, channel, plot_all, channel_name):
+    # Sampling rate
+    sample_rate = 256  # Hz
+    window = 256 # amount of data to take at once
+    step = 25 # Step to move the window each time
+    feats = []
+    tiempo = []
+    i = 0
+    n = len(channel)
+    contador_malos = 0
+    while i < n:
+        channel_slice = channel[i:i+window]
+        if(len(channel_slice) >= window):
+            f, good = compute_feature_vector_one(channel_slice, sample_rate)
+            if good:
+                feats.append(f)
+                tiempo.append(t[i])
+            else:
+                contador_malos += 1
+        i += step
+
+
+    if contador_malos > 0:
+        print("There were {} times that a channel got a 0 value (likely noise)".format(contador_malos))
+
+
+    # Transformar a matriz de numpy
+    feats = np.matrix(feats)
+
+    # Tomar señales por separado
+    delta = feats[:, 0]
+    theta = feats[:, 1]
+    alpha = feats[:, 2]
+    beta = feats[:, 3]
+    gamma = feats[:, 4]
+
+    def plot_wave(data, title, i):
+        if not plot_all:
+            plt.subplot(3, 2, i)
+            plt.title(title)
+
+        plt.plot(tiempo, data, label=title)
+
+    plt.suptitle("From ch {}".format(channel_name))
+
+    plot_wave(delta, "Delta", 1)
+    plot_wave(theta, "Theta", 2)
+    plot_wave(alpha, "Alpha", 3)
+    plot_wave(beta, "Beta", 4)
+    plot_wave(gamma, "Gamma", 5)
+
+    plt.ylabel("dB")
+    plt.xlabel("Tiempo (s)")
+
+
+    if plot_all:
+        plt.legend()
+
+    plt.show()
+
+def create_parser(channel_names):
     """ Create the console arguments parser"""
     parser = argparse.ArgumentParser(description='Apply FFT to data', usage='%(prog)s [options]')
 
-    group_data = parser.add_argument_group(title="Data arguments")
-    group_data.add_argument('-f', '--filename', default="dump", type=str,
+    group_data = parser.add_argument_group(title="File arguments")
+    group_data.add_argument('-f', '--fname', default="dump", type=str,
                         help="Name of the .csv file to read")
-    group_data.add_argument('-d', '--dir', default=None, type=str,
+    group_data.add_argument('--subfolder', default=None, type=str,
                         help="Subfolder to read the .csv file")
 
     group_plot = parser.add_argument_group(title="Plot arguments", description=None)
     group_plot.add_argument('-a', '--all', action="store_true",
                         help="Plot all the waves in the same figure. Else, use subplots")
+    group_plot.add_argument('--channel', choices=channel_names, default=channel_names[0], type=str,
+                        help="Channel to extract the waves from")
 
     return parser
 
+
 def main():
-    parser = create_parser()
+    # Channel names
+    ch_names = ['TP9', 'AF7', 'AF8', 'TP10']
+
+    # Parse args
+    parser = create_parser(ch_names)
     args = parser.parse_args()
 
     # Read the file
-    df = data_mng.read_data(args.filename, args.dir)
-
-    # Some information about the channels
-    ch_names = ['TP9', 'AF7', 'AF8', 'TP10']
+    df = data_mng.read_data(args.fname, args.subfolder)
 
     # Tomar data
-    # data = df[ch_names].as_matrix()
-    a = df['TP10'].as_matrix()
-
+    channel = df[args.channel].as_matrix()
     t = df['timestamps']
+
+    plot_fft(t, channel, args.all, args.channel)
 
     # tp10 = df['TP10'].as_matrix()
     # tp9 = df['TP9'].as_matrix()
@@ -179,60 +242,6 @@ def main():
     #
     # sys.exit(0)
 
-    # Sampling rate
-    sample_rate = 256  # Hz
-    window = 256 # amount of data to take at once
-    step = 25 # Step to move the window each time
-    feats = []
-    tiempo = []
-    i = 0
-    n = len(a)
-    contador_malos = 0
-    while i < n:
-        b = a[i:i+window]
-        if(len(b) >= window):
-            f, good = compute_feature_vector_one(b, sample_rate)
-            if good:
-                feats.append(f)
-                tiempo.append(t[i])
-            else:
-                contador_malos += 1
-        i += step
-
-    feats = np.matrix(feats)
-    tiempo = np.matrix(tiempo)
-
-    print("cantidad de veces con solo 0s: {}".format(contador_malos))
-
-    delta = feats[:, 0]
-    theta = feats[:, 1]
-    alpha = feats[:, 2]
-    beta = feats[:, 3]
-    gamma = feats[:, 4]
-
-
-    def plot_wave(data, title, i):
-        t = range(len(data))
-        if not args.all:
-            plt.subplot(3, 2, i)
-            plt.title(title)
-
-        plt.plot(t, data, label=title)
-
-    plot_wave(delta, "Delta", 1)
-    plot_wave(theta, "Theta", 2)
-    plot_wave(alpha, "Alpha", 3)
-    plot_wave(beta, "Beta", 4)
-    plot_wave(gamma, "Gamma", 5)
-
-    plt.ylabel("dB")
-    plt.xlabel("Tiempo (no en segundos)")
-    plt.legend()
-    plt.show()
-
-    # n = len(feats)
-    # plt.plot(range(n), feats)
-    # plt.show()
 
 if __name__ == "__main__":
     main()

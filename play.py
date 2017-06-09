@@ -20,7 +20,6 @@ import basic
 
 # Next TODOs:
 # TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho # opcion para guardarlas como dump o no
-# TODO: dejar opcion para stream promedio o todos los datos
 # IDEA: probar qué tanta información se pierde en mandar promedio, un dato o todos
     # calcular cov o dispersion de 12 samples (?)
 
@@ -77,7 +76,7 @@ def create_parser():
                         help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default values") # TODO: add to README
 
 
-    group_save = parser.add_argument_group(title="Save data", description=None)
+    group_save = parser.add_argument_group(title="File arguments", description=None)
     group_save.add_argument('-s', '--save', action="store_true",
                         help="Whether to save a .csv file with the data or not")
     group_save.add_argument('-f', '--fname', default="dump", type=str,
@@ -103,7 +102,6 @@ def notify_stream_mode(mode, n):
     if mode == "n":
         msg += ", with n = {}".format(n)
     print(msg)
-
 
 def main():
     """Connect with muse and stream the data"""
