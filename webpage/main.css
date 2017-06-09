@@ -1,16 +1,23 @@
+/* Basic */
 body{
   background-color: lightsteelblue;
   font-family: "Courier New", Courier, monospace;
-}
-
-footer{
-  padding-bottom: 1em;
 }
 
 .jumbotron {
   /*background-color: powderblue;*/
   /*background-color: gainsboro;*/
 }
+
+footer{
+  padding-bottom: 1em;
+}
+
+/*Panel control*/
+#panel-btns{
+  padding: 1em;
+}
+
 
 /*Graph of d3*/
 path {
@@ -52,14 +59,8 @@ rect {
   padding: 1em;
   /*border-radius: 2px;*/
 }
-#legend_container {
-  /*display: inline-block;*/
-  /*font-family: Arial, Helvetica, sans-serif;*/
-  border: 2px solid black;
-  padding: 1em;
-  /*border-radius: 2px;*/
-}
 
+/*Rectangulo de leyenda*/
 .legend-rect{
   height: inherit;
   width: inherit;

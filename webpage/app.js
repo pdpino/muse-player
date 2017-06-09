@@ -1,9 +1,8 @@
 // Plot using d3, adapted from http://jsfiddle.net/XZSuK/
 
-// TODO: ordenar codigo
+// TODO: estandarizar nombres de funciones y variables: minusMayus, _
 
-
-function create_graph(segs, yMin, yMax){
+function create_graph(yMin, yMax, xTicks, yTicks, n_secs){
   // Margenes
   var margin = {top: 10, right: 10, bottom: 20, left: 40},
       width = 600 - margin.left - margin.right,
@@ -24,11 +23,11 @@ function create_graph(segs, yMin, yMax){
       .attr("height", height);
 
   // Rangos de ejes
-  var xRange = d3.scale.linear().domain([-segs, 0]).range([0, width]); // x
-  var yRange = d3.scale.linear().domain([yMin, yMax]).range([height, 0]); // y // HACK: adaptar eje
+  var xRange = d3.scale.linear().domain([0, n_secs]).range([0, width]);
+  var yRange = d3.scale.linear().domain([yMin, yMax]).range([height, 0]);
 
   // Eje del tiempo
-  var xAxis = d3.svg.axis().scale(xRange).orient("bottom");
+  var xAxis = d3.svg.axis().scale(xRange).orient("bottom").ticks(5);
   svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
@@ -45,7 +44,6 @@ function create_graph(segs, yMin, yMax){
 function create_line_functions(x, y){
   var lines = Array(5);
 
-  // Funciones para obtener lineas
   lines[0] = d3.svg.line()
       .x(function(d) { return x(d.T); })
       .y(function(d) { return y(d.CH1); });
@@ -66,27 +64,25 @@ function create_line_functions(x, y){
 };
 
 $(document).ready( function() {
-  // Data
-  var n = 100;
-  var n_channels = 5;
-  var data = new Array(n);
-  var segs = 5; //segundos de ventana // HACK
-  for(var i=0;i<n;i++){
-    data[i] = {T: i*segs/n - segs, CH1: 0, CH2: 0, CH3: 0, CH4: 0, CH5: 0};
-  }
-
-
+  //// Parametros iniciales
+  // Rango de eje y
   var yMin = -1000;
   var yMax = 1000;
+  var xTicks = 5;
+  var yTicks = 5;
+  var n_secs = 20; // Cantidad de segundos maximo que guarda el plot
+
+  // Data
+  var n_channels = 5;
+  var data = new Array(1);
+  data[0] = {T: 0, CH1: 0, CH2: 0, CH3: 0, CH4: 0, CH5: 0};
 
 
   var colors = ["black", "red", "blue", "green", "cyan"];
-
-  var graph = create_graph(segs, yMin, yMax);
-
+  var graph = create_graph(yMin, yMax, xTicks, yTicks, n_secs);
   var lines = create_line_functions(graph.xRange, graph.yRange);
 
-  // Crear paths
+  // Funcion para crear paths
   function create_path(line, color){
     return graph.svg.append("g")
             .attr("clip-path", "url(#clip)")
@@ -97,16 +93,7 @@ $(document).ready( function() {
 
   };
 
-  var paths = Array(n_channels);
-  for(var i=0;i<n_channels;i++){
-    paths[i] = create_path(lines[i], colors[i]);
-  }
-
-  var plot_bools = Array(n_channels);
-  for(var i=0;i<n_channels;i++){
-    plot_bools[i] = true;
-  }
-
+  // Funcion para update linea en grafico
   function update_line(plot_ch, path, line){
     if(plot_ch){
       path.attr("d", line(data))
@@ -117,6 +104,14 @@ $(document).ready( function() {
     }
   }
 
+  // Paths y bools para cada canal
+  var paths = Array(n_channels); // Lineas en svg
+  var plot_bools = Array(n_channels); // Bools para esconder path
+  for(var i=0;i<n_channels;i++){
+    paths[i] = create_path(lines[i], colors[i]);
+    plot_bools[i] = true;
+  }
+
   // Funcion para updatear el grafico
   function update_graph() {
     for(var i=0;i<n_channels;i++){
@@ -125,13 +120,7 @@ $(document).ready( function() {
 
     // Setear rango de tiempo de nuevo
     graph.xRange.domain(d3.extent(data, function(d) { return d.T; }));
-    // y.domain(d3.extent(data, function(d) { return d.Y; }));
-    // y.domain([d3.min(data, function(d) { return Math.max(d.Y, -5);}),
-    //           d3.max(data, function(d) { return Math.min(d.Y, 5); })]);
-    // TODO: scale Y
-
-    graph.svg.select(".x.axis") // change the x axis
-        .call(graph.xAxis);
+    graph.svg.select(".x.axis").call(graph.xAxis); // change the x axis
   };
 
   // Pintar leyenda
@@ -143,6 +132,40 @@ $(document).ready( function() {
 
 
 
+  // Update axis
+  var dxRange = 1;
+  var dyRange = 100;
+  function update_y_axis(y1, y2){
+    if(y1 < y2){ // update solo si tiene sentido
+      graph.yRange.domain([y1, y2]);
+      graph.svg.select(".y.axis").call(graph.yAxis); // update svg
+    }
+  }
+
+  // Botones para updatear
+  $("#btn-zoomYin").click(function(){
+    if(yMin + dyRange < yMax - dyRange){ // Solo si tiene sentido
+      yMin += dyRange;
+      yMax -= dyRange;
+      update_y_axis(yMin, yMax);
+    }
+    else{
+      dyRange = dyRange/2;
+    }
+  });
+  $("#btn-zoomYout").click(function(){
+    yMin -= dyRange;
+    yMax += dyRange;
+    update_y_axis(yMin, yMax);
+  });
+  $("#btn-zoomXin").click(function(){
+    if(n_secs > 1){ // Minimo 5 segundos de ventana
+      n_secs -= dxRange;
+    }
+  });
+  $("#btn-zoomXout").click(function(){
+    n_secs += dxRange;
+  });
 
 
   // Conectarse con server (python) usando Event Source
@@ -167,8 +190,10 @@ $(document).ready( function() {
     // Update grafico
     update_graph();
 
-    // Pop primer dato
-    data.shift();
+    // Pop datos hasta tener solo n_secs
+    while(data[data.length-1].T - data[0].T > n_secs){
+      data.shift();
+    }
   };
 
   stream.onerror = function (e) {
@@ -204,16 +229,15 @@ $(document).ready( function() {
   });
 
   // Boton cerrar conexion
-  $("#close-con-btn").click(function(){
+  $("#btn-close-con").click(function(){
     stream.close();
     console.log("Connection closed");
   });
 
   // Boton debug
-  $("#debug-btn").click(function(){
-
+  $("#btn-debug").click(function(){
+    console.log("Debug button disconnected");
   });
-
 
 
   console.log("All set.");

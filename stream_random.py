@@ -50,14 +50,10 @@ def main():
     ##### Queues para stream datos, thread safe
     # Productor: random data
     # Consumidor: flask, que manda datos a client
-    msize = 10 # maxsize
+    msize = 20 # maxsize
     q_data = deque(maxlen=msize)
     q_time = deque(maxlen=msize)
     lock_queues = threading.Lock()
-
-    ##### Listas para guardar datos
-    full_time = []
-    full_data = []
 
     def generate_random_data(minrand, maxrand):
         """Generates random data"""
@@ -76,10 +72,6 @@ def main():
             # Transform data in range
             data = data*(maxrand - minrand) + minrand
 
-            # Agregar a full lists
-            full_time.append(timestamps)
-            full_data.append(data)
-
             # Agregar datos a queue
             with lock_queues:
                 q_time.append(timestamps)
@@ -97,18 +89,18 @@ def main():
     @app.route(args.url)
     def stream_data():
         """ """
-
-        def get_data_n(tt, t_init, data, n):
-            """Yield n out of the 12  """
-
         n_data = args.n_data
-
         def event_stream():
             # Drop old data
+            t_init = 0
+
             with lock_queues:
+                # Set an initial time as marker
+                if len(q_time) > 0:
+                    t_init = q_time[-1][0]
                 q_time.clear()
                 q_data.clear()
-                t_init = time() # Set an initial time as marker
+
 
             # Stream
             while True:
