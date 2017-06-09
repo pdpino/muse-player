@@ -159,7 +159,7 @@ def compute_waves(t, channel, sample_rate=256, window=256, step=25):
 
     return tiempo, feats
 
-def plot_waves(tiempo, feats, channel_name, plot_all=True):
+def plot_waves(tiempo, feats, channel_name, subplots=False):
     """Plot alpha, beta, etc waves in time """
 
     # Tomar señales por separado
@@ -170,7 +170,7 @@ def plot_waves(tiempo, feats, channel_name, plot_all=True):
     gamma = feats[:, 4]
 
     def plot_wave(data, title, i):
-        if not plot_all:
+        if subplots:
             plt.subplot(3, 2, i)
             plt.title(title)
 
@@ -187,12 +187,12 @@ def plot_waves(tiempo, feats, channel_name, plot_all=True):
     plt.ylabel("dB")
     plt.xlabel("Tiempo (s)")
 
-    if plot_all:
+    if not subplots:
         plt.legend()
 
     plt.show()
 
-def plot_raw(t, df, ch_names):
+def plot_raw(t, df, ch_names, subplots=False):
     """Plot raw channels """
     for ch in ch_names:
         plt.plot(t, df[ch].as_matrix(), label=ch)
@@ -212,11 +212,19 @@ def create_parser(ch_names):
     group_data.add_argument('--subfolder', default=None, type=str,
                         help="Subfolder to read the .csv file")
 
-    group_plot = parser.add_argument_group(title="Plot waves arguments", description=None)
-    group_plot.add_argument('-a', '--all', action="store_true",
-                        help="Plot all the waves in the same figure. Else, use subplots")
-    group_plot.add_argument('--channel', choices=ch_names, default=ch_names[0], type=str,
+    group_waves = parser.add_argument_group(title="Plot waves arguments", description=None)
+    group_waves.add_argument('--plot_waves', action="store_true",
+                        help="Plot the delta, theta, alpha, beta and gamma waves extracted from a channel")
+    group_waves.add_argument('--splot_waves', action="store_true",
+                        help="Plot the waves in subplots instead of one plot")
+    group_waves.add_argument('--channel', choices=ch_names, default=ch_names[0], type=str,
                         help="Channel to extract the waves from")
+
+    group_raw = parser.add_argument_group(title="Plot raw channels", description=None)
+    group_raw.add_argument('--plot_raw', action="store_true",
+                        help="Plot the raw channels")
+    group_raw.add_argument('--splot_raw', action="store_true",
+                        help="Plot the raw channels in subplots instead of together")
 
     return parser
 
@@ -235,9 +243,12 @@ def main():
     channel = df[args.channel].as_matrix()
     t = df['timestamps']
 
-    tiempo, feats = compute_waves(t, channel)
-    plot_waves(tiempo, feats, args.channel, args.all)
-    plot_raw(t, df, ch_names)
+    if args.plot_waves:
+        tiempo, feats = compute_waves(t, channel)
+        plot_waves(tiempo, feats, args.channel, args.splot_waves)
+
+    if args.plot_raw:
+        plot_raw(t, df, ch_names, args.splot_raw)
 
 if __name__ == "__main__":
     main()
