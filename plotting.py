@@ -130,16 +130,16 @@ def compute_feature_vector_one(eegdata, Fs):
 
     return list(feature_vector), good
 
-def plot_fft(t, channel, plot_all, channel_name):
-    # Sampling rate
-    sample_rate = 256  # Hz
-    window = 256 # amount of data to take at once
-    step = 25 # Step to move the window each time
-    feats = []
-    tiempo = []
-    i = 0
+
+
+def compute_waves(t, channel, sample_rate=256, window=256, step=25):
+    """Compute the waves (alpha, beta, etc) for a given channel"""
+    feats = [] # Guardar waves (features)
+    tiempo = [] # Guardar tiempo
+    i = 0 # contador del slice
     n = len(channel)
     contador_malos = 0
+
     while i < n:
         channel_slice = channel[i:i+window]
         if(len(channel_slice) >= window):
@@ -151,13 +151,16 @@ def plot_fft(t, channel, plot_all, channel_name):
                 contador_malos += 1
         i += step
 
-
     if contador_malos > 0:
         print("There were {} times that a channel got a 0 value (likely noise)".format(contador_malos))
 
-
     # Transformar a matriz de numpy
     feats = np.matrix(feats)
+
+    return tiempo, feats
+
+def plot_waves(tiempo, feats, channel_name, plot_all=True):
+    """Plot alpha, beta, etc waves in time """
 
     # Tomar señales por separado
     delta = feats[:, 0]
@@ -173,7 +176,7 @@ def plot_fft(t, channel, plot_all, channel_name):
 
         plt.plot(tiempo, data, label=title)
 
-    plt.suptitle("From ch {}".format(channel_name))
+    plt.suptitle("Waves from ch {}".format(channel_name), fontsize=20)
 
     plot_wave(delta, "Delta", 1)
     plot_wave(theta, "Theta", 2)
@@ -184,13 +187,22 @@ def plot_fft(t, channel, plot_all, channel_name):
     plt.ylabel("dB")
     plt.xlabel("Tiempo (s)")
 
-
     if plot_all:
         plt.legend()
 
     plt.show()
 
-def create_parser(channel_names):
+def plot_raw(t, df, ch_names):
+    """Plot raw channels """
+    for ch in ch_names:
+        plt.plot(t, df[ch].as_matrix(), label=ch)
+
+    plt.suptitle("Raw channels", fontsize=20)
+    plt.legend()
+    plt.show()
+
+
+def create_parser(ch_names):
     """ Create the console arguments parser"""
     parser = argparse.ArgumentParser(description='Apply FFT to data', usage='%(prog)s [options]')
 
@@ -200,14 +212,13 @@ def create_parser(channel_names):
     group_data.add_argument('--subfolder', default=None, type=str,
                         help="Subfolder to read the .csv file")
 
-    group_plot = parser.add_argument_group(title="Plot arguments", description=None)
+    group_plot = parser.add_argument_group(title="Plot waves arguments", description=None)
     group_plot.add_argument('-a', '--all', action="store_true",
                         help="Plot all the waves in the same figure. Else, use subplots")
-    group_plot.add_argument('--channel', choices=channel_names, default=channel_names[0], type=str,
+    group_plot.add_argument('--channel', choices=ch_names, default=ch_names[0], type=str,
                         help="Channel to extract the waves from")
 
     return parser
-
 
 def main():
     # Channel names
@@ -224,24 +235,9 @@ def main():
     channel = df[args.channel].as_matrix()
     t = df['timestamps']
 
-    plot_fft(t, channel, args.all, args.channel)
-
-    # tp10 = df['TP10'].as_matrix()
-    # tp9 = df['TP9'].as_matrix()
-    # af7 = df['AF7'].as_matrix()
-    # af8 = df['AF8'].as_matrix()
-    #
-    # # plt.plot(t, tp10, label='tp10')
-    # plt.plot(t, tp9, label='tp9')
-    # plt.plot(t, af7, label='af7')
-    # plt.plot(t, af8, label='af8')
-    #
-    # plt.xlim(20, 40)
-    # plt.legend()
-    # plt.show()
-    #
-    # sys.exit(0)
-
+    tiempo, feats = compute_waves(t, channel)
+    plot_waves(tiempo, feats, args.channel, args.all)
+    plot_raw(t, df, ch_names)
 
 if __name__ == "__main__":
     main()
