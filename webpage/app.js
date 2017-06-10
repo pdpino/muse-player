@@ -113,15 +113,56 @@ function initialize_data(){
 
 
 /* Funciones para connection */
+var StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
+function set_status_info(status){
+  var text = "";
+  var icon = "";
+  var color = "";
+
+  switch (status) {
+    case StatusEnum.OFF:
+      text = "Off";
+      icon = "off";
+      color = "black";
+      break;
+    case StatusEnum.CONNECTING:
+      text = "Connecting";
+      icon = "hourglass"; //Reloj de arena
+      color = "yellow";
+      break;
+    case StatusEnum.CONNECTED:
+      text = "Connected";
+      icon = "ok"; // Ticket
+      color = "green";
+      break;
+    case StatusEnum.DISCONNECTED:
+      text = "Disonnected";
+      icon = "remove"; // Equis
+      color = "red";
+      break;
+    default:
+      console.log("Status not recognized: ", status);
+      return;
+  }
+
+  $("#status-text").text(text);
+  $("#status-text").css("color", color);
+  $("#status-icon").attr("class", "glyphicon glyphicon-".concat(icon));
+}
+
 /**
- * Close a connection
- */
+* Close a connection
+*/
 function close_conn(conn, arr_data){
   if(conn.stream !== null){
     conn.stream.close();
   }
 
   conn.is_up = false;
+  conn.status = "Disconnected";
+  set_status_info(StatusEnum.DISCONNECTED);
+
+
   arr_data = initialize_data(); // reiniciar la data
   console.log("Connection closed");
 }
@@ -132,9 +173,13 @@ function close_conn(conn, arr_data){
 function start_conn(url, conn, arr_data, recv_msg){
   conn.stream = new EventSource(url); // Conectar por url
 
+  set_status_info(StatusEnum.CONNECTING);
+
   conn.stream.onopen = function (e) {
-    console.log("Connected with server");
     conn.is_up = true;
+    conn.status = "Connected";
+    set_status_info(StatusEnum.CONNECTED);
+    console.log("Connected with server");
   };
 
   conn.stream.onmessage = recv_msg;
@@ -151,6 +196,13 @@ function start_conn(url, conn, arr_data, recv_msg){
  * Main process
  */
 $(document).ready( function() {
+  // TODO: Añadir un cuadro de estado de conexion en pagina (al lado de botones)
+  // TODO: cambiar controles por bootstrap
+  // TODO: buscar header y footer bootstrap
+  // FIXME: en eje y no se alcanza a ver numero
+
+
+  // Not important:
   // TODO: estandarizar nombres de funciones y variables: minusMayus, _
 
 
@@ -178,7 +230,6 @@ $(document).ready( function() {
     paths[i] = create_path(graph, data, lines[i], colors[i]);
     plot_bools[i] = true;
   }
-
 
   // Funcion para updatear el grafico
   function update_graph() {
@@ -211,38 +262,12 @@ $(document).ready( function() {
     }
   };
 
-  // Botones para updatear
-  $("#btn-zoomYin").click(function(){
-    if(yMin + dyRange < yMax - dyRange){ // Solo si tiene sentido
-      yMin += dyRange;
-      yMax -= dyRange;
-      update_y_axis(yMin, yMax);
-    }
-    else{
-      // dyRange = dyRange/2;
-    }
-  });
-  $("#btn-zoomYout").click(function(){
-    yMin -= dyRange;
-    yMax += dyRange;
-    update_y_axis(yMin, yMax);
-  });
-  $("#btn-zoomXin").click(function(){
-    if(n_secs > 1){ // Minimo 5 segundos de ventana
-      n_secs -= dxRange;
-    }
-  });
-  $("#btn-zoomXout").click(function(){
-    n_secs += dxRange;
-  });
-
 
   // Mostrar/ocultar canales
   function toggle_show_path(path, checked){
     path.style("opacity", checked ? 1 : 0);
   }
-
-  // Form de mostrar o no canales
+  // Eventos
   $("#ch1").click(function(){
     plot_bools[0] = this.checked;
     toggle_show_path(paths[0], this.checked);
@@ -265,9 +290,39 @@ $(document).ready( function() {
   });
 
 
-  // Conectarse con server (python) usando Event Source
+  // Conexion: con server (python) usando Event Source
   var dir = 'http://localhost:8889/data/muse';
-  var conn = {stream: null, is_up: false};
+  var conn = {stream: null, is_up: false, status: "Disconnected"};
+
+
+  // Botones para updatear ejes
+  $("#btn-zoomYin").click(function(){
+    if(conn.is_up){
+      if(yMin + dyRange < yMax - dyRange){ // Solo si tiene sentido
+        yMin += dyRange;
+        yMax -= dyRange;
+        update_y_axis(yMin, yMax);
+      }
+    }
+  });
+  $("#btn-zoomYout").click(function(){
+    if(conn.is_up){
+      yMin -= dyRange;
+      yMax += dyRange;
+      update_y_axis(yMin, yMax);
+    }
+  });
+  $("#btn-zoomXin").click(function(){
+    if(conn.is_up && n_secs > 1){ // Minimo 5 segundos de ventana
+      n_secs -= dxRange;
+    }
+  });
+  $("#btn-zoomXout").click(function(){
+    if(conn.is_up){
+      n_secs += dxRange;
+    }
+  });
+
 
   /**
    * Recibe un mensaje entrante
@@ -312,6 +367,11 @@ $(document).ready( function() {
       }
     }
   });
+
+  // $("#btn-debug").click(function(){
+  //   $("#status-text").text("hola");
+  //   // document.getElementById("status-text").innerHTML="newtext";
+  // });
 
 
   // Conectarse al server

@@ -57,9 +57,12 @@
             </form>
           </div>
           <div class="row panel-btns">
-            <label> Connection </label>
+            <label> Status: </label> <span id="status-text" style="color:black; font-weight:bold;"> Connected </span>
+            <span id="status-icon" class="glyphicon glyphicon-off"></span>
+            <!-- <label> Connection </label> -->
+            <br>
             <button id="btn-start-conn" type="button">Connect</button>
-            <button id="btn-close-conn" type="button">Close</button>
+            <button id="btn-close-conn" type="button">Disconnect</button>
           </div>
           <div class="row panel-btns">
             <label> Zoom X </label>
@@ -70,9 +73,9 @@
             <button id="btn-zoomYin" type="button"> + </button>
             <button id="btn-zoomYout" type="button"> - </button>
           </div>
-          <div class="row panel-btns">
+          <!-- <div class="row panel-btns">
             <button id="btn-debug" type="button">Debug</button>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
