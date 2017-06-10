@@ -1,7 +1,12 @@
-// Plot using d3, adapted from http://jsfiddle.net/XZSuK/
-
-// TODO: estandarizar nombres de funciones y variables: minusMayus, _
-
+/* Funciones para grafico */
+/**
+ * Create an empty graph
+ * @param {Number} yMin minimum for y axis
+ * @param {Number} yMax maximum for y axis
+ * @param {Number} xTicks ticks for x axis
+ * @param {Number} yTicks ticks for y axis
+ * @param {Number} n_secs Amount of seconds to plot in the x axis
+ */
 function create_graph(yMin, yMax, xTicks, yTicks, n_secs){
   // Margenes
   var margin = {top: 10, right: 10, bottom: 20, left: 40},
@@ -41,6 +46,11 @@ function create_graph(yMin, yMax, xTicks, yTicks, n_secs){
   return {svg: svg, xRange: xRange, yRange: yRange, xAxis: xAxis, yAxis: yAxis};
 }
 
+/**
+ * Create an array of functions that return the data for a line in the graph
+ * @param {d3.scale.linear} x range for x axis
+ * @param {d3.scale.linear} y range for y axis
+ */
 function create_line_functions(x, y){
   var lines = Array(5);
 
@@ -63,8 +73,88 @@ function create_line_functions(x, y){
   return lines;
 };
 
+/**
+ * Funcion para actualizar linea en grafico
+ */
+function update_graph_line(data, path, line, plot_ch){
+  if(plot_ch){
+    path.attr("d", line(data))
+        .attr("transform", null)
+      .transition()
+        .duration(1000)
+        .ease("linear");
+  }
+}
+
+/**
+ * Crear paths en un grafico
+ */
+function create_path(graph, data, line, color){
+  return graph.svg.append("g")
+          .attr("clip-path", "url(#clip)")
+        .append("path")
+          .attr("class", "line")
+          .style("stroke", color)
+          .attr("d", line(data));
+};
+
+
+
+/* Funciones para datos */
+/**
+ * Initialize an empty array that behaves as data
+ */
+function initialize_data(){
+  var data = new Array(1);
+  data[0] = {T: 0, CH1: 0, CH2: 0, CH3: 0, CH4: 0, CH5: 0};
+  return data;
+}
+
+
+
+/* Funciones para connection */
+/**
+ * Close a connection
+ */
+function close_conn(conn, arr_data){
+  if(conn.stream !== null){
+    conn.stream.close();
+  }
+
+  conn.is_up = false;
+  arr_data = initialize_data(); // reiniciar la data
+  console.log("Connection closed");
+}
+
+/**
+ * Start a connection
+ */
+function start_conn(url, conn, arr_data, recv_msg){
+  conn.stream = new EventSource(url); // Conectar por url
+
+  conn.stream.onopen = function (e) {
+    console.log("Connected with server");
+    conn.is_up = true;
+  };
+
+  conn.stream.onmessage = recv_msg;
+
+  conn.stream.onerror = function (e) {
+    console.log("Error in the server connection");
+    close_conn(conn, arr_data);
+  };
+
+}
+
+
+/**
+ * Main process
+ */
 $(document).ready( function() {
-  //// Parametros iniciales
+  // TODO: estandarizar nombres de funciones y variables: minusMayus, _
+
+
+  // Parametros iniciales
   // Rango de eje y
   var yMin = -1000;
   var yMax = 1000;
@@ -74,52 +164,32 @@ $(document).ready( function() {
 
   // Data
   var n_channels = 5;
-  var data = new Array(1);
-  data[0] = {T: 0, CH1: 0, CH2: 0, CH3: 0, CH4: 0, CH5: 0};
+  var data = initialize_data();
 
 
   var colors = ["black", "red", "blue", "green", "cyan"];
   var graph = create_graph(yMin, yMax, xTicks, yTicks, n_secs);
   var lines = create_line_functions(graph.xRange, graph.yRange);
 
-  // Funcion para crear paths
-  function create_path(line, color){
-    return graph.svg.append("g")
-            .attr("clip-path", "url(#clip)")
-          .append("path")
-            .attr("class", "line")
-            .style("stroke", color)
-            .attr("d", line(data));
-
-  };
-
-  // Funcion para update linea en grafico
-  function update_line(plot_ch, path, line){
-    if(plot_ch){
-      path.attr("d", line(data))
-          .attr("transform", null)
-        .transition()
-          .duration(1000)
-          .ease("linear");
-    }
-  }
-
   // Paths y bools para cada canal
   var paths = Array(n_channels); // Lineas en svg
   var plot_bools = Array(n_channels); // Bools para esconder path
   for(var i=0;i<n_channels;i++){
-    paths[i] = create_path(lines[i], colors[i]);
+    paths[i] = create_path(graph, data, lines[i], colors[i]);
     plot_bools[i] = true;
   }
+
 
   // Funcion para updatear el grafico
   function update_graph() {
     for(var i=0;i<n_channels;i++){
-      update_line(plot_bools[i], paths[i], lines[i]);
+      update_graph_line(data, paths[i], lines[i], plot_bools[i]);
     }
 
-    // Setear rango de tiempo de nuevo
-    graph.xRange.domain(d3.extent(data, function(d) { return d.T; }));
+    // actualizar rango de tiempo
+    var rango = d3.extent(data, function(d) { return d.T; });
+    if(rango[0] + n_secs > rango[1]){ rango[1] = rango[0] + n_secs; } // Que el rango minimo sea n_secs
+    graph.xRange.domain(rango);
     graph.svg.select(".x.axis").call(graph.xAxis); // change the x axis
   };
 
@@ -131,8 +201,7 @@ $(document).ready( function() {
   d3.select("#ch5-rect").style("fill", colors[4]);
 
 
-
-  // Update axis
+  // Zoom buttons
   var dxRange = 1;
   var dyRange = 100;
   function update_y_axis(y1, y2){
@@ -140,7 +209,7 @@ $(document).ready( function() {
       graph.yRange.domain([y1, y2]);
       graph.svg.select(".y.axis").call(graph.yAxis); // update svg
     }
-  }
+  };
 
   // Botones para updatear
   $("#btn-zoomYin").click(function(){
@@ -150,7 +219,7 @@ $(document).ready( function() {
       update_y_axis(yMin, yMax);
     }
     else{
-      dyRange = dyRange/2;
+      // dyRange = dyRange/2;
     }
   });
   $("#btn-zoomYout").click(function(){
@@ -168,40 +237,7 @@ $(document).ready( function() {
   });
 
 
-  // Conectarse con server (python) usando Event Source
-  var dir = 'http://localhost:8889/data/muse';
-  var stream = new EventSource(dir); // TODO: usar try catch
-  stream.onopen = function (e) {
-    console.log("CONNECTED");
-  };
-
-  stream.onmessage = function (e) {
-    var arr = e.data.split(",");
-    var t = parseFloat(arr[0]); // tiempo
-    var ch1 = parseFloat(arr[1]);
-    var ch2 = parseFloat(arr[2]);
-    var ch3 = parseFloat(arr[3]);
-    var ch4 = parseFloat(arr[4]);
-    var ch5 = parseFloat(arr[5]);
-
-    // Push datos
-    data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
-
-    // Update grafico
-    update_graph();
-
-    // Pop datos hasta tener solo n_secs
-    while(data[data.length-1].T - data[0].T > n_secs){
-      data.shift();
-    }
-  };
-
-  stream.onerror = function (e) {
-    console.log("ERROR. Closing connection.\nReload the page to reconnect to the server");
-    stream.close();
-  };
-
-
+  // Mostrar/ocultar canales
   function toggle_show_path(path, checked){
     path.style("opacity", checked ? 1 : 0);
   }
@@ -228,17 +264,58 @@ $(document).ready( function() {
     toggle_show_path(paths[4], this.checked);
   });
 
-  // Boton cerrar conexion
-  $("#btn-close-con").click(function(){
-    stream.close();
-    console.log("Connection closed");
+
+  // Conectarse con server (python) usando Event Source
+  var dir = 'http://localhost:8889/data/muse';
+  var conn = {stream: null, is_up: false};
+
+  /**
+   * Recibe un mensaje entrante
+   */
+  function receive_msg(e) {
+    var arr = e.data.split(",");
+    var t = parseFloat(arr[0]); // tiempo
+    var ch1 = parseFloat(arr[1]);
+    var ch2 = parseFloat(arr[2]);
+    var ch3 = parseFloat(arr[3]);
+    var ch4 = parseFloat(arr[4]);
+    var ch5 = parseFloat(arr[5]);
+
+    // Push datos
+    data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
+
+    // Update grafico
+    update_graph();
+
+    // Pop datos hasta tener solo n_secs
+    while(data[data.length-1].T - data[0].T > n_secs){
+      data.shift();
+    }
+  };
+
+  // Botones iniciar/cerrar conexion
+  $("#btn-start-conn").click(function(){
+    if(conn.is_up){
+      if(conn.stream.readyState < 2){
+        return; // Ignoring
+      }
+    }
+
+    data = initialize_data(); // Reiniciar data
+    start_conn(dir, conn, data, receive_msg)
+  });
+  $("#btn-close-conn").click(function(){
+    if(conn.is_up){
+      if(conn.stream.readyState < 2){ //States. 0: connecting, 1: ready, 2: closed
+        close_conn(conn, data);
+        return;
+      }
+    }
   });
 
-  // Boton debug
-  $("#btn-debug").click(function(){
-    console.log("Debug button disconnected");
-  });
 
+  // Conectarse al server
+  start_conn(dir, conn, data, receive_msg)
 
-  console.log("All set.");
+  console.log("All set");
 });

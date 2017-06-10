@@ -14,8 +14,8 @@ footer{
 }
 
 /*Panel control*/
-#panel-btns{
-  padding: 1em;
+.panel-btns{
+  padding: 0.5em;
 }
 
 
