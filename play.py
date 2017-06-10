@@ -83,6 +83,9 @@ def create_parser():
                         help="Name to store the .csv file")
     group_save.add_argument('--subfolder', default=None, type=str,
                         help="Subfolder to save the .csv file")
+    group_save.add_argument('-o', '--only_stream', action="store_true",
+                        help="Save only the data that is streamed")
+
 
     group_sconn = parser.add_argument_group(title="Stream connection", description=None)
     group_sconn.add_argument('--ip', default="localhost", type=str,
@@ -95,12 +98,6 @@ def create_parser():
 
     return parser
 
-def notify_stream_mode(mode, n):
-    msg = "You choose to stream the data in the '{}' mode".format(mode)
-    if mode == "n":
-        msg += ", with n = {}".format(n)
-    print(msg)
-
 def main():
     """Connect with muse and stream the data"""
     # Parse args
@@ -109,6 +106,12 @@ def main():
 
     # Argumentos
     args.url = basic.assure_startswith(args.url, "/")
+    notify = False
+    if notify:
+        msg = "You choose to stream the data in the '{}' mode".format(args.stream_mode)
+        if args.stream_mode == "n":
+            msg += ", with n = {}".format(args.stream_n)
+        print(msg)
 
     ##### Queues para stream datos, thread safe
     # Productor: muse
@@ -206,7 +209,7 @@ def main():
             "min": get_data_min,
             "max": get_data_max,
             "n": get_data_n
-        }
+            }
 
         try:
             get_data = yielders[args.stream_mode]
@@ -221,12 +224,17 @@ def main():
             args.stream_n = 1
 
         n_data = args.stream_n # Usado para hacer yield de cierta cantidad de datos del total
+        drop_full = args.save and args.only_stream
 
         def event_stream():
             # DEBUG:
             t_act = 0
             t_old = 0
             dt = 1 # print cada 1 seg
+
+            if drop_full: # Al iniciar la conexion, borrar lo anterior
+                full_time = []
+                full_data = []
 
             # Drop old data
             with lock_queues:

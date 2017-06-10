@@ -57,22 +57,31 @@
             </form>
           </div>
           <div class="row panel-btns">
-            <label> Status: </label> <span id="status-text" style="color:black; font-weight:bold;"> Connected </span>
+            <label> Status: </label> <span id="status-text" style="color:black; font-weight:bold;"> Off </span>
             <span id="status-icon" class="glyphicon glyphicon-off"></span>
             <!-- <label> Connection </label> -->
             <br>
-            <button id="btn-start-conn" type="button">Connect</button>
-            <button id="btn-close-conn" type="button">Disconnect</button>
+            <button id="btn-start-conn" type="button" class="btn btn-primary">Connect</button>
+            <button id="btn-close-conn" type="button" class="btn btn-primary">Disconnect</button>
           </div>
-          <div class="row panel-btns">
+          <form class="form-inline panel-btns">
             <label> Zoom X </label>
-            <button id="btn-zoomXin" type="button"> + </button>
-            <button id="btn-zoomXout" type="button"> - </button>
-            <br>
+            <!-- <input id="input-zoomX" class="form-control" type="number" value="1" min="1"> -->
+            <div class="btn-group col-4">
+              <button id="btn-zoomXdec" type="button" class="btn btn-primary"> - </button>
+              <button id="btn-zoomXinc" type="button" class="btn btn-primary"> + </button>
+            </div>
+            <span id="segX" class="form-control-static"> 5 </span>
+            <span> Seconds </span>
+          </form>
+          <form class="form-inline panel-btns">
             <label> Zoom Y </label>
-            <button id="btn-zoomYin" type="button"> + </button>
-            <button id="btn-zoomYout" type="button"> - </button>
-          </div>
+            <!-- <input id="input-zoomY" class="form-control" type="number" value="100" min="1"> -->
+            <div class="btn-group">
+              <button id="btn-zoomYout" type="button" class="btn btn-primary"> - </button>
+              <button id="btn-zoomYin" type="button" class="btn btn-primary"> + </button>
+            </div>
+          </form>
           <!-- <div class="row panel-btns">
             <button id="btn-debug" type="button">Debug</button>
           </div> -->

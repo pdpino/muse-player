@@ -18,6 +18,10 @@ footer{
   padding: 0.5em;
 }
 
+#input-zoomX, #input-zoomY{
+  width: 4.5em;
+}
+
 
 /*Graph of d3*/
 path {

@@ -99,6 +99,12 @@ function create_path(graph, data, line, color){
 };
 
 
+/**
+ * Set the span in html with the amount of seconds displaying in the x axis
+ */
+function set_segX(segs){
+  $("#segX").text(segs.toFixed(1))
+}
 
 /* Funciones para datos */
 /**
@@ -128,7 +134,7 @@ function set_status_info(status){
     case StatusEnum.CONNECTING:
       text = "Connecting";
       icon = "hourglass"; //Reloj de arena
-      color = "yellow";
+      color = "orange";
       break;
     case StatusEnum.CONNECTED:
       text = "Connected";
@@ -196,7 +202,6 @@ function start_conn(url, conn, arr_data, recv_msg){
  * Main process
  */
 $(document).ready( function() {
-  // TODO: Añadir un cuadro de estado de conexion en pagina (al lado de botones)
   // TODO: cambiar controles por bootstrap
   // TODO: buscar header y footer bootstrap
   // FIXME: en eje y no se alcanza a ver numero
@@ -212,7 +217,9 @@ $(document).ready( function() {
   var yMax = 1000;
   var xTicks = 5;
   var yTicks = 5;
-  var n_secs = 20; // Cantidad de segundos maximo que guarda el plot
+  var n_secs = 5; // Cantidad de segundos maximo que guarda el plot
+
+  set_segX(n_secs);
 
   // Data
   var n_channels = 5;
@@ -239,7 +246,7 @@ $(document).ready( function() {
 
     // actualizar rango de tiempo
     var rango = d3.extent(data, function(d) { return d.T; });
-    if(rango[0] + n_secs > rango[1]){ rango[1] = rango[0] + n_secs; } // Que el rango minimo sea n_secs
+    // if(rango[0] + n_secs > rango[1]){ rango[1] = rango[0] + n_secs; } // Que el rango minimo sea n_secs
     graph.xRange.domain(rango);
     graph.svg.select(".x.axis").call(graph.xAxis); // change the x axis
   };
@@ -312,17 +319,18 @@ $(document).ready( function() {
       update_y_axis(yMin, yMax);
     }
   });
-  $("#btn-zoomXin").click(function(){
+  $("#btn-zoomXdec").click(function(){
     if(conn.is_up && n_secs > 1){ // Minimo 5 segundos de ventana
       n_secs -= dxRange;
+      set_segX(n_secs);
     }
   });
-  $("#btn-zoomXout").click(function(){
+  $("#btn-zoomXinc").click(function(){
     if(conn.is_up){
       n_secs += dxRange;
+      set_segX(n_secs);
     }
   });
-
 
   /**
    * Recibe un mensaje entrante
