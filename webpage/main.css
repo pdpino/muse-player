@@ -80,6 +80,9 @@ rect {
   /*display: inline-block;*/
   /*font-family: Arial, Helvetica, sans-serif;*/
   /*border: 2px solid black;*/
-  padding: 1em;
+  /*padding: 1em;*/
   /*border-radius: 2px;*/
+}
+#chart_title{
+  font-size: 16px;
 }

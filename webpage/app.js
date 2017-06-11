@@ -12,14 +12,14 @@
  * @param {Number} yTicks ticks for y axis
  * @param {Number} n_secs Amount of seconds to plot in the x axis
  */
-function create_graph(yMin, yMax, xTicks, yTicks, n_secs){
+function create_graph(container, yMin, yMax, xTicks, yTicks, n_secs){
   // Margenes
-  var margin = {top: 10, right: 10, bottom: 20, left: 40},
-      width = 600 - margin.left - margin.right,
+  var margin = {top: 40, right: 10, bottom: 30, left: 60},
+      width = 700 - margin.left - margin.right,
       height = 400 - margin.top - margin.bottom;
 
   // Svg
-  var svg = d3.select("#chart_container").append("svg")
+  var svg = d3.select(container).append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
     .append("g")
@@ -47,6 +47,16 @@ function create_graph(yMin, yMax, xTicks, yTicks, n_secs){
   svg.append("g")
       .attr("class", "y axis")
       .call(yAxis);
+
+
+  // Titulo
+  svg.append("text")
+      .attr("id", "chart_title")
+      .attr("x", (width / 2))
+      .attr("y", 0 - (margin.top / 2))
+      .attr("text-anchor", "middle")
+      // .style("text-decoration", "underline")
+      .text("Electrodes");
 
   return {svg: svg, xRange: xRange, yRange: yRange, xAxis: xAxis, yAxis: yAxis};
 }
@@ -246,11 +256,9 @@ function start_conn(url, conn, arr_data, recv_msg){
  */
 $(document).ready( function() {
   // TODO: buscar header y footer bootstrap
-  // FIXME: en eje y no se alcanza a ver numero
-
 
   // Not important:
-  // TODO: estandarizar nombres de funciones y variables: minusMayus, _
+  // TODO: estandarizar nombres de funciones y variables: minusMayus vs _; graph vs chart
 
 
   // Parametros iniciales
@@ -271,7 +279,7 @@ $(document).ready( function() {
 
 
   var colors = ["black", "red", "blue", "green", "cyan"];
-  var graph = create_graph(yMin, yMax, xTicks, yTicks, n_secs);
+  var graph = create_graph("#chart_container", yMin, yMax, xTicks, yTicks, n_secs);
   var lines = create_line_functions(graph.xRange, graph.yRange);
 
   // Paths y bools para cada canal
