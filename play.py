@@ -17,6 +17,23 @@ from basic.data_manager import save_data
 import basic
 
 
+# DEBUG: para saber si se corto la conexion
+    # https://stackoverflow.com/questions/18511119/stop-processing-flask-route-if-request-aborted
+from werkzeug.serving import WSGIRequestHandler
+class CustomRequestHandler(WSGIRequestHandler):
+    """ """
+
+    callback_conn_closed = None
+
+    def connection_dropped(self, error, environ=None):
+        print("connection closed")
+        if not CustomRequestHandler.callback_conn_closed is None:
+            CustomRequestHandler.callback_conn_closed()
+            print("\tcalling callback")
+        else:
+            print("\tnot calling callback")
+
+
 
 # Next TODOs:
 # TODO: handle when muse turns off
@@ -27,6 +44,18 @@ import basic
 # Not urgent
 # TODO: ordenar README_develop seccion "headband en estado normal"
 # IDEA: expandir muse module para que chequee estado bateria y reciba aceletrometro, etc
+
+def get_running_time(timestamps):
+    """Return the running time, given the list of timestamps"""
+    if timestamps is None:
+        return 0
+
+    if len(timestamps) == 0:
+        return 0
+
+    t_end = timestamps[-1][-1]
+    t_init = timestamps[0][0]
+    return t_end - t_init
 
 def normalize_time(timestamps):
     """Receive a list of np arrays of timestamps. Return the concatenated and normalized (substract initial time) np array"""
@@ -39,9 +68,16 @@ def normalize_data(data):
     """Return the data concatenated"""
     return np.concatenate(data, 1).T
 
-def save_csv(data, timestamps, fname, subfolder=None):
-    """Preprocess the data and save it to a csv """
+def save_csv(timestamps, data, fname, subfolder=None, suffix=None):
+    """Preprocess the data and save it to a csv."""
+    if timestamps is None or data is None:
+        return
+    if len(timestamps) == 0 or len(data) == 0:
+        return
+
+
     # Concatenar data
+    timestamps = normalize_time(timestamps)
     data = normalize_data(data)
 
     # Juntar en dataframe
@@ -49,7 +85,7 @@ def save_csv(data, timestamps, fname, subfolder=None):
     res['timestamps'] = timestamps
 
     # Guardar a csv
-    save_data(res, fname, subfolder)
+    save_data(res, fname, subfolder, suffix)
 
 def create_parser():
     """ Create the console arguments parser"""
@@ -84,8 +120,8 @@ def create_parser():
                         help="Name to store the .csv file")
     group_save.add_argument('--subfolder', default=None, type=str,
                         help="Subfolder to save the .csv file")
-    group_save.add_argument('-o', '--only_stream', action="store_true",
-                        help="Save only the data that is streamed")
+    # group_save.add_argument('--save_stream', action="store_true",
+    #                     help="Save the data that is streamed on different files")
 
 
     group_sconn = parser.add_argument_group(title="Stream connection", description=None)
@@ -114,6 +150,12 @@ def main():
             msg += ", with n = {}".format(args.stream_n)
         print(msg)
 
+    # Cap the amount of data to yield
+    if args.stream_n > 12:
+        args.stream_n = 12
+    elif args.stream_n <= 0:
+        args.stream_n = 1
+
     ##### Queues para stream datos, thread safe
     # Productor: muse
     # Consumidor: flask, que manda datos a client
@@ -122,15 +164,20 @@ def main():
     q_time = deque(maxlen=msize)
     lock_queues = threading.Lock()
 
-    ##### Listas para guardar datos
+    ### Listas para guardar datos
+    # Guardan todos los datos
     full_time = []
     full_data = []
+    # Guardar solo los datos que se hace stream
+    streamed_time = []
+    streamed_data = []
+    lock_streamed = threading.Lock()
 
     def process_muse_data(data, timestamps):
         """Stores and enqueues the incoming muse data
 
-        - data comes in ndarrays of 5x12, 5 channels and 12 samples
-        - timestamps comes in ndarrays of 12x1, 12 samples"""
+        data -- ndarray of 5x12, 5 channels and 12 samples
+        timestamps -- ndarray of 12x1, 12 samples"""
 
         # Agregar a full lists
         full_time.append(timestamps)
@@ -142,8 +189,7 @@ def main():
             q_data.append(data)
 
     # Conectar muse
-    muse = Muse(args.address, process_muse_data, interface=args.interface,
-        norm_factor=args.nfactor, norm_sub=args.nsub) # factores para normalizar
+    muse = Muse(args.address, process_muse_data, interface=args.interface, norm_factor=args.nfactor, norm_sub=args.nsub)
     status = muse.connect()
     if status != 0:
         basic.perror("Can't connect to muse band", exit_code=status)
@@ -156,13 +202,12 @@ def main():
     @app.route(args.url)
     def stream_data():
         """ """
-
         # String para hacer yield
         yield_string = "data: {}, {}, {}, {}, {}, {}\n\n"
             # Siempre se envia (timestamp, ch0, ch1, ch2, ch3, ch4)
 
         def get_data_mean(tt, t_init, data, dummy=None):
-            """Yield the mean in the 12 samples for each channel separately"""
+            """Yield the mean in the 12 samples for each channel separately."""
             yield yield_string.format( \
                     tt.mean() - t_init, \
                     data[0].mean(), \
@@ -218,14 +263,7 @@ def main():
             basic.perror("yielder: {} not found".format(args.stream_mode), force_continue=True)
             get_data = get_data_n
 
-        # Cap the amount of data to yield
-        if args.stream_n > 12:
-            args.stream_n = 12
-        elif args.stream_n <= 0:
-            args.stream_n = 1
-
         n_data = args.stream_n # Usado para hacer yield de cierta cantidad de datos del total
-        drop_full = args.save and args.only_stream
 
         def event_stream():
             # DEBUG:
@@ -233,11 +271,7 @@ def main():
             t_old = 0
             dt = 1 # print cada 1 seg
 
-            if drop_full: # Al iniciar la conexion, borrar lo anterior
-                full_time = []
-                full_data = []
-
-            # Drop old data
+            # Drop old data in queue
             with lock_queues:
                 q_time.clear()
                 q_data.clear()
@@ -257,33 +291,31 @@ def main():
                 d = q_data.popleft()
                 lock_queues.release()
 
+                # Guardar en listas de streamed datos
+                with lock_streamed:
+                    streamed_time.append(t)
+                    streamed_data.append(d)
+
                 # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an index exception
                 yield from get_data(t, t_init, d, n_data)
 
-                # DEBUG printing time:
-                # t_act = t[-1]
-                # if(t_act - t_old >= dt): # 1 second passed
-                #     print(t_act)
-                #     t_old = t_act
-
         return Response(event_stream(), mimetype="text/event-stream")
+
 
     # Thread para streaming
     stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
     stream.daemon = True
 
-
-
-
     # Capturar ctrl-c
     catcher = basic.SignalCatcher()
     signal.signal(signal.SIGINT, catcher.signal_handler)
+
 
     ## Iniciar
     muse.start()
     stream.start()
 
-    print("Started receiving muse data...")
+    print("Started receiving data")
     if args.time is None:
         while catcher.keep_running():
             sleep(1)
@@ -296,13 +328,13 @@ def main():
     print("Stopped receiving muse data")
 
 
-    ##### Guardar todo
-    full_time = normalize_time(full_time)
-
-    print("Received data for {:.2f} seconds".format(full_time[-1]))
+    # Print running time
+    print("\tReceived data for {:.2f} seconds".format(get_running_time(full_time)))
+    print("\tStreamed data for {:.2f} seconds".format(get_running_time(streamed_time)))
 
     if args.save:
-        save_csv(full_data, full_time, args.fname, subfolder=args.subfolder)
+        save_csv(full_time, full_data, args.fname, subfolder=args.subfolder, suffix="full")
+        save_csv(streamed_time, streamed_data, args.fname, subfolder=args.subfolder, suffix="streamed")
 
     return 0
 

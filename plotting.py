@@ -211,6 +211,14 @@ def create_parser(ch_names):
                         help="Name of the .csv file to read")
     group_data.add_argument('--subfolder', default=None, type=str,
                         help="Subfolder to read the .csv file")
+    group_data.add_argument('--suffix', default=None, type=str,
+                        help="Suffix to append to the filename")
+
+    group_raw = parser.add_argument_group(title="Plot raw channels", description=None)
+    group_raw.add_argument('--plot_raw', action="store_true",
+                        help="Plot the raw channels")
+    group_raw.add_argument('--splot_raw', action="store_true",
+                        help="Plot the raw channels in subplots instead of together")
 
     group_waves = parser.add_argument_group(title="Plot waves arguments", description=None)
     group_waves.add_argument('--plot_waves', action="store_true",
@@ -220,11 +228,6 @@ def create_parser(ch_names):
     group_waves.add_argument('--channel', choices=ch_names, default=ch_names[0], type=str,
                         help="Channel to extract the waves from")
 
-    group_raw = parser.add_argument_group(title="Plot raw channels", description=None)
-    group_raw.add_argument('--plot_raw', action="store_true",
-                        help="Plot the raw channels")
-    group_raw.add_argument('--splot_raw', action="store_true",
-                        help="Plot the raw channels in subplots instead of together")
 
     return parser
 
@@ -237,7 +240,7 @@ def main():
     args = parser.parse_args()
 
     # Read the file
-    df = read_data(args.fname, args.subfolder)
+    df = read_data(args.fname, args.subfolder, args.suffix)
 
     # Tomar data
     channel = df[args.channel].as_matrix()
