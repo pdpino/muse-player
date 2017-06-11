@@ -122,6 +122,8 @@ class Muse():
         aa = bitstring.Bits(bytes=packet)
         pattern = "uint:16,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12, \
                    uint:12,uint:12,uint:12,uint:12,uint:12,uint:12"
+        # pattern = "uint:16,int:12,int:12,int:12,int:12,int:12,int:12, \
+        #            int:12,int:12,int:12,int:12,int:12,int:12"
         res = aa.unpack(pattern)
         timestamp = res[0]
         data = res[1:]
@@ -139,7 +141,7 @@ class Muse():
     def _handle_eeg(self, handle, data):
         """Calback for receiving a sample.
 
-        sample are received in this oder : 44, 41, 38, 32, 35
+        sample are received in this order : 44, 41, 38, 32, 35
         wait until we get 35 and call the data
         """
         timestamp = self.time_func()
@@ -147,8 +149,8 @@ class Muse():
         tm, d = self._unpack_eeg_channel(data)
         self.data[index] = d
         self.timestamps[index] = timestamp
-        # last data received
-        if handle == 35:
+
+        if handle == 35: # last data received
             # affect as timestamps the first timestamps - 12 sample
             timestamps = np.arange(-12, 0) / 256.
             timestamps += np.min(self.timestamps)

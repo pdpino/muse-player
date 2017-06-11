@@ -70,9 +70,9 @@ def create_parser():
                         help="Choose what part of the data to yield to the client. If 'n' is selected consider providing a --stream_n argument as well") # TODO: add to README
     group_data.add_argument('--stream_n', default=1, type=int,
                         help="If --stream_mode n is selected, define the amount of data to yield")
-    group_data.add_argument('--norm_sub', default=None, type=int,
+    group_data.add_argument('--nsub', default=None, type=int,
                         help="Normalize substractor. Number to substract to the raw data when incoming, before the factor. If None, it will use the muse module default value") # TODO: add to README
-    group_data.add_argument('--norm_factor', default=None, type=int,
+    group_data.add_argument('--nfactor', default=None, type=int,
                         help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default value") # TODO: add to README
 
 
@@ -142,7 +142,7 @@ def main():
 
     # Conectar muse
     muse = Muse(args.address, process_muse_data, interface=args.interface,
-        norm_factor=args.norm_factor, norm_sub=args.norm_sub) # factores para normalizar
+        norm_factor=args.nfactor, norm_sub=args.nsub) # factores para normalizar
     status = muse.connect()
     if status != 0:
         basic.perror("Can't connect to muse band", exit_code=status)

@@ -1,3 +1,8 @@
+/**
+ * Receive a stream of data from a muse server and plots it
+ */
+
+
 /* Funciones para grafico */
 /**
  * Create an empty graph
@@ -120,10 +125,24 @@ function initialize_data(){
 
 /* Funciones para connection */
 var StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
-function set_status_info(status){
+function is_connected(conn){
+  return conn.status === StatusEnum.CONNECTED;
+}
+
+function is_disconnected(conn){
+  return conn.status === StatusEnum.OFF || conn.status === StatusEnum.DISCONNECTED;
+}
+
+/**
+ * Set the status of the connection.
+ * Set a number in the conn object, an icon and a text in the page
+ */
+function set_status(conn, status){
   var text = "";
   var icon = "";
   var color = "";
+
+  conn.status = status;
 
   switch (status) {
     case StatusEnum.OFF:
@@ -142,7 +161,7 @@ function set_status_info(status){
       color = "green";
       break;
     case StatusEnum.DISCONNECTED:
-      text = "Disonnected";
+      text = "Disconnected";
       icon = "remove"; // Equis
       color = "red";
       break;
@@ -160,49 +179,67 @@ function set_status_info(status){
 * Close a connection
 */
 function close_conn(conn, arr_data){
+  if(is_disconnected(conn)){ // Ya esta desconectado
+    return;
+  }
+
   if(conn.stream !== null){
+    if(conn.stream.readyState === 2){ // Esta closed
+      //States. 0: connecting, 1: ready, 2: closed
+      set_status(conn, StatusEnum.DISCONNECTED);
+      return;
+    }
     conn.stream.close();
   }
 
-  conn.is_up = false;
-  conn.status = "Disconnected";
-  set_status_info(StatusEnum.DISCONNECTED);
-
+  set_status(conn, StatusEnum.DISCONNECTED);
 
   arr_data = initialize_data(); // reiniciar la data
   console.log("Connection closed");
+  return;
 }
 
 /**
  * Start a connection
  */
 function start_conn(url, conn, arr_data, recv_msg){
+  if(!is_disconnected(conn)){ // Esta conectado o conectando
+    return;
+  }
+  if(conn.stream !== null){
+    if(conn.stream.readyState === 1){ // Esta conectado
+      //States. 0: connecting, 1: ready, 2: closed
+      set_status(conn, StatusEnum.CONNECTED);
+      return;
+    }
+  }
+
   conn.stream = new EventSource(url); // Conectar por url
 
-  set_status_info(StatusEnum.CONNECTING);
+  set_status(conn, StatusEnum.CONNECTING);
 
+  // Conectar eventos
   conn.stream.onopen = function (e) {
-    conn.is_up = true;
-    conn.status = "Connected";
-    set_status_info(StatusEnum.CONNECTED);
+    set_status(conn, StatusEnum.CONNECTED);
+    arr_data = initialize_data(); // reiniciar la data
     console.log("Connected with server");
   };
-
   conn.stream.onmessage = recv_msg;
-
   conn.stream.onerror = function (e) {
     console.log("Error in the server connection");
     close_conn(conn, arr_data);
   };
 
+  return;
 }
+
+
 
 
 /**
  * Main process
  */
 $(document).ready( function() {
-  // TODO: cambiar controles por bootstrap
   // TODO: buscar header y footer bootstrap
   // FIXME: en eje y no se alcanza a ver numero
 
@@ -215,6 +252,8 @@ $(document).ready( function() {
   // Rango de eje y
   var yMin = -1000;
   var yMax = 1000;
+  var yMinHome = Number(yMin); // copy by value
+  var yMaxHome = Number(yMax);
   var xTicks = 5;
   var yTicks = 5;
   var n_secs = 5; // Cantidad de segundos maximo que guarda el plot
@@ -259,9 +298,10 @@ $(document).ready( function() {
   d3.select("#ch5-rect").style("fill", colors[4]);
 
 
-  // Zoom buttons
+  // Axis input
   var dxRange = 1;
-  var dyRange = 100;
+  var dyZoom = 100;
+  var dyMove = 50;
   function update_y_axis(y1, y2){
     if(y1 < y2){ // update solo si tiene sentido
       graph.yRange.domain([y1, y2]);
@@ -299,37 +339,44 @@ $(document).ready( function() {
 
   // Conexion: con server (python) usando Event Source
   var dir = 'http://localhost:8889/data/muse';
-  var conn = {stream: null, is_up: false, status: "Disconnected"};
+  var conn = {stream: null, status: StatusEnum.OFF};
 
 
   // Botones para updatear ejes
   $("#btn-zoomYin").click(function(){
-    if(conn.is_up){
-      if(yMin + dyRange < yMax - dyRange){ // Solo si tiene sentido
-        yMin += dyRange;
-        yMax -= dyRange;
-        update_y_axis(yMin, yMax);
-      }
-    }
-  });
-  $("#btn-zoomYout").click(function(){
-    if(conn.is_up){
-      yMin -= dyRange;
-      yMax += dyRange;
+    if(yMin + dyZoom < yMax - dyZoom){ // Solo si tiene sentido
+      yMin += dyZoom;
+      yMax -= dyZoom;
       update_y_axis(yMin, yMax);
     }
   });
+  $("#btn-zoomYout").click(function(){
+    yMin -= dyZoom;
+    yMax += dyZoom;
+    update_y_axis(yMin, yMax);
+  });
   $("#btn-zoomXdec").click(function(){
-    if(conn.is_up && n_secs > 1){ // Minimo 5 segundos de ventana
-      n_secs -= dxRange;
-      set_segX(n_secs);
-    }
+    n_secs -= dxRange;
+    set_segX(n_secs);
   });
   $("#btn-zoomXinc").click(function(){
-    if(conn.is_up){
-      n_secs += dxRange;
-      set_segX(n_secs);
-    }
+    n_secs += dxRange;
+    set_segX(n_secs);
+  });
+  $("#btn-moveYdown").click(function(){
+    yMin -= dyMove;
+    yMax -= dyMove;
+    update_y_axis(yMin, yMax);
+  });
+  $("#btn-moveYup").click(function(){
+    yMin += dyMove;
+    yMax += dyMove;
+    update_y_axis(yMin, yMax);
+  });
+  $("#btn-homeY").click(function(){
+    yMin = yMinHome;
+    yMax = yMaxHome;
+    update_y_axis(yMin, yMax);
   });
 
   /**
@@ -358,22 +405,11 @@ $(document).ready( function() {
 
   // Botones iniciar/cerrar conexion
   $("#btn-start-conn").click(function(){
-    if(conn.is_up){
-      if(conn.stream.readyState < 2){
-        return; // Ignoring
-      }
-    }
-
     data = initialize_data(); // Reiniciar data
     start_conn(dir, conn, data, receive_msg)
   });
   $("#btn-close-conn").click(function(){
-    if(conn.is_up){
-      if(conn.stream.readyState < 2){ //States. 0: connecting, 1: ready, 2: closed
-        close_conn(conn, data);
-        return;
-      }
-    }
+    close_conn(conn, data);
   });
 
   // $("#btn-debug").click(function(){

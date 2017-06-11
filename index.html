@@ -40,26 +40,21 @@
         <div class="col-md-4">
           <div class="row">
             <form>
-              <svg width="12" height="12"> <rect class="legend-rect" id="ch1-rect" /> </svg>
+              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch1-rect" /> </svg>
               <input id="ch1" type="checkbox" checked> TP9 <br>
-
-              <svg width="12" height="12"> <rect class="legend-rect" id="ch2-rect" /> </svg>
+              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch2-rect" /> </svg>
               <input id="ch2" type="checkbox" checked> AF7 <br>
-
-              <svg width="12" height="12"> <rect class="legend-rect" id="ch3-rect" /> </svg>
+              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch3-rect" /> </svg>
               <input id="ch3" type="checkbox" checked> AF8 <br>
-
-              <svg width="12" height="12"> <rect class="legend-rect" id="ch4-rect" /> </svg>
+              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch4-rect" /> </svg>
               <input id="ch4" type="checkbox" checked> TP10 <br>
-
-              <svg width="12" height="12"> <rect class="legend-rect" id="ch5-rect" /> </svg>
+              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch5-rect" /> </svg>
               <input id="ch5" type="checkbox" checked> Right Aux <br>
             </form>
           </div>
           <div class="row panel-btns">
-            <label> Status: </label> <span id="status-text" style="color:black; font-weight:bold;"> Off </span>
+            <label> Status: </label> <span id="status-text"> Off </span>
             <span id="status-icon" class="glyphicon glyphicon-off"></span>
-            <!-- <label> Connection </label> -->
             <br>
             <button id="btn-start-conn" type="button" class="btn btn-primary">Connect</button>
             <button id="btn-close-conn" type="button" class="btn btn-primary">Disconnect</button>
@@ -81,6 +76,19 @@
               <button id="btn-zoomYout" type="button" class="btn btn-primary"> - </button>
               <button id="btn-zoomYin" type="button" class="btn btn-primary"> + </button>
             </div>
+          </form>
+          <form class="form-inline panel-btns">
+            <label> Move Y </label>
+            <div class="btn-group">
+              <button id="btn-moveYdown" type="button" class="btn btn-primary"> - </button>
+              <button id="btn-moveYup" type="button" class="btn btn-primary"> + </button>
+            </div>
+          </form>
+          <form class="form-inline panel-btns">
+            <label> Home Y </label>
+            <button id="btn-homeY" type="button" class="btn btn-primary">
+              <span class="glyphicon glyphicon-home"></span>
+            </button>
           </form>
           <!-- <div class="row panel-btns">
             <button id="btn-debug" type="button">Debug</button>
