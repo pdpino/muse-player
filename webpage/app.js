@@ -16,7 +16,7 @@ function create_graph(yMin, yMax, xTicks, yTicks, n_secs){
   // Margenes
   var margin = {top: 10, right: 10, bottom: 20, left: 40},
       width = 600 - margin.left - margin.right,
-      height = 300 - margin.top - margin.bottom;
+      height = 400 - margin.top - margin.bottom;
 
   // Svg
   var svg = d3.select("#chart_container").append("svg")
@@ -108,7 +108,7 @@ function create_path(graph, data, line, color){
  * Set the span in html with the amount of seconds displaying in the x axis
  */
 function set_segX(segs){
-  $("#segX").text(segs.toFixed(1))
+  $("#segX").text(segs.toFixed(0))
 }
 
 /* Funciones para datos */
@@ -125,8 +125,8 @@ function initialize_data(){
 
 /* Funciones para connection */
 var StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
-function is_connected(conn){
-  return conn.status === StatusEnum.CONNECTED;
+function is_connecting(conn){
+  return conn.status === StatusEnum.CONNECTING;
 }
 
 function is_disconnected(conn){
@@ -193,7 +193,6 @@ function close_conn(conn, arr_data){
   }
 
   set_status(conn, StatusEnum.DISCONNECTED);
-
   arr_data = initialize_data(); // reiniciar la data
   console.log("Connection closed");
   return;
@@ -226,7 +225,13 @@ function start_conn(url, conn, arr_data, recv_msg){
   };
   conn.stream.onmessage = recv_msg;
   conn.stream.onerror = function (e) {
-    console.log("Error in the server connection");
+    if(is_connecting(conn)){
+      console.log("Can't connect to the server");
+      // TODO: send alert to the client
+    }
+    else{
+      console.log("Error in the server connection");
+    }
     close_conn(conn, arr_data);
   };
 
@@ -252,7 +257,7 @@ $(document).ready( function() {
   // Rango de eje y
   var yMin = -1000;
   var yMax = 1000;
-  var yMinHome = Number(yMin); // copy by value
+  var yMinHome = Number(yMin); // copy by value // HACK
   var yMaxHome = Number(yMax);
   var xTicks = 5;
   var yTicks = 5;
@@ -356,8 +361,10 @@ $(document).ready( function() {
     update_y_axis(yMin, yMax);
   });
   $("#btn-zoomXdec").click(function(){
-    n_secs -= dxRange;
-    set_segX(n_secs);
+    if(n_secs > 1){
+      n_secs -= dxRange;
+      set_segX(n_secs);
+    }
   });
   $("#btn-zoomXinc").click(function(){
     n_secs += dxRange;

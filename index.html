@@ -4,11 +4,10 @@
   <title>Muse band 2016, plot data</title>
   <meta charset="utf-8"/>
 
-
+  <link rel="shortcut icon" href="">
   <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-
-
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <!-- Import css with random number (avoid cache) -->
   <!-- <script>
   document.write('<link rel="stylesheet" type="text/css" href="webpage/main.css?dev=' + Math.floor(Math.random()*100) + '"\>');
@@ -26,7 +25,6 @@
   <header class="container">
     <div class="row text-center">
       <h2>Muse data</h2>
-      <h3>Streaming live from your brain</h3>
     </div>
   </header>
 
@@ -39,60 +37,73 @@
         </div>
         <div class="col-md-4">
           <div class="row">
-            <form>
-              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch1-rect" /> </svg>
-              <input id="ch1" type="checkbox" checked> TP9 <br>
-              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch2-rect" /> </svg>
-              <input id="ch2" type="checkbox" checked> AF7 <br>
-              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch3-rect" /> </svg>
-              <input id="ch3" type="checkbox" checked> AF8 <br>
-              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch4-rect" /> </svg>
-              <input id="ch4" type="checkbox" checked> TP10 <br>
-              <svg class="legend-rect-container"> <rect class="legend-rect" id="ch5-rect" /> </svg>
-              <input id="ch5" type="checkbox" checked> Right Aux <br>
-            </form>
+            <div class="panel panel-primary">
+              <div class="panel-heading text-center">Streaming</div>
+              <form class="form-inline panel-conn">
+                <label> Status: </label>
+                <span id="status-text"> Off </span>
+                <span id="status-icon" class="glyphicon glyphicon-off"></span>
+              </form>
+              <form class="form panel-conn">
+                <button id="btn-start-conn" type="button" class="btn btn-primary">Connect</button>
+                <button id="btn-close-conn" type="button" class="btn btn-primary">Disconnect</button>
+              </form>
+            </div>
           </div>
-          <div class="row panel-btns">
-            <label> Status: </label> <span id="status-text"> Off </span>
-            <span id="status-icon" class="glyphicon glyphicon-off"></span>
-            <br>
-            <button id="btn-start-conn" type="button" class="btn btn-primary">Connect</button>
-            <button id="btn-close-conn" type="button" class="btn btn-primary">Disconnect</button>
+          <div class="row">
+            <div class="col-md-5">
+              <div class="panel panel-primary">
+                <div class="panel-heading text-center">Legend</div>
+                <form class="panel-body">
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch1-rect" /> </svg>
+                  <input id="ch1" type="checkbox" checked> TP9 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch2-rect" /> </svg>
+                  <input id="ch2" type="checkbox" checked> AF7 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch3-rect" /> </svg>
+                  <input id="ch3" type="checkbox" checked> AF8 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch4-rect" /> </svg>
+                  <input id="ch4" type="checkbox" checked> TP10 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch5-rect" /> </svg>
+                  <input id="ch5" type="checkbox" checked> Right Aux <br>
+                </form>
+              </div>
+            </div>
+            <div class="col-md-7">
+              <div class="panel panel-primary">
+                <div class="panel-heading text-center">Graph</div>
+                <form class="form-inline panel-graph">
+                  <label> Zoom X </label>
+                  <!-- <input id="input-zoomX" class="form-control" type="number" value="1" min="1"> -->
+                  <div class="btn-group col-4">
+                    <button id="btn-zoomXdec" type="button" class="btn btn-primary"> - </button>
+                    <button id="btn-zoomXinc" type="button" class="btn btn-primary"> + </button>
+                  </div>
+                  <span id="segX" class="form-control-static"> 5 </span> <span> s </span>
+                </form>
+                <form class="form-inline panel-graph">
+                  <label> Zoom Y </label>
+                  <!-- <input id="input-zoomY" class="form-control" type="number" value="100" min="1"> -->
+                  <div class="btn-group">
+                    <button id="btn-zoomYout" type="button" class="btn btn-primary"> - </button>
+                    <button id="btn-zoomYin" type="button" class="btn btn-primary"> + </button>
+                  </div>
+                </form>
+                <form class="form-inline panel-graph">
+                  <label> Move Y </label>
+                  <div class="btn-group">
+                    <button id="btn-moveYdown" type="button" class="btn btn-primary"> - </button>
+                    <button id="btn-moveYup" type="button" class="btn btn-primary"> + </button>
+                  </div>
+                </form>
+                <form class="form-inline panel-graph">
+                  <label> Home Y </label>
+                  <button id="btn-homeY" type="button" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-home"></span>
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
-          <form class="form-inline panel-btns">
-            <label> Zoom X </label>
-            <!-- <input id="input-zoomX" class="form-control" type="number" value="1" min="1"> -->
-            <div class="btn-group col-4">
-              <button id="btn-zoomXdec" type="button" class="btn btn-primary"> - </button>
-              <button id="btn-zoomXinc" type="button" class="btn btn-primary"> + </button>
-            </div>
-            <span id="segX" class="form-control-static"> 5 </span>
-            <span> Seconds </span>
-          </form>
-          <form class="form-inline panel-btns">
-            <label> Zoom Y </label>
-            <!-- <input id="input-zoomY" class="form-control" type="number" value="100" min="1"> -->
-            <div class="btn-group">
-              <button id="btn-zoomYout" type="button" class="btn btn-primary"> - </button>
-              <button id="btn-zoomYin" type="button" class="btn btn-primary"> + </button>
-            </div>
-          </form>
-          <form class="form-inline panel-btns">
-            <label> Move Y </label>
-            <div class="btn-group">
-              <button id="btn-moveYdown" type="button" class="btn btn-primary"> - </button>
-              <button id="btn-moveYup" type="button" class="btn btn-primary"> + </button>
-            </div>
-          </form>
-          <form class="form-inline panel-btns">
-            <label> Home Y </label>
-            <button id="btn-homeY" type="button" class="btn btn-primary">
-              <span class="glyphicon glyphicon-home"></span>
-            </button>
-          </form>
-          <!-- <div class="row panel-btns">
-            <button id="btn-debug" type="button">Debug</button>
-          </div> -->
         </div>
       </div>
     </div>

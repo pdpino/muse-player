@@ -19,6 +19,7 @@ import basic
 
 
 # Next TODOs:
+# TODO: handle when muse turns off
 # TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho # opcion para guardarlas como dump o no
 # IDEA: probar qué tanta información se pierde en mandar promedio, un dato o todos
     # calcular cov o dispersion de 12 samples (?)

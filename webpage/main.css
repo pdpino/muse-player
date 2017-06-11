@@ -1,7 +1,7 @@
 /* Basic */
 body{
   background-color: lightsteelblue;
-  font-family: "Courier New", Courier, monospace;
+  /*font-family: "Courier New", Courier, monospace;*/
 }
 
 .jumbotron {
@@ -14,8 +14,13 @@ footer{
 }
 
 /*Panel control*/
-.panel-btns{
+.panel-graph{
   padding: 0.5em;
+  text-align: center;
+}
+.panel-conn{
+  padding: 0.5em;
+  text-align: center;
 }
 
 #input-zoomX, #input-zoomY{
