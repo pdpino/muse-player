@@ -2,6 +2,7 @@
 """Layer that handles the data"""
 import os
 import pandas as pd
+import basic
 
 data_folder = "data/"
 data_ext = ".csv"
@@ -11,12 +12,20 @@ def _assure_folder(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-def _get_fname(name, subfolder=None, suffix=None):
-    """Return the full filename for a data file"""
+def _get_fname(name, subfolder=None, suffix=None, assure=False):
+    """Return the full filename for a data file
+
+    Parameters:
+    subfolder --
+    suffix --
+    assure -- bool, whether to assure the existence of the subfolder or not"""
+
+
     fname = data_folder
     if not subfolder is None:
         fname += subfolder + "/"
-        _assure_folder(fname)
+        if assure:
+            _assure_folder(fname)
 
     if name is None or name == "":
         fname += "-"
@@ -40,12 +49,12 @@ def read_data(name, subfolder=None, suffix=None):
         print("Read from file: {}".format(fname))
         return df
     except FileNotFoundError:
-        print("")
+        basic.perror("The file {} wasn't found".format(fname))
 
 
 def save_data(df, name, subfolder=None, suffix=None):
     """Save a dataframe to a .csv"""
-    fname = _get_fname(name, subfolder, suffix)
+    fname = _get_fname(name, subfolder, suffix, assure=True)
 
     df.to_csv(fname, float_format='%f')
     print("Saved to file: {}".format(fname))

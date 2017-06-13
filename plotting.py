@@ -6,9 +6,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
 from basic.data_manager import read_data
+from basic import perror
 
 
-"""Basado en codigo de: https://github.com/NeuroTechX/bci-workshop"""
 def compute_feature_vector(eegdata, Fs):
     """Extract the features from the EEG
     Inputs:
@@ -18,7 +18,7 @@ def compute_feature_vector(eegdata, Fs):
     Outputs:
     feature_vector: [number of features points; number of different features]
 
-
+    source: https://github.com/NeuroTechX/bci-workshop
     """
 
     n_samples, n_channels = eegdata.shape
@@ -27,10 +27,6 @@ def compute_feature_vector(eegdata, Fs):
 
     # Apply Hamming window
     w = np.hamming(n_samples)
-
-    # print(w)
-    # input()
-
     dataWinCentered = eegdata - np.mean(eegdata, axis=0) # Remove offset
     dataWinCenteredHam = (dataWinCentered.T*w).T
 
@@ -66,121 +62,131 @@ def compute_feature_vector(eegdata, Fs):
 
     return feature_vector
 
-def compute_feature_vector_one(eegdata, Fs, plot_windows=False):
+def compute_feature_vector_one(eegdata, Fs, plot_window=False):
     """Extract the features from the EEG, only with one axis
-    Inputs:
-    eegdata: array of dimension [number of samples]
-    Fs: sampling frequency of eegdata
 
-    Outputs:
-    feature_vector: [number of features points; number of different features]
+    Parameters:
+    eegdata -- array of dimension [number of samples]
+    Fs -- sampling frequency of eegdata
+    plot_window -- bool, plot: data, centered_data, freq-domain with data, freq-domain with centered_data
 
+    Return:
+    feature_vector -- array: [delta, theta, alpha, beta, gamma]
     """
 
     n_samples = len(eegdata)
-
-    ### 1. Compute the PSD # Power Spectral Density
-
-    ## Apply Hamming window
-    w = np.hamming(n_samples)
-    dataWinCentered = eegdata - np.mean(eegdata) # Remove offset # no interesa el offset de la onda
-    dataWinCenteredHam = (dataWinCentered.T*w).T # QUESTION: pq una hamming window? que es lo que hace?
-
-    ## FFT
-    Y = np.fft.fft(dataWinCenteredHam) #, n=NFFT) #, axis=0)
-    Y = Y/n_samples # para que este en la misma escala de los datos
-
-    # Rango que interesa de FFT
-    n_freqs = int(n_samples/2) + 1 # Tomar hasta n_freqs + 1
-    PSD = np.abs(Y[0:n_freqs]) # Transformar numero complejo a real
-    PSD = 2*PSD # sumar freqs positivas (0:n/2) con freqs negativas (n/2:n) para obtener amplitud total
-        # Aunque, 0 y la freq de nyquist  no tienen mirror --> no hay que multiplicarlos por dos
-        # Pero PSD[0] = 0 --> pq se removio el offset de los datos
-        # PSD[-1] no interesa, pq es muy alto
+    n_freqs = int(n_samples/2) + 1 # Cantidad de frecuencias (resolucion)
 
     # Tomar rango de frecuencias
-    f = np.linspace(0,Fs/2,n_freqs)
-        # Fs/2: nyquist frequency
-        # rango entre 0 y nyquist, en n_freqs intervalos
+    f = np.linspace(0,Fs/2,n_freqs) # Fs/2: nyquist frequency; n_freqs intervalos
+
+    # Remove offset
+    data_centered = eegdata - np.mean(eegdata) # no interesa el offset de la onda
+
+    # Apply Hamming window
+    w = np.hamming(n_samples)
+    data_centered_ham = (data_centered.T*w).T # QUESTION: pq una hamming window? que es lo que hace?
+
+    def get_fft(data, n, nfreqs):
+        Y = np.fft.fft(data)/n # dividir por n para normalizar unidades
+        return 2*np.abs(Y[0:n_freqs])
+
+    PSD_raw = get_fft(data_centered, n_samples, n_freqs)
+    PSD_window = get_fft(data_centered_ham, n_samples, n_freqs)
+
 
 
     ## Filtrar por frecuencias
     def filter_wrapper(PSD, condition):
+        """Filter by the wanted frequencies"""
         index, = np.where(condition)
         return np.mean(PSD[index]) # QUESTION: usar mean, sum, ifft?
 
-    # Delta < 4
-    delta = filter_wrapper(PSD, (f<4))
+    def obtain_feat_vector(PSD):
+        """Receive a power spectral density and return the (d, t, a, b, g) vector of features."""
+        delta = filter_wrapper(PSD, (f<4)) # Delta < 4
+        theta = filter_wrapper(PSD, (f>=4) & (f<=8)) # Theta 4-8
+        alpha = filter_wrapper(PSD, (f>=8) & (f<=12)) # Alpha 8 - 12
+        beta = filter_wrapper(PSD, (f>=12) & (f<=30)) # Beta 12-30
+        gamma = filter_wrapper(PSD, (f>=30) & (f<=44)) # Gamma 30-44
 
-    # Theta 4-8
-    theta = filter_wrapper(PSD, (f>=4) & (f<=8))
+        if beta == 0 or delta == 0 or theta == 0 or alpha == 0 or gamma == 0: # si son 0, log tira error
+            perror("There are features with value 0 (noise?)", force_continue=True)
 
-    # Alpha 8 - 12
-    alpha = filter_wrapper(PSD, (f>=8) & (f<=12))
+        return np.array([delta, theta, alpha, beta, gamma]) # Vector de features
 
-    # Beta 12-30
-    beta = filter_wrapper(PSD, (f>=12) & (f<=30))
+    feature_vector_raw = obtain_feat_vector(PSD_raw)
+    feature_vector_window = obtain_feat_vector(PSD_window)
 
-    # Gamma 30-44
-    gamma = filter_wrapper(PSD, (f>=30) & (f<=44))
-
-
-    # Vector de features
-    feature_vector = np.array([delta, theta, alpha, beta, gamma])
-
-
-    if plot_windows:
+    if plot_window:
         # Plot eegdata
-        plt.subplot(2, 1, 1)
+        plt.subplot(2, 2, 1)
         plt.plot(eegdata)
+        plt.title("Data")
         plt.xlabel("Time (not seconds)")
         plt.ylabel("Amplitude")
 
-        index, = np.where(f==44)
-        index = int(index[0])
+        # Plot hamming window
+        plt.subplot(2, 2, 2)
+        plt.plot(data_centered_ham)
+        plt.title("Data with Hamming window applied")
+        plt.xlabel("Time (not seconds)")
+        plt.ylabel("Amplitude")
 
-        # Plot FT
-        plt.subplot(2, 1, 2)
-        plt.plot(f[:index], PSD[:index])
+
+        # Plot FT with raw data
+        index, = np.where(f==44) # Desde 44Hz hacia atras
+        index = int(index[0])
+        plt.subplot(2, 2, 3)
+        plt.plot(f[:index], PSD_raw[:index])
+        plt.title("FFT with raw data")
         plt.xlabel("Frequency (Hz)")
         plt.ylabel("Amplitude")
 
-        print(feature_vector)
+        # Plot FT with windowed data
+        plt.subplot(2, 2, 4)
+        plt.plot(f[:index], PSD_window[:index])
+        plt.title("FFT with window data")
+        plt.xlabel("Frequency (Hz)")
+        plt.ylabel("Amplitude")
+
+        # print("features: (delta, theta, alpha, beta, gamma)")
+        print("features raw: ")
+        print(feature_vector_raw)
+
+        print("features window: ")
+        print(feature_vector_window)
+
         plt.show()
-
-
-    # Bool indicando si anda bien
-    good = True
-    if beta == 0 or delta == 0 or theta == 0 or alpha == 0 or gamma == 0: # si son 0, log tira error
-        good = False
+        print("----------")
 
     # Aplicar log10
-    feature_vector = np.log10(feature_vector)
+    feature_vector = np.log10(feature_vector_window)
 
-    return list(feature_vector), good
+    return list(feature_vector)
 
+def compute_waves(t, channel, sample_rate=256, window=256, step=25, plot_window=False):
+    """Compute the waves (delta, theta, alpha, beta, gamma) for a given channel
 
-def compute_waves(t, channel, sample_rate=256, window=256, step=25, plot_windows=False):
-    """Compute the waves (alpha, beta, etc) for a given channel"""
+    Parameters:
+    sample_rate -- sample rate of the measured data
+    window -- size of the sliding window
+    step -- step to slide the window
+    plot_window -- bool, passed to compute_feature_vector_one"""
+
     feats = [] # Guardar waves (features)
     tiempo = [] # Guardar tiempo
     i = 0 # contador del slice
     n = len(channel)
-    contador_malos = 0
 
     while i < n:
         channel_slice = channel[i:i+window]
         if(len(channel_slice) >= window):
-            f, good = compute_feature_vector_one(channel_slice, sample_rate, plot_windows)
-            if good:
-                feats.append(f)
-                tiempo.append(t[i])
-            else:
-                contador_malos += 1
-        i += step
+            f = compute_feature_vector_one(channel_slice, sample_rate, plot_window)
+            feats.append(f)
+            tiempo.append(t[i])
 
-    if contador_malos > 0:
-        print("There were {} times that a channel got a 0 value (likely noise)".format(contador_malos))
+        i += step
 
     # Transformar a matriz de numpy
     feats = np.matrix(feats)
@@ -188,9 +194,9 @@ def compute_waves(t, channel, sample_rate=256, window=256, step=25, plot_windows
     return tiempo, feats
 
 def plot_waves(tiempo, feats, channel_name, subplots=False):
-    """Plot alpha, beta, etc waves in time """
+    """Plot (delta, theta, alpha, beta, gamma) waves in time."""
 
-    # Tomar señales por separado
+    # Tomar señales en todo el tiempo
     delta = feats[:, 0]
     theta = feats[:, 1]
     alpha = feats[:, 2]
@@ -221,17 +227,21 @@ def plot_waves(tiempo, feats, channel_name, subplots=False):
     plt.show()
 
 def plot_raw(t, df, ch_names, subplots=False):
-    """Plot raw channels """
+    """Plot raw channels."""
+
+    i = 1
     for ch in ch_names:
+        if subplots:
+            plt.subplot(3, 2, i)
+            i += 1
         plt.plot(t, df[ch].as_matrix(), label=ch)
 
     plt.suptitle("Raw channels", fontsize=20)
     plt.legend()
     plt.show()
 
-
 def create_parser(ch_names):
-    """ Create the console arguments parser"""
+    """Create the console arguments parser."""
     parser = argparse.ArgumentParser(description='Apply FFT to data', usage='%(prog)s [options]')
 
     group_data = parser.add_argument_group(title="File arguments")
@@ -261,7 +271,8 @@ def create_parser(ch_names):
     return parser
 
 def main():
-    # QUESTION: como juntar todos los canales?
+    # QUESTION: como juntar todos los canales? o usarlos por separado?
+
     # Channel names
     ch_names = ['TP9', 'AF7', 'AF8', 'TP10']
 
@@ -277,7 +288,7 @@ def main():
     t = df['timestamps']
 
     if args.waves:
-        tiempo, feats = compute_waves(t, channel, plot_windows=args.plot_window)
+        tiempo, feats = compute_waves(t, channel, plot_window=args.plot_window)
         plot_waves(tiempo, feats, args.channel, args.splot_waves)
 
     if args.raw:
