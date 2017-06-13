@@ -100,7 +100,7 @@ def compute_feature_vector_one(eegdata, Fs, plot_window=False):
     def filter_wrapper(PSD, condition):
         """Filter by the wanted frequencies"""
         index, = np.where(condition)
-        return np.mean(PSD[index]) # QUESTION: usar mean, sum, ifft?
+        return np.sum(PSD[index]) # QUESTION: usar mean, sum, ifft? # muse page says sum
 
     def obtain_feat_vector(PSD):
         """Receive a power spectral density and return the (d, t, a, b, g) vector of features."""
