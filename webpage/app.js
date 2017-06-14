@@ -189,8 +189,8 @@ class Graph {
       sign = -1;
     }
 
-    var y_min_new = this.y_min + sign*this.dy_home;
-    var y_max_new = this.y_max + sign*this.dy_home;
+    var y_min_new = this.y_min + sign*this.dy_move;
+    var y_max_new = this.y_max + sign*this.dy_move;
 
     this._update_y_axis(y_min_new, y_max_new);
   }
@@ -225,7 +225,7 @@ class Graph {
   /**
    * Update the line in the graph, use when updated the data
    */
-  update_graph_line(data, path, line, plot_ch){
+  _update_graph_line(data, path, line, plot_ch){
     if(plot_ch){
       path.attr("d", line(data))
           .attr("transform", null)
@@ -239,17 +239,23 @@ class Graph {
   /**
    * Update all the lines in the graph
    */
-  update_graph(data) {
-    for(var i=0;i<n_channels;i++){
-      update_graph_line(data, paths[i], lines[i], plot_bools[i]);
+  update_graph(data, shift=true) {
+    for(var i=0;i<this.n_channels;i++){
+      this._update_graph_line(data, this.paths[i], this.lines[i], this.plot_bools[i]);
     }
 
     // actualizar rango de tiempo
     var rango = d3.extent(data, function(d) { return d.T; });
-    // if(rango[0] + n_secs > rango[1]){ rango[1] = rango[0] + n_secs; } // Que el rango minimo sea n_secs
+    // if(rango[0] + this.n_secs > rango[1]){ rango[1] = rango[0] + this.n_secs; } // Que el rango minimo sea n_secs
     this.x_range.domain(rango);
 
     this.svg.select(".x.axis").call(this.x_axis); // change the x axis
+
+    if(shift){ // shift the data to fit in n_secs
+      while(data[data.length-1].T - data[0].T > this.n_secs){
+        data.shift();
+      }
+    }
   }
 
 }
@@ -439,7 +445,7 @@ $(document).ready( function() {
   // Pintar leyenda
   for(var i=0;i<n_channels;i++){
     var id_element = "#ch".concat(String(i+1), "-rect");
-    d3.select(id_element),style("fill", colors[i]);
+    d3.select(id_element).style("fill", colors[i]);
   }
 
   // Show/hide events
@@ -479,13 +485,7 @@ $(document).ready( function() {
     // Push datos
     data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
 
-    // Update grafico
-    graph.update_graph(data);
-
-    // Pop datos hasta tener solo n_secs
-    while(data[data.length-1].T - data[0].T > n_secs){
-      data.shift();
-    }
+    graph.update_graph(data); // Update grafico
   };
 
   // Botones iniciar/cerrar conexion
