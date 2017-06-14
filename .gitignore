@@ -7,8 +7,11 @@ __pycache__/
 old/
 
 # Debug files
-debug.*
+debug*
 zoom.js
 
 # Rickshaw library
 rickshaw*
+
+# Lock files
+.~lock*

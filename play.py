@@ -19,19 +19,19 @@ import basic
 
 # DEBUG: para saber si se corto la conexion
     # https://stackoverflow.com/questions/18511119/stop-processing-flask-route-if-request-aborted
-from werkzeug.serving import WSGIRequestHandler
-class CustomRequestHandler(WSGIRequestHandler):
-    """ """
-
-    callback_conn_closed = None
-
-    def connection_dropped(self, error, environ=None):
-        print("connection closed")
-        if not CustomRequestHandler.callback_conn_closed is None:
-            CustomRequestHandler.callback_conn_closed()
-            print("\tcalling callback")
-        else:
-            print("\tnot calling callback")
+# from werkzeug.serving import WSGIRequestHandler
+# class CustomRequestHandler(WSGIRequestHandler):
+#     """ """
+#
+#     callback_conn_closed = None
+#
+#     def connection_dropped(self, error, environ=None):
+#         print("connection closed")
+#         if not CustomRequestHandler.callback_conn_closed is None:
+#             CustomRequestHandler.callback_conn_closed()
+#             print("\tcalling callback")
+#         else:
+#             print("\tnot calling callback")
 
 
 
@@ -327,6 +327,8 @@ def main():
     muse.disconnect()
     print("Stopped receiving muse data")
 
+    # Imprimir mensajes que recibio Muse en todo el proceso
+    muse.print_msgs()
 
     # Print running time
     print("\tReceived data for {:.2f} seconds".format(get_running_time(full_time)))
