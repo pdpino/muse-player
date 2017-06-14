@@ -3,70 +3,265 @@
  */
 
 
-/* Funciones para grafico */
-/**
- * Create an empty graph
- * @param {Number} yMin minimum for y axis
- * @param {Number} yMax maximum for y axis
- * @param {Number} xTicks ticks for x axis
- * @param {Number} yTicks ticks for y axis
- * @param {Number} n_secs Amount of seconds to plot in the x axis
- */
-function create_graph(container, yMin, yMax, xTicks, yTicks, n_secs){
-  // Margenes
-  var margin = {top: 40, right: 10, bottom: 30, left: 60},
-      width = 700 - margin.left - margin.right,
-      height = 400 - margin.top - margin.bottom;
+class Graph {
+  /**
+   * Intialize
+   */
+  constructor(container, w, h, title, y_min, y_max, x_ticks, y_ticks, n_secs) {
+    // Save variables
+    this._update_x_axis(n_secs);
+    this.y_min = Number(y_min);
+    this.y_max = Number(y_max);
+    this.y_min_home = Number(y_min);
+    this.y_max_home = Number(y_max);
 
-  // Svg
-  var svg = d3.select(container).append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-  // Clip para tomar lo que sale por la izquierda
-  svg.append("defs").append("clipPath")
-      .attr("id", "clip")
-    .append("rect")
-      .attr("width", width)
-      .attr("height", height);
-
-  // Rangos de ejes
-  var xRange = d3.scale.linear().domain([0, n_secs]).range([0, width]);
-  var yRange = d3.scale.linear().domain([yMin, yMax]).range([height, 0]);
-
-  // Eje del tiempo
-  var xAxis = d3.svg.axis().scale(xRange).orient("bottom").ticks(5);
-  svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
-  // Y axis
-  var yAxis = d3.svg.axis().scale(yRange).orient("left").ticks(5);
-  svg.append("g")
-      .attr("class", "y axis")
-      .call(yAxis);
+    this.create_empty_graph(container, w, h, title, x_ticks, y_ticks);
+  }
 
 
-  // Titulo
-  svg.append("text")
-      .attr("id", "chart_title")
-      .attr("x", (width / 2))
-      .attr("y", 0 - (margin.top / 2))
-      .attr("text-anchor", "middle")
-      // .style("text-decoration", "underline")
-      .text("Electrodes");
+  /**
+   * Create an empty graph
+   * @param {String} container HTML ID to locate the graph
+   * @param {Number} w width
+   * @param {Number} h height
+   * @param {String} title
+   * @param {Number} y_min initial minimum for y axis
+   * @param {Number} y_max initial maximum for y axis
+   * @param {Number} x_ticks
+   * @param {Number} y_ticks
+   * @param {Number} n_secs Amount of seconds to plot in the x axis
+   */
+  create_empty_graph(container, w, h, title, x_ticks, y_ticks){
+    // Margin
+    this.margin = {top: 40, right: 10, bottom: 30, left: 60};
+    this.width = w - this.margin.left - this.margin.right;
+    this.height = h - this.margin.top - this.margin.bottom;
 
-  return {svg: svg, xRange: xRange, yRange: yRange, xAxis: xAxis, yAxis: yAxis};
+    // Svg
+    this.svg = d3.select(container).append("svg")
+        .attr("width", this.width + this.margin.left + this.margin.right)
+        .attr("height", this.height + this.margin.top + this.margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+
+    // Clip para tomar lo que sale por la izquierda
+    this.svg.append("defs").append("clipPath")
+        .attr("id", "clip")
+      .append("rect")
+        .attr("width", this.width)
+        .attr("height", this.height);
+
+    // Rangos de ejes
+    this.x_range = d3.scale.linear().domain([0, this.n_secs]).range([0, this.width]);
+    this.y_range = d3.scale.linear().domain([this.y_min, this.y_max]).range([this.height, 0]);
+
+    // Eje del tiempo
+    this.x_axis = d3.svg.axis().scale(this.x_range).orient("bottom").ticks(x_ticks);
+    this.svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + this.height + ")")
+        .call(this.x_axis);
+
+    // Y axis
+    this.y_axis = d3.svg.axis().scale(this.y_range).orient("left").ticks(y_ticks);
+    this.svg.append("g")
+        .attr("class", "y axis")
+        .call(this.y_axis);
+
+    // Titulo
+    this.svg.append("text")
+        .attr("id", "chart_title")
+        .attr("x", (this.width / 2))
+        .attr("y", 0 - (this.margin.top / 2))
+        .attr("text-anchor", "middle")
+        .text(title);
+  }
+
+  /**
+   * Set
+   * @param {function} line_function function that return an array of line functions
+   */
+  set_lines(line_function){
+    this.lines = line_function(this.x_range, this.y_range);
+  }
+
+  /**
+   * Init the paths in the graph and an array of bools to show the lines
+   */
+  init_channels(data, n_channels, colors){
+    this.n_channels = Number(n_channels);
+
+    // Create path and bools for each channel
+    this.paths = Array(n_channels); // Lines in svg
+    this.plot_bools = Array(n_channels); // Bools to show each line
+    for(var i=0;i<n_channels;i++){
+      this.plot_bools[i] = true; // Default: show line
+
+      // Append to svg
+      this.paths[i] = this.svg.append("g")
+              .attr("clip-path", "url(#clip)")
+            .append("path")
+              .attr("class", "line")
+              .style("stroke", colors[i])
+              .attr("d", this.lines[i](data));
+    }
+
+  }
+
+  /**
+   * Set amounts to update the axiss
+   */
+  set_axis_params(dx_zoom, dy_zoom, dy_move){
+    this.dx_zoom = Number(dx_zoom); // HACK: copy by value
+    this.dy_zoom = Number(dy_zoom);
+    this.dy_move = Number(dy_move);
+  }
+
+  /**
+   * Show/Hide channels
+   */
+  toggle_show_path(i, checked){
+    this.plot_bools[i] = checked;
+    this.paths[i].style("opacity", checked ? 1 : 0);
+  }
+
+
+  /**
+   * Update the y axis
+   */
+  _update_y_axis(y1, y2){
+    if(y1 < y2){
+      this.y_min = Number(y1); // ccpy by value // HACK
+      this.y_max = Number(y2);
+      this.y_range.domain([y1, y2]);
+      this.svg.select(".y.axis").call(this.y_axis); // update svg
+    }
+  }
+
+  /**
+   * Zoom the y axis
+   * @param {bool} out Direction of the zoom
+   */
+  zoom_y_axis(out){
+    var sign_min;
+    var sign_max;
+
+    if(out){
+      sign_min = -1; // decrease y_min
+      sign_max = 1; // increase y_max
+    }
+    else{
+      sign_min = 1; // increase y_min
+      sign_max = -1; // decrease y_max
+    }
+
+    var y_min_new = this.y_min + sign_min*this.dy_zoom;
+    var y_max_new = this.y_max + sign_max*this.dy_zoom;
+
+    // Safe to zoom in
+    if(!out){
+      if(y_max_new - y_min_new < 100){ // At least a 100 window
+        return;
+      }
+    }
+
+    this._update_y_axis(y_min_new, y_max_new);
+  };
+
+  /**
+   * Set the y axis to the original values
+   */
+  home_y_axis(){
+    this._update_y_axis(this.y_min_home, this.y_max_home);
+  }
+
+  /**
+   * Move the y axis range
+   * @param {bool} up Direction of the move
+   */
+  move_y_axis(up){
+    var sign;
+
+    if(up){
+      sign = 1;
+    }
+    else{
+      sign = -1;
+    }
+
+    var y_min_new = this.y_min + sign*this.dy_home;
+    var y_max_new = this.y_max + sign*this.dy_home;
+
+    this._update_y_axis(y_min_new, y_max_new);
+  }
+
+
+  /**
+   *
+   */
+  _update_x_axis(segundos){
+    if(segundos > 1){
+      this.n_secs = Number(segundos); // HACK
+      $("#segX").text(this.n_secs.toFixed(0))
+    }
+  }
+
+  /**
+   *
+   * @param {bool} increase increase or decrease the amount of seconds shown
+   */
+  zoom_x_axis(increase){
+    var sign;
+    if(increase){
+      sign = 1;
+    }
+    else{
+      sign = -1;
+    }
+    this._update_x_axis(this.n_secs + sign*this.dx_zoom);
+  }
+
+
+  /**
+   * Update the line in the graph, use when updated the data
+   */
+  update_graph_line(data, path, line, plot_ch){
+    if(plot_ch){
+      path.attr("d", line(data))
+          .attr("transform", null)
+        .transition()
+          .duration(1000)
+          .ease("linear");
+    }
+  }
+
+
+  /**
+   * Update all the lines in the graph
+   */
+  update_graph(data) {
+    for(var i=0;i<n_channels;i++){
+      update_graph_line(data, paths[i], lines[i], plot_bools[i]);
+    }
+
+    // actualizar rango de tiempo
+    var rango = d3.extent(data, function(d) { return d.T; });
+    // if(rango[0] + n_secs > rango[1]){ rango[1] = rango[0] + n_secs; } // Que el rango minimo sea n_secs
+    this.x_range.domain(rango);
+
+    this.svg.select(".x.axis").call(this.x_axis); // change the x axis
+  }
+
 }
 
+
+
 /**
- * Create an array of functions that return the data for a line in the graph
+ * Create an array of functions that returns the channels in the electrode data
  * @param {d3.scale.linear} x range for x axis
  * @param {d3.scale.linear} y range for y axis
  */
-function create_line_functions(x, y){
+function electrode_lines(x, y){
   var lines = Array(5);
 
   lines[0] = d3.svg.line()
@@ -88,38 +283,7 @@ function create_line_functions(x, y){
   return lines;
 };
 
-/**
- * Funcion para actualizar linea en grafico
- */
-function update_graph_line(data, path, line, plot_ch){
-  if(plot_ch){
-    path.attr("d", line(data))
-        .attr("transform", null)
-      .transition()
-        .duration(1000)
-        .ease("linear");
-  }
-}
 
-/**
- * Crear paths en un grafico
- */
-function create_path(graph, data, line, color){
-  return graph.svg.append("g")
-          .attr("clip-path", "url(#clip)")
-        .append("path")
-          .attr("class", "line")
-          .style("stroke", color)
-          .attr("d", line(data));
-};
-
-
-/**
- * Set the span in html with the amount of seconds displaying in the x axis
- */
-function set_segX(segs){
-  $("#segX").text(segs.toFixed(0))
-}
 
 /* Funciones para datos */
 /**
@@ -260,139 +424,45 @@ $(document).ready( function() {
   // Not important:
   // TODO: estandarizar nombres de funciones y variables: minusMayus vs _; graph vs chart
 
-
-  // Parametros iniciales
-  // Rango de eje y
-  var yMin = -1000;
-  var yMax = 1000;
-  var yMinHome = Number(yMin); // copy by value // HACK
-  var yMaxHome = Number(yMax);
-  var xTicks = 5;
-  var yTicks = 5;
-  var n_secs = 5; // Cantidad de segundos maximo que guarda el plot
-
-  set_segX(n_secs);
-
   // Data
   var n_channels = 5;
   var data = initialize_data();
 
 
   var colors = ["black", "red", "blue", "green", "cyan"];
-  var graph = create_graph("#chart_container", yMin, yMax, xTicks, yTicks, n_secs);
-  var lines = create_line_functions(graph.xRange, graph.yRange);
+  var graph = new Graph("#chart_container", 700, 400, "Electrodes", -1000, 1000, 5, 5, 5);
+  graph.set_lines(electrode_lines);
+  graph.init_channels(data, n_channels, colors);
+  graph.set_axis_params(1, 100, 50); // dx_zoom, dy_zoom, dy_move
 
-  // Paths y bools para cada canal
-  var paths = Array(n_channels); // Lineas en svg
-  var plot_bools = Array(n_channels); // Bools para esconder path
-  for(var i=0;i<n_channels;i++){
-    paths[i] = create_path(graph, data, lines[i], colors[i]);
-    plot_bools[i] = true;
-  }
-
-  // Funcion para updatear el grafico
-  function update_graph() {
-    for(var i=0;i<n_channels;i++){
-      update_graph_line(data, paths[i], lines[i], plot_bools[i]);
-    }
-
-    // actualizar rango de tiempo
-    var rango = d3.extent(data, function(d) { return d.T; });
-    // if(rango[0] + n_secs > rango[1]){ rango[1] = rango[0] + n_secs; } // Que el rango minimo sea n_secs
-    graph.xRange.domain(rango);
-    graph.svg.select(".x.axis").call(graph.xAxis); // change the x axis
-  };
 
   // Pintar leyenda
-  d3.select("#ch1-rect").style("fill", colors[0]);
-  d3.select("#ch2-rect").style("fill", colors[1]);
-  d3.select("#ch3-rect").style("fill", colors[2]);
-  d3.select("#ch4-rect").style("fill", colors[3]);
-  d3.select("#ch5-rect").style("fill", colors[4]);
-
-
-  // Axis input
-  var dxRange = 1;
-  var dyZoom = 100;
-  var dyMove = 50;
-  function update_y_axis(y1, y2){
-    if(y1 < y2){ // update solo si tiene sentido
-      graph.yRange.domain([y1, y2]);
-      graph.svg.select(".y.axis").call(graph.yAxis); // update svg
-    }
-  };
-
-
-  // Mostrar/ocultar canales
-  function toggle_show_path(path, checked){
-    path.style("opacity", checked ? 1 : 0);
+  for(var i=0;i<n_channels;i++){
+    var id_element = "#ch".concat(String(i+1), "-rect");
+    d3.select(id_element),style("fill", colors[i]);
   }
-  // Eventos
-  $("#ch1").click(function(){
-    plot_bools[0] = this.checked;
-    toggle_show_path(paths[0], this.checked);
-  });
-  $("#ch2").click(function(){
-    plot_bools[1] = this.checked;
-    toggle_show_path(paths[1], this.checked);
-  });
-  $("#ch3").click(function(){
-    plot_bools[2] = this.checked;
-    toggle_show_path(paths[2], this.checked);
-  });
-  $("#ch4").click(function(){
-    plot_bools[3] = this.checked;
-    toggle_show_path(paths[3], this.checked);
-  });
-  $("#ch5").click(function(){
-    plot_bools[4] = this.checked;
-    toggle_show_path(paths[4], this.checked);
-  });
+
+  // Show/hide events
+  for(var i=0;i<n_channels;i++){
+    var id_element = "#ch".concat(String(i+1));
+    $(id_element).click(function(){ graph.toggle_show_path(i, this.checked); });
+  }
+
+  // Botones para updatear ejes
+  $("#btn-zoomYin").click(function(){ graph.zoom_y_axis(false); });
+  $("#btn-zoomYout").click(function(){ graph.zoom_y_axis(true); });
+  $("#btn-moveYdown").click(function(){ graph.move_y_axis(false); });
+  $("#btn-moveYup").click(function(){ graph.move_y_axis(true); });
+  $("#btn-homeY").click(function(){ graph.home_y_axis(); });
+  $("#btn-zoomXdec").click(function(){ graph.zoom_x_axis(false); });
+  $("#btn-zoomXinc").click(function(){ graph.zoom_x_axis(true); });
+
 
 
   // Conexion: con server (python) usando Event Source
   var dir = 'http://localhost:8889/data/muse';
   var conn = {stream: null, status: StatusEnum.OFF};
 
-
-  // Botones para updatear ejes
-  $("#btn-zoomYin").click(function(){
-    if(yMin + dyZoom < yMax - dyZoom){ // Solo si tiene sentido
-      yMin += dyZoom;
-      yMax -= dyZoom;
-      update_y_axis(yMin, yMax);
-    }
-  });
-  $("#btn-zoomYout").click(function(){
-    yMin -= dyZoom;
-    yMax += dyZoom;
-    update_y_axis(yMin, yMax);
-  });
-  $("#btn-zoomXdec").click(function(){
-    if(n_secs > 1){
-      n_secs -= dxRange;
-      set_segX(n_secs);
-    }
-  });
-  $("#btn-zoomXinc").click(function(){
-    n_secs += dxRange;
-    set_segX(n_secs);
-  });
-  $("#btn-moveYdown").click(function(){
-    yMin -= dyMove;
-    yMax -= dyMove;
-    update_y_axis(yMin, yMax);
-  });
-  $("#btn-moveYup").click(function(){
-    yMin += dyMove;
-    yMax += dyMove;
-    update_y_axis(yMin, yMax);
-  });
-  $("#btn-homeY").click(function(){
-    yMin = yMinHome;
-    yMax = yMaxHome;
-    update_y_axis(yMin, yMax);
-  });
 
   /**
    * Recibe un mensaje entrante
@@ -410,7 +480,7 @@ $(document).ready( function() {
     data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
 
     // Update grafico
-    update_graph();
+    graph.update_graph(data);
 
     // Pop datos hasta tener solo n_secs
     while(data[data.length-1].T - data[0].T > n_secs){
