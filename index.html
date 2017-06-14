@@ -105,6 +105,88 @@
           </div>
         </div>
       </div>
+
+      <div class="row">  <!-- Other graph (debugging) -->
+        <div class="col-md-8">
+          <div id="graph_other"> </div>
+        </div>
+        <div class="col-md-4">
+          <div class="row">
+            <div class="panel panel-primary">
+              <div class="panel-heading text-center">Streaming</div>
+              <form class="form-inline panel-conn">
+                <label> Status: </label>
+                <span id="status-text-other"> Off </span>
+                <span id="status-icon-other" class="glyphicon glyphicon-off"></span>
+              </form>
+              <form class="form panel-conn">
+                <button id="btn-start-conn-other" type="button" class="btn btn-primary">Connect</button>
+                <button id="btn-close-conn-other" type="button" class="btn btn-primary">Disconnect</button>
+              </form>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-5">
+              <div class="panel panel-primary">
+                <div class="panel-heading text-center">Legend</div>
+                <form class="panel-body">
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch0-rect-other" /> </svg>
+                  <input id="ch0-other" type="checkbox" checked> A1 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch1-rect-other" /> </svg>
+                  <input id="ch1-other" type="checkbox" checked> A2 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch2-rect-other" /> </svg>
+                  <input id="ch2-other" type="checkbox" checked> A3 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch3-rect-other" /> </svg>
+                  <input id="ch3-other" type="checkbox" checked> A4 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch4-rect-other" /> </svg>
+                  <input id="ch4-other" type="checkbox" checked> A5 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch5-rect-other" /> </svg>
+                  <input id="ch5-other" type="checkbox" checked> A6 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch6-rect-other" /> </svg>
+                  <input id="ch6-other" type="checkbox" checked> A7 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch7-rect-other" /> </svg>
+                  <input id="ch7-other" type="checkbox" checked> A8 <br>
+                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch8-rect-other" /> </svg>
+                  <input id="ch8-other" type="checkbox" checked> A9 <br>
+                </form>
+              </div>
+            </div>
+            <div class="col-md-7">
+              <div class="panel panel-primary">
+                <div class="panel-heading text-center">Graph</div>
+                <form class="form-inline panel-graph">
+                  <label> Zoom X </label>
+                  <div class="btn-group col-4">
+                    <button id="btn-zoomXdec-other" type="button" class="btn btn-primary"> - </button>
+                    <button id="btn-zoomXinc-other" type="button" class="btn btn-primary"> + </button>
+                  </div>
+                  <span id="segX-other" class="form-control-static"> 5 </span> <span> s </span>
+                </form>
+                <form class="form-inline panel-graph">
+                  <label> Zoom Y </label>
+                  <div class="btn-group">
+                    <button id="btn-zoomYout-other" type="button" class="btn btn-primary"> - </button>
+                    <button id="btn-zoomYin-other" type="button" class="btn btn-primary"> + </button>
+                  </div>
+                </form>
+                <form class="form-inline panel-graph">
+                  <label> Move Y </label>
+                  <div class="btn-group">
+                    <button id="btn-moveYdown-other" type="button" class="btn btn-primary"> - </button>
+                    <button id="btn-moveYup-other" type="button" class="btn btn-primary"> + </button>
+                  </div>
+                </form>
+                <form class="form-inline panel-graph">
+                  <label> Home Y </label>
+                  <button id="btn-homeY-other" type="button" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-home"></span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 

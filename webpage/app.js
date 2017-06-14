@@ -9,6 +9,7 @@ class Graph {
    */
   constructor(config) {
     // Save variables
+    this.secs_indicator = String(config.sec_x);
     this._update_x_axis(config.n_secs);
     this.y_min = Number(config.y_min);
     this.y_max = Number(config.y_max);
@@ -178,7 +179,7 @@ class Graph {
   _update_x_axis(segundos){
     if(segundos > 1){
       this.n_secs = Number(segundos); // HACK
-      $("#segX").text(this.n_secs.toFixed(0))
+      $(this.secs_indicator).text(this.n_secs.toFixed(0))
     }
   }
 
@@ -498,17 +499,65 @@ function init_eeg_data(){
 
 
 /**
+ * Create an array of functions that returns the channels in the debug data
+ * @param {d3.scale.linear} x range for x axis
+ * @param {d3.scale.linear} y range for y axis
+ */
+function debug_lines(x, y){
+  var lines = Array(9);
+
+  lines[0] = d3.svg.line()
+      .x(function(d) { return x(d.T); })
+      .y(function(d) { return y(d.A1); });
+  lines[1] = d3.svg.line()
+      .x(function(d) { return x(d.T); })
+      .y(function(d) { return y(d.A2); });
+  lines[2] = d3.svg.line()
+      .x(function(d) { return x(d.T); })
+      .y(function(d) { return y(d.A3); });
+  lines[3] = d3.svg.line()
+      .x(function(d) { return x(d.T); })
+      .y(function(d) { return y(d.A4); });
+  lines[4] = d3.svg.line()
+      .x(function(d) { return x(d.T); })
+      .y(function(d) { return y(d.A5); });
+  lines[5] = d3.svg.line()
+      .x(function(d) { return x(d.T); })
+      .y(function(d) { return y(d.A6); });
+  lines[6] = d3.svg.line()
+      .x(function(d) { return x(d.T); })
+      .y(function(d) { return y(d.A7); });
+  lines[7] = d3.svg.line()
+      .x(function(d) { return x(d.T); })
+      .y(function(d) { return y(d.A8); });
+  lines[8] = d3.svg.line()
+      .x(function(d) { return x(d.T); })
+      .y(function(d) { return y(d.A9); });
+
+  return lines;
+};
+
+/**
+ * Initialize an empty array that holds data
+ */
+function init_debug_data(){
+  var data = new Array(1);
+  data[0] = {T: 0, A1: 0, A2: 0, A3: 0, A4: 0, A5: 0, A6: 0, A7: 0, A8: 0, A9: 0};
+  return data;
+}
+
+
+/**
  * Main process
  */
 $(document).ready( function() {
-  // TODO: Hacer que clase Graph cree los elementos en html, que reciba solo los containers 
+  // TODO: Hacer que clase Graph cree los elementos en html, que reciba solo los containers
   // TODO: buscar header y footer bootstrap
 
 
 
-  // Data
+  // EEG Data
   var data = init_eeg_data();
-
   var graph = new Graph({
     container: "#graph_container",
     data: data,
@@ -523,6 +572,7 @@ $(document).ready( function() {
     y_zoom_btn: ["#btn-zoomYin", "#btn-zoomYout"],
     y_move_btn: ["#btn-moveYdown", "#btn-moveYup"],
     y_home_btn: "#btn-homeY",
+    sec_x: "#segX",
 
     width: 700,
     height: 400,
@@ -535,8 +585,6 @@ $(document).ready( function() {
     dy_zoom: 100,
     dy_move: 50
     });
-
-
   /**
    * Recibe un mensaje entrante de eeg
    */
@@ -555,7 +603,6 @@ $(document).ready( function() {
     graph.update_graph(data); // Update grafico
   };
 
-
   // EEG connection
   var eeg_conn = new Connection({
     url: "http://localhost:8889/data/muse",
@@ -569,8 +616,76 @@ $(document).ready( function() {
   $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_eeg_data(); });
 
 
+
+
+  // Other Data
+  var data_other = init_debug_data();
+  var graph_other = new Graph({
+    container: "#graph_other",
+    data: data_other,
+    lines: debug_lines,
+    n_channels: 9,
+    title: "Other",
+    colors: ["black", "red", "blue", "green", "cyan", "gold", "brown", "coral", "indigo"],
+
+    legend_ticks: ["#ch0-other", "#ch1-other", "#ch2-other", "#ch3-other", "#ch4-other", "#ch5-other", "#ch6-other", "#ch7-other", "#ch8-other"],
+    legend_rect: ["#ch0-rect-other", "#ch1-rect-other", "#ch2-rect-other", "#ch3-rect-other", "#ch4-rect-other", "#ch5-rect-other", "#ch6-rect-other", "#ch7-rect-other", "#ch8-rect-other"],
+    x_zoom_btn: ["#btn-zoomXdec-other", "#btn-zoomXinc-other"],
+    y_zoom_btn: ["#btn-zoomYin-other", "#btn-zoomYout-other"],
+    y_move_btn: ["#btn-moveYdown-other", "#btn-moveYup-other"],
+    y_home_btn: "#btn-homeY-other",
+    sec_x: "#segX-other",
+
+    width: 700,
+    height: 400,
+    y_min: -1000,
+    y_max: 1000,
+    x_ticks: 5,
+    y_ticks: 5,
+    n_secs: 5,
+    dx_zoom: 1,
+    dy_zoom: 100,
+    dy_move: 50
+    });
+
+  /**
+   * Recibe un mensaje entrante de eeg
+   */
+  function receive_debug(e) {
+    var arr = e.data.split(",");
+    var t = parseFloat(arr[0]); // tiempo
+    var a1 = parseFloat(arr[1]);
+    var a2 = parseFloat(arr[2]);
+    var a3 = parseFloat(arr[3]);
+    var a4 = parseFloat(arr[4]);
+    var a5 = parseFloat(arr[5]);
+    var a6 = parseFloat(arr[6]);
+    var a7 = parseFloat(arr[7]);
+    var a8 = parseFloat(arr[8]);
+    var a9 = parseFloat(arr[9]);
+
+    // Push datos
+    data_other.push({T: t, A1: a1, A2: a2, A3: a3, A4: a4, A5: a5, A6: a6, A7: a7, A8: a8, A9: a9});
+
+    graph_other.update_graph(data_other); // Update grafico
+  };
+
+  // Other connection
+  var other_conn = new Connection({
+    url: "http://localhost:8889/data/other",
+    status_text: "#status-text-other",
+    status_icon: "#status-icon-other",
+    recv_msg: receive_debug
+    });
+
+  // Botones iniciar/cerrar conexion
+  $("#btn-start-conn-other").click(function(){ data_other = init_debug_data(); other_conn.start_conn() });
+  $("#btn-close-conn-other").click(function(){ other_conn.close_conn(); data_other = init_debug_data(); });
+
+
   // Conectarse al server
-  eeg_conn.start_conn(receive_eeg)
+  eeg_conn.start_conn()
+  other_conn.start_conn()
 
   console.log("All set");
 });
