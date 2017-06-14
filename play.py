@@ -79,8 +79,6 @@ class DataContainer(object):
 
             yield from self._yielder(t, t_init, d, n_data)
 
-
-
 class EEGContainer(DataContainer):
     """Contains the eeg data produced by Muse"""
     def get_running_time(self):
@@ -119,7 +117,6 @@ class EEGContainer(DataContainer):
 
         # Guardar a csv
         save_data(res, fname, subfolder, suffix)
-
 
 class EEGyielder(object):
     """Yield functions to stream the data in the desired way.
