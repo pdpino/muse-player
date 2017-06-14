@@ -7,15 +7,32 @@ class Graph {
   /**
    * Intialize
    */
-  constructor(container, w, h, title, y_min, y_max, x_ticks, y_ticks, n_secs) {
+  constructor(config) {
     // Save variables
-    this._update_x_axis(n_secs);
-    this.y_min = Number(y_min);
-    this.y_max = Number(y_max);
-    this.y_min_home = Number(y_min);
-    this.y_max_home = Number(y_max);
+    this._update_x_axis(config.n_secs);
+    this.y_min = Number(config.y_min);
+    this.y_max = Number(config.y_max);
+    this.y_min_home = Number(config.y_min);
+    this.y_max_home = Number(config.y_max);
 
-    this.create_empty_graph(container, w, h, title, x_ticks, y_ticks);
+    // Create graph
+    this._create_empty_graph(config.container, config.width, config.height, config.title, config.x_ticks, config.y_ticks);
+
+    // Set the line functions
+    this._set_lines(config.lines);
+
+    // Init paths, bools and color for each channel
+    this._init_channels(config.data, config.n_channels, config.colors);
+
+    // Set parameters to update the axis
+    this._set_axis_params(config.dx_zoom, config.dy_zoom, config.dy_move);
+
+    // Set the legend, and the proper events
+    this._set_legend(config.legend_ticks, config.legend_rect);
+
+    // Buttons to update axis
+    this._add_events_x_axis(config.x_zoom_btn[0], config.x_zoom_btn[1]);
+    this._add_events_y_axis(config.y_zoom_btn, config.y_move_btn, config.y_home_btn);
   }
 
 
@@ -31,7 +48,7 @@ class Graph {
    * @param {Number} y_ticks
    * @param {Number} n_secs Amount of seconds to plot in the x axis
    */
-  create_empty_graph(container, w, h, title, x_ticks, y_ticks){
+  _create_empty_graph(container, w, h, title, x_ticks, y_ticks){
     // Margin
     this.margin = {top: 40, right: 10, bottom: 30, left: 60};
     this.width = w - this.margin.left - this.margin.right;
@@ -70,7 +87,7 @@ class Graph {
 
     // Titulo
     this.svg.append("text")
-        .attr("id", "chart_title")
+        .attr("id", "graph_title")
         .attr("x", (this.width / 2))
         .attr("y", 0 - (this.margin.top / 2))
         .attr("text-anchor", "middle")
@@ -81,15 +98,16 @@ class Graph {
    * Set
    * @param {function} line_function function that return an array of line functions
    */
-  set_lines(line_function){
+  _set_lines(line_function){
     this.lines = line_function(this.x_range, this.y_range);
   }
 
   /**
    * Init the paths in the graph and an array of bools to show the lines
    */
-  init_channels(data, n_channels, colors){
-    this.n_channels = Number(n_channels);
+  _init_channels(data, n_channels, colors){
+    this.n_channels = Number(n_channels); //HACK
+    this.colors = colors; // REVIEW: copy?
 
     // Create path and bools for each channel
     this.paths = Array(n_channels); // Lines in svg
@@ -109,22 +127,38 @@ class Graph {
   }
 
   /**
+   * Paint the squares in the legend
+   */
+  _set_legend(ids_tick, ids_rect){
+    if(ids_rect.length < this.n_channels || ids_tick.length < this.n_channels){
+      return;
+    }
+
+    var graph = this;
+
+    // Paint colors
+    for(var i=0;i<this.n_channels;i++){
+      d3.select(ids_rect[i]).style("fill", graph.colors[i]);
+    }
+
+    // Show/hide events
+    ids_tick.forEach(function(t, i){
+      $(t).click( function(){
+        graph.plot_bools[i] = this.checked;
+        graph.paths[i].style("opacity", this.checked ? 1 : 0);
+      });
+    });
+
+  }
+
+  /**
    * Set amounts to update the axiss
    */
-  set_axis_params(dx_zoom, dy_zoom, dy_move){
+  _set_axis_params(dx_zoom, dy_zoom, dy_move){
     this.dx_zoom = Number(dx_zoom); // HACK: copy by value
     this.dy_zoom = Number(dy_zoom);
     this.dy_move = Number(dy_move);
   }
-
-  /**
-   * Show/Hide channels
-   */
-  toggle_show_path(i, checked){
-    this.plot_bools[i] = checked;
-    this.paths[i].style("opacity", checked ? 1 : 0);
-  }
-
 
   /**
    * Update the y axis
@@ -137,6 +171,51 @@ class Graph {
       this.svg.select(".y.axis").call(this.y_axis); // update svg
     }
   }
+
+  /**
+   *
+   */
+  _update_x_axis(segundos){
+    if(segundos > 1){
+      this.n_secs = Number(segundos); // HACK
+      $("#segX").text(this.n_secs.toFixed(0))
+    }
+  }
+
+  /**
+   * Connect the x axis buttons with the corresponding events
+   */
+  _add_events_x_axis(btn_dec, btn_inc){
+    var graph = this;
+    $(btn_dec).click(function(){ graph.zoom_x_axis(false); });
+    $(btn_inc).click(function(){ graph.zoom_x_axis(true); });
+  }
+
+  /**
+   * Connect the y axis buttons with the corresponding events
+   */
+  _add_events_y_axis(btns_zoom, btns_move, btn_home){
+    var graph = this;
+    $(btns_zoom[0]).click(function(){ graph.zoom_y_axis(false); });
+    $(btns_zoom[1]).click(function(){ graph.zoom_y_axis(true); });
+    $(btns_move[0]).click(function(){ graph.move_y_axis(false); });
+    $(btns_move[1]).click(function(){ graph.move_y_axis(true); });
+    $(btn_home).click(function(){ graph.home_y_axis(); });
+  }
+
+  /**
+   * Update the line in the graph, use when updated the data
+   */
+  _update_graph_line(data, path, line, plot_ch){
+    if(plot_ch){
+      path.attr("d", line(data))
+          .attr("transform", null)
+        .transition()
+          .duration(1000)
+          .ease("linear");
+    }
+  }
+
 
   /**
    * Zoom the y axis
@@ -195,17 +274,6 @@ class Graph {
     this._update_y_axis(y_min_new, y_max_new);
   }
 
-
-  /**
-   *
-   */
-  _update_x_axis(segundos){
-    if(segundos > 1){
-      this.n_secs = Number(segundos); // HACK
-      $("#segX").text(this.n_secs.toFixed(0))
-    }
-  }
-
   /**
    *
    * @param {bool} increase increase or decrease the amount of seconds shown
@@ -220,21 +288,6 @@ class Graph {
     }
     this._update_x_axis(this.n_secs + sign*this.dx_zoom);
   }
-
-
-  /**
-   * Update the line in the graph, use when updated the data
-   */
-  _update_graph_line(data, path, line, plot_ch){
-    if(plot_ch){
-      path.attr("d", line(data))
-          .attr("transform", null)
-        .transition()
-          .duration(1000)
-          .ease("linear");
-    }
-  }
-
 
   /**
    * Update all the lines in the graph
@@ -260,6 +313,150 @@ class Graph {
 
 }
 
+
+var StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
+class Connection{
+  /**
+   *
+   * @param {String} url url to connect to
+   * @param {String} status_text HTML id of the text of the connection message
+   * @param {String} status_icon HTML id of the icon of the connection message
+   * @param {function} recv_msg Function to connect to the onmessage event
+   */
+  constructor(config){
+    // URL
+    this.url = config.url;
+
+    // Status
+    this.status_text = config.status_text;
+    this.status_icon = config.status_icon;
+    this._set_status(StatusEnum.OFF);
+
+    // Stream
+    this.stream = null;
+
+    // Receive message function
+    this.recv_msg = config.recv_msg;
+  }
+
+  /**
+   * Return a bool
+   */
+  _is_connecting(){
+    return this.status === StatusEnum.CONNECTING;
+  }
+
+  /**
+   * Return a bool
+   */
+  _is_disconnected(){
+    return this.status === StatusEnum.OFF || this.status === StatusEnum.DISCONNECTED;
+  }
+
+
+  /**
+   * Set the status of the connection.
+   * Set a number in the conn object, an icon and a text in the page
+   */
+  _set_status(status){
+    var text = "";
+    var icon = "";
+    var color = "";
+
+    this.status = status;
+
+    switch (status) {
+      case StatusEnum.OFF:
+        text = "Off";
+        icon = "off";
+        color = "black";
+        break;
+      case StatusEnum.CONNECTING:
+        text = "Connecting";
+        icon = "hourglass"; //Reloj de arena
+        color = "orange";
+        break;
+      case StatusEnum.CONNECTED:
+        text = "Connected";
+        icon = "ok"; // Ticket
+        color = "green";
+        break;
+      case StatusEnum.DISCONNECTED:
+        text = "Disconnected";
+        icon = "remove"; // Equis
+        color = "red";
+        break;
+      default:
+        console.log("Status not recognized: ", status);
+        return;
+    }
+
+    $(this.status_text).text(text);
+    $(this.status_text).css("color", color);
+    $(this.status_icon).attr("class", "glyphicon glyphicon-".concat(icon));
+  }
+
+
+  /**
+  * Close the connection
+  */
+  close_conn(){
+    if(this._is_disconnected()){ // Ya esta desconectado
+      return;
+    }
+
+    if(this.stream !== null){
+      if(this.stream.readyState === 2){ // Esta closed
+        //States. 0: connecting, 1: ready, 2: closed
+        this._set_status(StatusEnum.DISCONNECTED);
+        return;
+      }
+      this.stream.close();
+    }
+
+    this._set_status(StatusEnum.DISCONNECTED);
+    console.log("Connection closed");
+  }
+
+  /**
+   * Start a connection
+   */
+  start_conn(){
+    if(!this._is_disconnected()){ // Esta conectado o conectando
+      return;
+    }
+
+    if(this.stream !== null){
+      if(this.stream.readyState === 1){ //States. 0: connecting, 1: ready, 2: closed
+        this._set_status(StatusEnum.CONNECTED);
+        return;
+      }
+    }
+
+    var conn = this;
+    this._set_status(StatusEnum.CONNECTING);
+    this.stream = new EventSource(this.url); // Conectar por url
+
+    // Conectar eventos
+    this.stream.onopen = function (e) {
+      conn._set_status(StatusEnum.CONNECTED);
+      console.log("Connected with server");
+    };
+    this.stream.onmessage = this.recv_msg;
+    this.stream.onerror = function (e) {
+      if(conn._is_connecting()){
+        console.log("Can't connect to the server");
+        // TODO: send alert to the client
+      }
+      else{
+        console.log("Error in the server connection");
+      }
+      conn.close_conn();
+    };
+
+  }
+
+}
 
 
 /**
@@ -289,13 +486,10 @@ function electrode_lines(x, y){
   return lines;
 };
 
-
-
-/* Funciones para datos */
 /**
- * Initialize an empty array that behaves as data
+ * Initialize an empty array that holds eeg data
  */
-function initialize_data(){
+function init_eeg_data(){
   var data = new Array(1);
   data[0] = {T: 0, CH1: 0, CH2: 0, CH3: 0, CH4: 0, CH5: 0};
   return data;
@@ -303,177 +497,50 @@ function initialize_data(){
 
 
 
-/* Funciones para connection */
-var StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
-function is_connecting(conn){
-  return conn.status === StatusEnum.CONNECTING;
-}
-
-function is_disconnected(conn){
-  return conn.status === StatusEnum.OFF || conn.status === StatusEnum.DISCONNECTED;
-}
-
-/**
- * Set the status of the connection.
- * Set a number in the conn object, an icon and a text in the page
- */
-function set_status(conn, status){
-  var text = "";
-  var icon = "";
-  var color = "";
-
-  conn.status = status;
-
-  switch (status) {
-    case StatusEnum.OFF:
-      text = "Off";
-      icon = "off";
-      color = "black";
-      break;
-    case StatusEnum.CONNECTING:
-      text = "Connecting";
-      icon = "hourglass"; //Reloj de arena
-      color = "orange";
-      break;
-    case StatusEnum.CONNECTED:
-      text = "Connected";
-      icon = "ok"; // Ticket
-      color = "green";
-      break;
-    case StatusEnum.DISCONNECTED:
-      text = "Disconnected";
-      icon = "remove"; // Equis
-      color = "red";
-      break;
-    default:
-      console.log("Status not recognized: ", status);
-      return;
-  }
-
-  $("#status-text").text(text);
-  $("#status-text").css("color", color);
-  $("#status-icon").attr("class", "glyphicon glyphicon-".concat(icon));
-}
-
-/**
-* Close a connection
-*/
-function close_conn(conn, arr_data){
-  if(is_disconnected(conn)){ // Ya esta desconectado
-    return;
-  }
-
-  if(conn.stream !== null){
-    if(conn.stream.readyState === 2){ // Esta closed
-      //States. 0: connecting, 1: ready, 2: closed
-      set_status(conn, StatusEnum.DISCONNECTED);
-      return;
-    }
-    conn.stream.close();
-  }
-
-  set_status(conn, StatusEnum.DISCONNECTED);
-  arr_data = initialize_data(); // reiniciar la data
-  console.log("Connection closed");
-  return;
-}
-
-/**
- * Start a connection
- */
-function start_conn(url, conn, arr_data, recv_msg){
-  if(!is_disconnected(conn)){ // Esta conectado o conectando
-    return;
-  }
-  if(conn.stream !== null){
-    if(conn.stream.readyState === 1){ // Esta conectado
-      //States. 0: connecting, 1: ready, 2: closed
-      set_status(conn, StatusEnum.CONNECTED);
-      return;
-    }
-  }
-
-  conn.stream = new EventSource(url); // Conectar por url
-
-  set_status(conn, StatusEnum.CONNECTING);
-
-  // Conectar eventos
-  conn.stream.onopen = function (e) {
-    set_status(conn, StatusEnum.CONNECTED);
-    arr_data = initialize_data(); // reiniciar la data
-    console.log("Connected with server");
-  };
-  conn.stream.onmessage = recv_msg;
-  conn.stream.onerror = function (e) {
-    if(is_connecting(conn)){
-      console.log("Can't connect to the server");
-      // TODO: send alert to the client
-    }
-    else{
-      console.log("Error in the server connection");
-    }
-    close_conn(conn, arr_data);
-  };
-
-  return;
-}
-
-
-
-
 /**
  * Main process
  */
 $(document).ready( function() {
+  // TODO: Hacer que clase Graph cree los elementos en html, que reciba solo los containers 
   // TODO: buscar header y footer bootstrap
 
-  // Not important:
-  // TODO: estandarizar nombres de funciones y variables: minusMayus vs _; graph vs chart
+
 
   // Data
-  var n_channels = 5;
-  var data = initialize_data();
+  var data = init_eeg_data();
 
+  var graph = new Graph({
+    container: "#graph_container",
+    data: data,
+    lines: electrode_lines,
+    n_channels: 5,
+    title: "Electrodes",
+    colors: ["black", "red", "blue", "green", "cyan"],
+    // FIXME: que el metodo mismo cree la leyenda
+    legend_ticks: ["#ch0", "#ch1", "#ch2", "#ch3", "#ch4"],
+    legend_rect: ["#ch0-rect", "#ch1-rect", "#ch2-rect", "#ch3-rect", "#ch4-rect"],
+    x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
+    y_zoom_btn: ["#btn-zoomYin", "#btn-zoomYout"],
+    y_move_btn: ["#btn-moveYdown", "#btn-moveYup"],
+    y_home_btn: "#btn-homeY",
 
-  var colors = ["black", "red", "blue", "green", "cyan"];
-  var graph = new Graph("#chart_container", 700, 400, "Electrodes", -1000, 1000, 5, 5, 5);
-  graph.set_lines(electrode_lines);
-  graph.init_channels(data, n_channels, colors);
-  graph.set_axis_params(1, 100, 50); // dx_zoom, dy_zoom, dy_move
-
-
-  // Pintar leyenda
-  for(var i=0;i<n_channels;i++){
-    var id_element = "#ch".concat(String(i+1), "-rect");
-    d3.select(id_element).style("fill", colors[i]);
-  }
-
-  // Show/hide events
-  for(var i=0;i<n_channels;i++){
-    var id_element = "#ch".concat(String(i+1));
-    $(id_element).click(function(){ graph.toggle_show_path(i, this.checked); });
-  }
-
-  // Botones para updatear ejes
-  $("#btn-zoomYin").click(function(){ graph.zoom_y_axis(false); });
-  $("#btn-zoomYout").click(function(){ graph.zoom_y_axis(true); });
-  $("#btn-moveYdown").click(function(){ graph.move_y_axis(false); });
-  $("#btn-moveYup").click(function(){ graph.move_y_axis(true); });
-  $("#btn-homeY").click(function(){ graph.home_y_axis(); });
-  $("#btn-zoomXdec").click(function(){ graph.zoom_x_axis(false); });
-  $("#btn-zoomXinc").click(function(){ graph.zoom_x_axis(true); });
-
-
-
-  // Conexion: con server (python) usando Event Source
-  var dir = 'http://localhost:8889/data/muse';
-  var conn = {stream: null, status: StatusEnum.OFF};
+    width: 700,
+    height: 400,
+    y_min: -1000,
+    y_max: 1000,
+    x_ticks: 5,
+    y_ticks: 5,
+    n_secs: 5,
+    dx_zoom: 1,
+    dy_zoom: 100,
+    dy_move: 50
+    });
 
 
   /**
-   * Recibe un mensaje entrante
+   * Recibe un mensaje entrante de eeg
    */
-  function receive_msg(e) {
+  function receive_eeg(e) {
     var arr = e.data.split(",");
     var t = parseFloat(arr[0]); // tiempo
     var ch1 = parseFloat(arr[1]);
@@ -488,23 +555,22 @@ $(document).ready( function() {
     graph.update_graph(data); // Update grafico
   };
 
-  // Botones iniciar/cerrar conexion
-  $("#btn-start-conn").click(function(){
-    data = initialize_data(); // Reiniciar data
-    start_conn(dir, conn, data, receive_msg)
-  });
-  $("#btn-close-conn").click(function(){
-    close_conn(conn, data);
-  });
 
-  // $("#btn-debug").click(function(){
-  //   $("#status-text").text("hola");
-  //   // document.getElementById("status-text").innerHTML="newtext";
-  // });
+  // EEG connection
+  var eeg_conn = new Connection({
+    url: "http://localhost:8889/data/muse",
+    status_text: "#status-text", //FIXME: que la clase cree estos
+    status_icon: "#status-icon",
+    recv_msg: receive_eeg
+    });
+
+  // Botones iniciar/cerrar conexion
+  $("#btn-start-conn").click(function(){ data = init_eeg_data(); eeg_conn.start_conn() });
+  $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_eeg_data(); });
 
 
   // Conectarse al server
-  start_conn(dir, conn, data, receive_msg)
+  eeg_conn.start_conn(receive_eeg)
 
   console.log("All set");
 });
