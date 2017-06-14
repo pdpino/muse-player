@@ -81,7 +81,7 @@ class Muse():
         try:
             self.device = self.adapter.connect(self.address)
         except Exception as e:
-            return 1 #Error # You may want to handle it
+            raise(ConnectionError("Can't connect to Muse headband"))
 
 
         # Subscribe to messages
@@ -107,7 +107,7 @@ class Muse():
         if not preset is None:
             self._set_preset(preset)
 
-        return 0 #Success
+
 
     def _write_cmd(self, cmd):
         """Wrapper to write a command to the Muse device.
@@ -243,7 +243,7 @@ class Muse():
             # affect as timestamps the first timestamps - 12 sample
             timestamps = np.arange(-12, 0) / 256.
             timestamps += np.min(self.timestamps)
-            self.callback(self.data, timestamps)
+            self.callback(timestamps, self.data)
             self._init_sample()
 
 
