@@ -325,6 +325,9 @@ class Connection{
    * @param {function} recv_msg Function to connect to the onmessage event
    */
   constructor(config){
+    // Name
+    this.name = config.name;
+
     // URL
     this.url = config.url;
 
@@ -416,7 +419,7 @@ class Connection{
     }
 
     this._set_status(StatusEnum.DISCONNECTED);
-    console.log("Connection closed");
+    console.log("Connection closed with", this.name);
   }
 
   /**
@@ -441,16 +444,16 @@ class Connection{
     // Conectar eventos
     this.stream.onopen = function (e) {
       conn._set_status(StatusEnum.CONNECTED);
-      console.log("Connected with server");
+      console.log("Connected:", conn.name);
     };
     this.stream.onmessage = this.recv_msg;
     this.stream.onerror = function (e) {
       if(conn._is_connecting()){
-        console.log("Can't connect to the server");
+        console.log("Can't connect to:", conn.name);
         // TODO: send alert to the client
       }
       else{
-        console.log("Error in the server connection");
+        console.log("Error in the connection", conn.name);
       }
       conn.close_conn();
     };
@@ -557,64 +560,66 @@ $(document).ready( function() {
 
 
   // EEG Data
-  var data = init_eeg_data();
-  var graph = new Graph({
-    container: "#graph_container",
-    data: data,
-    lines: electrode_lines,
-    n_channels: 5,
-    title: "Electrodes",
-    colors: ["black", "red", "blue", "green", "cyan"],
-    // FIXME: que el metodo mismo cree la leyenda
-    legend_ticks: ["#ch0", "#ch1", "#ch2", "#ch3", "#ch4"],
-    legend_rect: ["#ch0-rect", "#ch1-rect", "#ch2-rect", "#ch3-rect", "#ch4-rect"],
-    x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
-    y_zoom_btn: ["#btn-zoomYin", "#btn-zoomYout"],
-    y_move_btn: ["#btn-moveYdown", "#btn-moveYup"],
-    y_home_btn: "#btn-homeY",
-    sec_x: "#segX",
-
-    width: 700,
-    height: 400,
-    y_min: -1000,
-    y_max: 1000,
-    x_ticks: 5,
-    y_ticks: 5,
-    n_secs: 5,
-    dx_zoom: 1,
-    dy_zoom: 100,
-    dy_move: 50
-    });
-  /**
-   * Recibe un mensaje entrante de eeg
-   */
-  function receive_eeg(e) {
-    var arr = e.data.split(",");
-    var t = parseFloat(arr[0]); // tiempo
-    var ch1 = parseFloat(arr[1]);
-    var ch2 = parseFloat(arr[2]);
-    var ch3 = parseFloat(arr[3]);
-    var ch4 = parseFloat(arr[4]);
-    var ch5 = parseFloat(arr[5]);
-
-    // Push datos
-    data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
-
-    graph.update_graph(data); // Update grafico
-  };
-
-  // EEG connection
-  var eeg_conn = new Connection({
-    url: "http://localhost:8889/data/muse",
-    status_text: "#status-text", //FIXME: que la clase cree estos
-    status_icon: "#status-icon",
-    recv_msg: receive_eeg
-    });
-
-  // Botones iniciar/cerrar conexion
-  $("#btn-start-conn").click(function(){ data = init_eeg_data(); eeg_conn.start_conn() });
-  $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_eeg_data(); });
-
+  //
+  // var data = init_eeg_data();
+  // var graph = new Graph({
+  //   container: "#graph_container",
+  //   data: data,
+  //   lines: electrode_lines,
+  //   n_channels: 5,
+  //   title: "Electrodes",
+  //   colors: ["black", "red", "blue", "green", "cyan"],
+  //   // FIXME: que el metodo mismo cree la leyenda
+  //   legend_ticks: ["#ch0", "#ch1", "#ch2", "#ch3", "#ch4"],
+  //   legend_rect: ["#ch0-rect", "#ch1-rect", "#ch2-rect", "#ch3-rect", "#ch4-rect"],
+  //   x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
+  //   y_zoom_btn: ["#btn-zoomYin", "#btn-zoomYout"],
+  //   y_move_btn: ["#btn-moveYdown", "#btn-moveYup"],
+  //   y_home_btn: "#btn-homeY",
+  //   sec_x: "#segX",
+  //
+  //   width: 700,
+  //   height: 400,
+  //   y_min: -1000,
+  //   y_max: 1000,
+  //   x_ticks: 5,
+  //   y_ticks: 5,
+  //   n_secs: 5,
+  //   dx_zoom: 1, // FIXME: que clase calcule esto
+  //   dy_zoom: 100,
+  //   dy_move: 50
+  //   });
+  // /**
+  //  * Recibe un mensaje entrante de eeg
+  //  */
+  // function receive_eeg(e) {
+  //   var arr = e.data.split(",");
+  //   var t = parseFloat(arr[0]); // tiempo
+  //   var ch1 = parseFloat(arr[1]);
+  //   var ch2 = parseFloat(arr[2]);
+  //   var ch3 = parseFloat(arr[3]);
+  //   var ch4 = parseFloat(arr[4]);
+  //   var ch5 = parseFloat(arr[5]);
+  //
+  //   // Push datos
+  //   data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
+  //
+  //   graph.update_graph(data); // Update grafico
+  // };
+  //
+  // // EEG connection
+  // var eeg_conn = new Connection({
+  //   name: "eeg data",
+  //   url: "http://localhost:8889/data/muse",
+  //   status_text: "#status-text", //FIXME: que la clase cree estos
+  //   status_icon: "#status-icon",
+  //   recv_msg: receive_eeg
+  //   });
+  //
+  // // Botones iniciar/cerrar conexion
+  // $("#btn-start-conn").click(function(){ data = init_eeg_data(); eeg_conn.start_conn() });
+  // $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_eeg_data(); });
+  //
 
 
 
@@ -644,8 +649,8 @@ $(document).ready( function() {
     y_ticks: 5,
     n_secs: 5,
     dx_zoom: 1,
-    dy_zoom: 100,
-    dy_move: 50
+    dy_zoom: 1000,
+    dy_move: 100
     });
 
   /**
@@ -672,6 +677,7 @@ $(document).ready( function() {
 
   // Other connection
   var other_conn = new Connection({
+    name: "other data",
     url: "http://localhost:8889/data/other",
     status_text: "#status-text-other",
     status_icon: "#status-icon-other",
@@ -684,7 +690,7 @@ $(document).ready( function() {
 
 
   // Conectarse al server
-  eeg_conn.start_conn()
+  // eeg_conn.start_conn()
   other_conn.start_conn()
 
   console.log("All set");

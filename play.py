@@ -30,7 +30,10 @@ import basic
 class DataContainer(object):
     """Contains the data produced by Muse, gives it to Flask to stream it"""
 
-    def __init__(self, maxsize=10, yield_function=None):
+    def __init__(self, name="", maxsize=10, yield_function=None):
+        """Initialize."""
+        self.name = name
+
         # All the data
         self._full_time = []
         self._full_data = []
@@ -43,7 +46,6 @@ class DataContainer(object):
         # Yielder
         self._yielder = yield_function
 
-    """Stream methods"""
     def incoming_data(self, timestamps, data):
         """Process the incoming data."""
         # Add to full lists
@@ -55,8 +57,12 @@ class DataContainer(object):
             self._q_time.append(timestamps)
             self._q_data.append(data)
 
-    def data_generator(self, n_data):
-        """Generator to stream the data."""
+    def data_generator(self, n_data=None):
+        """Generator to stream the data.
+
+        Parameters:
+        n_data -- parameter passed to the yielder"""
+
         if self._yielder is None:
             basic.perror("Can't stream the data without a yielder")
             return
@@ -118,7 +124,7 @@ class EEGContainer(DataContainer):
         # Guardar a csv
         save_data(res, fname, subfolder, suffix)
 
-class EEGyielder(object):
+class EEGYielder(object):
     """Yield functions to stream the data in the desired way.
 
     Assumes that the shape of the data is:
@@ -132,7 +138,7 @@ class EEGyielder(object):
     @staticmethod
     def _get_data_mean(t, t_init, data, dummy=None):
         """Yield the mean in the 12 samples for each channel separately."""
-        yield EEGyielder.yield_string.format( \
+        yield EEGYielder.yield_string.format( \
                 t.mean() - t_init, \
                 data[0].mean(), \
                 data[1].mean(), \
@@ -144,7 +150,7 @@ class EEGyielder(object):
     def _get_data_max(t, t_init, data, dummy=None):
         """Yield the max of the 12 samples for each channel separately"""
         # NOTE: use tt.max(), tt.mean()?
-        yield EEGyielder.yield_string.format( \
+        yield EEGYielder.yield_string.format( \
                 t.max() - t_init, \
                 data[0].max(), \
                 data[1].max(), \
@@ -155,7 +161,7 @@ class EEGyielder(object):
     @staticmethod
     def _get_data_min(t, t_init, data, dummy=None):
         """Yield the min of the 12 samples for each channel separately"""
-        yield EEGyielder.yield_string.format( \
+        yield EEGYielder.yield_string.format( \
                 t.min() - t_init, \
                 data[0].min(), \
                 data[1].min(), \
@@ -168,7 +174,7 @@ class EEGyielder(object):
         """Yield n out of the 12 samples."""
         for i in range(n):
             tt = t[i] - t_init
-            yield EEGyielder.yield_string.format(
+            yield EEGYielder.yield_string.format(
                 tt, \
                 data[0][i], \
                 data[1][i], \
@@ -181,19 +187,37 @@ class EEGyielder(object):
         """Return the selected yielder function"""
         # Available yielders
         yielders = {
-            "mean": EEGyielder._get_data_mean,
-            "min": EEGyielder._get_data_min,
-            "max": EEGyielder._get_data_max,
-            "n": EEGyielder._get_data_n
+            "mean": EEGYielder._get_data_mean,
+            "min": EEGYielder._get_data_min,
+            "max": EEGYielder._get_data_max,
+            "n": EEGYielder._get_data_n
             }
 
         try:
             yielder = yielders[mode]
         except KeyError:
             basic.perror("yielder: {} not found".format(mode), force_continue=True)
-            yielder = EEGyielder._get_data_n # Default
+            yielder = EEGYielder._get_data_n # Default
 
         return yielder
+
+class DataYielder(object):
+    """Yield functions to stream the data in the desired way."""
+
+    # String para hacer yield
+    yield_string = "data: {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n\n"
+
+    @staticmethod
+    def get_data(t, t_init, data, dummy=None):
+        """Yield out 9 points."""
+        if len(data) < 9:
+            while len(data) < 9:
+                data.append(0)
+        elif len(data) > 9:
+            data = data[:9]
+
+        yield DataYielder.yield_string.format(t - t_init, *data)
+
 
 
 def parse_args():
@@ -266,10 +290,11 @@ def main():
     args = parse_args()
 
     # Container for the incoming data
-    eeg_container = EEGContainer(yield_function=EEGyielder.get_yielder(args.stream_mode))
+    eeg_container = EEGContainer(name="eeg", yield_function=EEGYielder.get_yielder(args.stream_mode))
+    data_container = DataContainer(name="other", yield_function=DataYielder.get_data)
 
     # Conectar muse
-    muse = Muse(args.address, eeg_container.incoming_data, norm_factor=args.nfactor, norm_sub=args.nsub)
+    muse = Muse(args.address, eeg_container.incoming_data, data_container.incoming_data, norm_factor=args.nfactor, norm_sub=args.nsub)
     muse.connect(interface=args.interface)
 
     # Init Flask
@@ -284,10 +309,16 @@ def main():
 
 
     # Connect EEGdata
-    @app.route(args.url)
-    def stream_eeg():
-        """Return a generator to stream the data """
-        return Response(eeg_container.data_generator(args.stream_n), mimetype="text/event-stream")
+    # @app.route(args.url)
+    # def stream_eeg():
+    #     """Stream the eeg data."""
+    #     return Response(eeg_container.data_generator(args.stream_n), mimetype="text/event-stream")
+
+    # Connect Other data
+    @app.route('/data/other')
+    def stream_other():
+        """Stream other data."""
+        return Response(data_container.data_generator(), mimetype="text/event-stream")
 
 
     ## Iniciar
@@ -308,6 +339,15 @@ def main():
 
     # Imprimir mensajes que recibio Muse en todo el proceso
     # muse.print_msgs()
+
+    # DEBUG:
+    df = pd.DataFrame(muse.lista)
+
+    col0 = df.columns[0]
+    df[col0] = df[col0] - df[col0][0] # Normalizar tiempo
+    df.to_csv("debug2.csv", index=False, header=False) # Guardar a archivo
+
+
 
     # Print running time
     print("\tReceived data for {:.2f} seconds".format(eeg_container.get_running_time()))

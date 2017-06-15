@@ -1,5 +1,6 @@
 from time import time, sleep
 from sys import platform
+import struct
 import numpy as np
 import bitstring
 import pygatt
@@ -9,7 +10,7 @@ import threading
 class Muse():
     """Muse 2016 headband"""
 
-    def __init__(self, address, callback, info=True, eeg=True, other=True, accelero=False,
+    def __init__(self, address, callback, callback_other, info=True, eeg=True, other=True, accelero=False,
                  giro=False, norm_factor=None, norm_sub=None):
         """Initialize
 
@@ -27,6 +28,7 @@ class Muse():
 
         self.address = address
         self.callback = callback
+        self.callback_other = callback_other
         self.info = info
         self.other = other
         self.eeg = eeg
@@ -301,26 +303,21 @@ class Muse():
 
         ### Recibe data cada 10 segundos
         ### Handle: 0x1a = 26 # Le llegan 160 bits, sera la bateria?
-        self.device.subscribe('273e000b-4c4d-454d-96be-f03bac821358',
-                              callback=self._handle_battery)
+        # self.device.subscribe('273e000b-4c4d-454d-96be-f03bac821358', callback=self._handle_battery)
 
         ### No recibe data:
         # handle 0x1d
-        # self.device.subscribe('273e0002-4c4d-454d-96be-f03bac821358',
-        #                       callback=self.handle_something)
+        # self.device.subscribe('273e0002-4c4d-454d-96be-f03bac821358', callback=self.handle_something)
 
 
         ### Recibe 4-5 veces por segundo # handle 0x11
-        # self.device.subscribe('273e0008-4c4d-454d-96be-f03bac821358',
-        #                       callback=self._handle_11)
+        # self.device.subscribe('273e0008-4c4d-454d-96be-f03bac821358', callback=self._handle_11)
 
-        ### Reciben mucha data por segundo:
-        ## ~17 x seg # handle 0x14
-        # self.device.subscribe('273e0009-4c4d-454d-96be-f03bac821358',
-        #                       callback=self._handle_14)
-        ## ~17 x seg # handle 0x17
-        # self.device.subscribe('273e000a-4c4d-454d-96be-f03bac821358',
-        #                       callback=self._handle_17)
+        ### Reciben mucha data por segundo: ## ~17 x seg
+        ## handle 0x14
+        # self.device.subscribe('273e0009-4c4d-454d-96be-f03bac821358', callback=self._handle_14)
+        ## handle 0x17
+        self.device.subscribe('273e000a-4c4d-454d-96be-f03bac821358', callback=self._handle_17)
 
 
     def _handle_battery(self, handle, data):
@@ -338,7 +335,7 @@ class Muse():
         string_hex = string_hex[4:] # Quitar tiempo
         self.lista.append([t, *string_hex, *res])
 
-        # self.callback_other(t, res)
+        self.callback_other(t, res)
 
         # print(hex(handle))
         # print("bytes: {}".format(len(data)))
@@ -353,16 +350,27 @@ class Muse():
         """ """
 
         aa = bitstring.Bits(bytes=data)
-        # pattern = "uint:16,uint:16,uint:16,uint:16,uint:16,uint:16,uint:16, \
-        #             uint:16,uint:16,uint:16"
-        pattern = "uint:16,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12\
-                    ,uint:12,uint:12,uint:12,uint:12,uint:12"
+        # pattern = "uint:16,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12, \
+        #             uint:12,uint:12,uint:12,uint:12,uint:12"
+        pattern = "uint:16,int:12,int:12,int:12,int:12,int:12,int:12,int:12, \
+                    int:12,int:12,int:12,int:12,int:12"
+
         res = aa.unpack(pattern)
 
         t = time()
-        string_hex = ''.join('{:02x}'.format(x) for x in data)
-        self.lista.append([t, string_hex, *res])
 
+        data = []
+        i = 2
+        while i < len(res):
+            data.append(res[i])
+            i += 2
+
+
+        string_hex = ''.join('{:02x}'.format(x) for x in data)
+        string_hex = string_hex[4:]
+        self.lista.append([t, *string_hex, *data])
+
+        self.callback_other(t, data)
         # print("handle: {}, {}".format(hex(handle), handle))
         # print("bytes: {}".format(len(data)))
         # print("bits: {}".format(len(aa)))
@@ -373,20 +381,44 @@ class Muse():
         #
         # print(t)
 
+    def _unpack(self, data):
+        """Try to unpack as float from 16bit, zero pad doesnt work """
+        zeros = bytearray(b"\x00\x00") # zero padding
+        nums = []
+        i = 4 # Omitir el timestamp
+        while i + 2 < len(data):
+            b = struct.unpack('f', zeros + data[i:i+2])
+            print(b)
+            nums.append(b)
+            i += 2
+
+        print(nums)
+
+        return nums
+
     def _handle_14(self, handle, data):
         """ """
 
         aa = bitstring.Bits(bytes=data)
-        # pattern = "uint:16,uint:16,uint:16,uint:16,uint:16,uint:16,uint:16, \
-        #             uint:16,uint:16,uint:16"
-        pattern = "uint:16,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,\
-                    uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
+        # pattern = "uint:16,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,\
+        #             uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
+        # pattern = "uint:16,int:12,int:12,int:12,int:12,int:12,int:12, \
+        #             int:12,int:12,int:12,int:12,int:12,int:12"
+        pattern = "uint:16,uint:16,uint:16,uint:16,uint:16,uint:16,uint:16, \
+                    uint:16,uint:16,uint:16"
         res = aa.unpack(pattern)
 
         t = time()
         string_hex = ''.join('{:02x}'.format(x) for x in data)
         string_hex = string_hex[4:] # Quitar tiempo
-        self.lista.append([t, string_hex, *res])
+        string_big = []
+        i = 0
+        while i + 4 < len(string_hex):
+            string_big.append(string_hex[i:i+4])
+            i += 4
+        self.lista.append([t, *string_big, *res])
+
+        self.callback_other(t, res[1:])
 
         # print("handle: {}, {}".format(hex(handle), handle))
         # print("bytes: {}".format(len(data)))
@@ -403,16 +435,18 @@ class Muse():
         """ """
 
         aa = bitstring.Bits(bytes=data)
-        # pattern = "uint:16,uint:16,uint:16,uint:16,uint:16,uint:16,uint:16, \
-        #             uint:16,uint:16,uint:16"
-        pattern = "uint:16,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,\
-                    uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
+        # pattern = "uint:16,int:8,int:8,int:8,int:8,int:8,int:8,int:8,int:8,int:8,\
+        #             uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
+        pattern = "uint:16,uint:16,uint:16,uint:16,uint:16,uint:16,uint:16, \
+                    uint:16,uint:16,uint:16"
         res = aa.unpack(pattern)
 
         t = time()
         string_hex = ''.join('{:02x}'.format(x) for x in data)
         string_hex = string_hex[4:] # Quitar tiempo
-        self.lista.append([t, string_hex, *res])
+        self.lista.append([t, *string_hex, *res])
+
+        self.callback_other(t, res[1:])
 
         # print("handle: {}, {}".format(hex(handle), handle))
         # print("bytes: {}".format(len(data)))
