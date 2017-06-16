@@ -8,7 +8,8 @@ class Graph {
    * Intialize
    */
   constructor(config) {
-    // Save variables
+    // Save variables // HACK
+    this.n_channels = Number(config.n_channels);
     this.secs_indicator = String(config.sec_x);
     this._update_x_axis(config.n_secs);
     this.y_min = Number(config.y_min);
@@ -20,10 +21,10 @@ class Graph {
     this._create_empty_graph(config.container, config.width, config.height, config.title, config.x_ticks, config.y_ticks);
 
     // Set the line functions
-    this._set_lines(config.lines);
+    this._set_lines();
 
     // Init paths, bools and color for each channel
-    this._init_channels(config.data, config.n_channels, config.colors);
+    this._init_channels(config.data, config.colors);
 
     // Set parameters to update the axis
     this._set_axis_params(config.dx_zoom, config.dy_zoom, config.dy_move);
@@ -96,24 +97,48 @@ class Graph {
   }
 
   /**
-   * Set
-   * @param {function} line_function function that return an array of line functions
+   * Create an array of functions that returns the channels in the data
+   * The data always come in the following format:
+   * Array of Arrays, each of the inner arrays is a moment in time, which is formed by:
+   * [t, ch1, ch2, ch3, ..., chN], where 't' is the time, and the rest are the n channels
    */
-  _set_lines(line_function){
-    this.lines = line_function(this.x_range, this.y_range);
+  _set_lines(){
+    this.lines = Array(this.n_channels);
+    this.lines.forEach(function(l, i){
+      this.lines[i] = d3.svg.line()
+        .x(function(d) { return this.x_range(d[0]); })
+        .y(function(d) { return this.y_range(d[i + 1]); });
+    });
+
+    console.log(this.lines);
+    // lines[0] = d3.svg.line()
+    //   .x(function(d) { return x(d.T); })
+    //   .y(function(d) { return y(d.CH1); });
+    // lines[1] = d3.svg.line()
+    //   .x(function(d) { return x(d.T); })
+    //   .y(function(d) { return y(d.CH2); });
+    // lines[2] = d3.svg.line()
+    //   .x(function(d) { return x(d.T); })
+    //   .y(function(d) { return y(d.CH3); });
+    // lines[3] = d3.svg.line()
+    //   .x(function(d) { return x(d.T); })
+    //   .y(function(d) { return y(d.CH4); });
+    // lines[4] = d3.svg.line()
+    //   .x(function(d) { return x(d.T); })
+    //   .y(function(d) { return y(d.CH5); });
+
   }
 
   /**
    * Init the paths in the graph and an array of bools to show the lines
    */
-  _init_channels(data, n_channels, colors){
-    this.n_channels = Number(n_channels); //HACK
+  _init_channels(data, colors){
     this.colors = colors; // REVIEW: copy?
 
     // Create path and bools for each channel
-    this.paths = Array(n_channels); // Lines in svg
-    this.plot_bools = Array(n_channels); // Bools to show each line
-    for(var i=0;i<n_channels;i++){
+    this.paths = Array(this.n_channels); // Lines in svg
+    this.plot_bools = Array(this.n_channels); // Bools to show each line
+    for(var i=0;i<this.n_channels;i++){
       this.plot_bools[i] = true; // Default: show line
 
       // Append to svg
@@ -216,6 +241,7 @@ class Graph {
           .ease("linear");
     }
   }
+
 
 
   /**
@@ -463,32 +489,7 @@ class Connection{
 }
 
 
-/**
- * Create an array of functions that returns the channels in the electrode data
- * @param {d3.scale.linear} x range for x axis
- * @param {d3.scale.linear} y range for y axis
- */
-function electrode_lines(x, y){
-  var lines = Array(5);
 
-  lines[0] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.CH1); });
-  lines[1] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.CH2); });
-  lines[2] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.CH3); });
-  lines[3] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.CH4); });
-  lines[4] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.CH5); });
-
-  return lines;
-};
 
 /**
  * Initialize an empty array that holds eeg data
@@ -506,46 +507,50 @@ function init_eeg_data(){
  * @param {d3.scale.linear} x range for x axis
  * @param {d3.scale.linear} y range for y axis
  */
-function debug_lines(x, y){
-  var lines = Array(9);
-
-  lines[0] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.A1); });
-  lines[1] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.A2); });
-  lines[2] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.A3); });
-  lines[3] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.A4); });
-  lines[4] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.A5); });
-  lines[5] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.A6); });
-  lines[6] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.A7); });
-  lines[7] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.A8); });
-  lines[8] = d3.svg.line()
-      .x(function(d) { return x(d.T); })
-      .y(function(d) { return y(d.A9); });
-
-  return lines;
-};
+// function debug_lines(x, y){
+//   var lines = Array(9);
+//
+//   lines[0] = d3.svg.line()
+//       .x(function(d) { return x(d.T); })
+//       .y(function(d) { return y(d.A1); });
+//   lines[1] = d3.svg.line()
+//       .x(function(d) { return x(d.T); })
+//       .y(function(d) { return y(d.A2); });
+//   lines[2] = d3.svg.line()
+//       .x(function(d) { return x(d.T); })
+//       .y(function(d) { return y(d.A3); });
+//   lines[3] = d3.svg.line()
+//       .x(function(d) { return x(d.T); })
+//       .y(function(d) { return y(d.A4); });
+//   lines[4] = d3.svg.line()
+//       .x(function(d) { return x(d.T); })
+//       .y(function(d) { return y(d.A5); });
+//   lines[5] = d3.svg.line()
+//       .x(function(d) { return x(d.T); })
+//       .y(function(d) { return y(d.A6); });
+//   lines[6] = d3.svg.line()
+//       .x(function(d) { return x(d.T); })
+//       .y(function(d) { return y(d.A7); });
+//   lines[7] = d3.svg.line()
+//       .x(function(d) { return x(d.T); })
+//       .y(function(d) { return y(d.A8); });
+//   lines[8] = d3.svg.line()
+//       .x(function(d) { return x(d.T); })
+//       .y(function(d) { return y(d.A9); });
+//
+//   return lines;
+// };
 
 /**
  * Initialize an empty array that holds data
  */
-function init_debug_data(){
+function init_data(n){
   var data = new Array(1);
-  data[0] = {T: 0, A1: 0, A2: 0, A3: 0, A4: 0, A5: 0, A6: 0, A7: 0, A8: 0, A9: 0};
+  data[0] = new Array(n+1); // one for the time, the rest are channels
+  for(var i=0;i<=n;i++){
+    data[0][i] = 0;
+  }
+  // {T: 0, A1: 0, A2: 0, A3: 0, A4: 0, A5: 0, A6: 0, A7: 0, A8: 0, A9: 0};
   return data;
 }
 
@@ -560,86 +565,21 @@ $(document).ready( function() {
 
 
   // EEG Data
-  //
-  // var data = init_eeg_data();
-  // var graph = new Graph({
-  //   container: "#graph_container",
-  //   data: data,
-  //   lines: electrode_lines,
-  //   n_channels: 5,
-  //   title: "Electrodes",
-  //   colors: ["black", "red", "blue", "green", "cyan"],
-  //   // FIXME: que el metodo mismo cree la leyenda
-  //   legend_ticks: ["#ch0", "#ch1", "#ch2", "#ch3", "#ch4"],
-  //   legend_rect: ["#ch0-rect", "#ch1-rect", "#ch2-rect", "#ch3-rect", "#ch4-rect"],
-  //   x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
-  //   y_zoom_btn: ["#btn-zoomYin", "#btn-zoomYout"],
-  //   y_move_btn: ["#btn-moveYdown", "#btn-moveYup"],
-  //   y_home_btn: "#btn-homeY",
-  //   sec_x: "#segX",
-  //
-  //   width: 700,
-  //   height: 400,
-  //   y_min: -1000,
-  //   y_max: 1000,
-  //   x_ticks: 5,
-  //   y_ticks: 5,
-  //   n_secs: 5,
-  //   dx_zoom: 1, // FIXME: que clase calcule esto
-  //   dy_zoom: 100,
-  //   dy_move: 50
-  //   });
-  // /**
-  //  * Recibe un mensaje entrante de eeg
-  //  */
-  // function receive_eeg(e) {
-  //   var arr = e.data.split(",");
-  //   var t = parseFloat(arr[0]); // tiempo
-  //   var ch1 = parseFloat(arr[1]);
-  //   var ch2 = parseFloat(arr[2]);
-  //   var ch3 = parseFloat(arr[3]);
-  //   var ch4 = parseFloat(arr[4]);
-  //   var ch5 = parseFloat(arr[5]);
-  //
-  //   // Push datos
-  //   data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
-  //
-  //   graph.update_graph(data); // Update grafico
-  // };
-  //
-  // // EEG connection
-  // var eeg_conn = new Connection({
-  //   name: "eeg data",
-  //   url: "http://localhost:8889/data/muse",
-  //   status_text: "#status-text", //FIXME: que la clase cree estos
-  //   status_icon: "#status-icon",
-  //   recv_msg: receive_eeg
-  //   });
-  //
-  // // Botones iniciar/cerrar conexion
-  // $("#btn-start-conn").click(function(){ data = init_eeg_data(); eeg_conn.start_conn() });
-  // $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_eeg_data(); });
-  //
-
-
-
-  // Other Data
-  var data_other = init_debug_data();
-  var graph_other = new Graph({
-    container: "#graph_other",
-    data: data_other,
-    lines: debug_lines,
-    n_channels: 9,
-    title: "Other",
-    colors: ["black", "red", "blue", "green", "cyan", "gold", "brown", "coral", "indigo"],
-
-    legend_ticks: ["#ch0-other", "#ch1-other", "#ch2-other", "#ch3-other", "#ch4-other", "#ch5-other", "#ch6-other", "#ch7-other", "#ch8-other"],
-    legend_rect: ["#ch0-rect-other", "#ch1-rect-other", "#ch2-rect-other", "#ch3-rect-other", "#ch4-rect-other", "#ch5-rect-other", "#ch6-rect-other", "#ch7-rect-other", "#ch8-rect-other"],
-    x_zoom_btn: ["#btn-zoomXdec-other", "#btn-zoomXinc-other"],
-    y_zoom_btn: ["#btn-zoomYin-other", "#btn-zoomYout-other"],
-    y_move_btn: ["#btn-moveYdown-other", "#btn-moveYup-other"],
-    y_home_btn: "#btn-homeY-other",
-    sec_x: "#segX-other",
+  var data = init_data(5);
+  var graph = new Graph({
+    container: "#graph_container",
+    data: data,
+    n_channels: 5,
+    title: "Electrodes",
+    colors: ["black", "red", "blue", "green", "cyan"],
+    // FIXME: que el metodo mismo cree la leyenda
+    legend_ticks: ["#ch0", "#ch1", "#ch2", "#ch3", "#ch4"],
+    legend_rect: ["#ch0-rect", "#ch1-rect", "#ch2-rect", "#ch3-rect", "#ch4-rect"],
+    x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
+    y_zoom_btn: ["#btn-zoomYin", "#btn-zoomYout"],
+    y_move_btn: ["#btn-moveYdown", "#btn-moveYup"],
+    y_home_btn: "#btn-homeY",
+    sec_x: "#segX",
 
     width: 700,
     height: 400,
@@ -648,50 +588,114 @@ $(document).ready( function() {
     x_ticks: 5,
     y_ticks: 5,
     n_secs: 5,
-    dx_zoom: 1,
-    dy_zoom: 1000,
-    dy_move: 100
+    dx_zoom: 1, // FIXME: que clase calcule esto
+    dy_zoom: 100,
+    dy_move: 50
     });
-
   /**
    * Recibe un mensaje entrante de eeg
    */
-  function receive_debug(e) {
+  function receive_eeg(e) {
     var arr = e.data.split(",");
     var t = parseFloat(arr[0]); // tiempo
-    var a1 = parseFloat(arr[1]);
-    var a2 = parseFloat(arr[2]);
-    var a3 = parseFloat(arr[3]);
-    var a4 = parseFloat(arr[4]);
-    var a5 = parseFloat(arr[5]);
-    var a6 = parseFloat(arr[6]);
-    var a7 = parseFloat(arr[7]);
-    var a8 = parseFloat(arr[8]);
-    var a9 = parseFloat(arr[9]);
+    var ch1 = parseFloat(arr[1]);
+    var ch2 = parseFloat(arr[2]);
+    var ch3 = parseFloat(arr[3]);
+    var ch4 = parseFloat(arr[4]);
+    var ch5 = parseFloat(arr[5]);
 
     // Push datos
-    data_other.push({T: t, A1: a1, A2: a2, A3: a3, A4: a4, A5: a5, A6: a6, A7: a7, A8: a8, A9: a9});
+    // data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
+    data.push([t, ch1, ch2, ch3, ch4, ch5]);
 
-    graph_other.update_graph(data_other); // Update grafico
+    graph.update_graph(data); // Update grafico
   };
 
-  // Other connection
-  var other_conn = new Connection({
-    name: "other data",
-    url: "http://localhost:8889/data/other",
-    status_text: "#status-text-other",
-    status_icon: "#status-icon-other",
-    recv_msg: receive_debug
+  // EEG connection
+  var eeg_conn = new Connection({
+    name: "eeg data",
+    url: "http://localhost:8889/data/muse",
+    status_text: "#status-text", //FIXME: que la clase cree estos
+    status_icon: "#status-icon",
+    recv_msg: receive_eeg
     });
 
   // Botones iniciar/cerrar conexion
-  $("#btn-start-conn-other").click(function(){ data_other = init_debug_data(); other_conn.start_conn() });
-  $("#btn-close-conn-other").click(function(){ other_conn.close_conn(); data_other = init_debug_data(); });
+  $("#btn-start-conn").click(function(){ data = init_data(); eeg_conn.start_conn() });
+  $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_data(); });
 
 
-  // Conectarse al server
-  // eeg_conn.start_conn()
-  other_conn.start_conn()
+
+
+  // // Other Data
+  // var data_other = init_debug_data();
+  // var graph_other = new Graph({
+  //   container: "#graph_other",
+  //   data: data_other,
+  //   lines: debug_lines,
+  //   n_channels: 9,
+  //   title: "Other",
+  //   colors: ["black", "red", "blue", "green", "cyan", "gold", "brown", "coral", "indigo"],
+  //
+  //   legend_ticks: ["#ch0-other", "#ch1-other", "#ch2-other", "#ch3-other", "#ch4-other", "#ch5-other", "#ch6-other", "#ch7-other", "#ch8-other"],
+  //   legend_rect: ["#ch0-rect-other", "#ch1-rect-other", "#ch2-rect-other", "#ch3-rect-other", "#ch4-rect-other", "#ch5-rect-other", "#ch6-rect-other", "#ch7-rect-other", "#ch8-rect-other"],
+  //   x_zoom_btn: ["#btn-zoomXdec-other", "#btn-zoomXinc-other"],
+  //   y_zoom_btn: ["#btn-zoomYin-other", "#btn-zoomYout-other"],
+  //   y_move_btn: ["#btn-moveYdown-other", "#btn-moveYup-other"],
+  //   y_home_btn: "#btn-homeY-other",
+  //   sec_x: "#segX-other",
+  //
+  //   width: 700,
+  //   height: 400,
+  //   y_min: -1000,
+  //   y_max: 1000,
+  //   x_ticks: 5,
+  //   y_ticks: 5,
+  //   n_secs: 5,
+  //   dx_zoom: 1,
+  //   dy_zoom: 1000,
+  //   dy_move: 100
+  //   });
+  //
+  // /**
+  //  * Recibe un mensaje entrante de eeg
+  //  */
+  // function receive_debug(e) {
+  //   var arr = e.data.split(",");
+  //   var t = parseFloat(arr[0]); // tiempo
+  //   var a1 = parseFloat(arr[1]);
+  //   var a2 = parseFloat(arr[2]);
+  //   var a3 = parseFloat(arr[3]);
+  //   var a4 = parseFloat(arr[4]);
+  //   var a5 = parseFloat(arr[5]);
+  //   var a6 = parseFloat(arr[6]);
+  //   var a7 = parseFloat(arr[7]);
+  //   var a8 = parseFloat(arr[8]);
+  //   var a9 = parseFloat(arr[9]);
+  //
+  //   // Push datos
+  //   data_other.push({T: t, A1: a1, A2: a2, A3: a3, A4: a4, A5: a5, A6: a6, A7: a7, A8: a8, A9: a9});
+  //
+  //   graph_other.update_graph(data_other); // Update grafico
+  // };
+  //
+  // // Other connection
+  // var other_conn = new Connection({
+  //   name: "other data",
+  //   url: "http://localhost:8889/data/other",
+  //   status_text: "#status-text-other",
+  //   status_icon: "#status-icon-other",
+  //   recv_msg: receive_debug
+  //   });
+  //
+  // // Botones iniciar/cerrar conexion
+  // $("#btn-start-conn-other").click(function(){ data_other = init_debug_data(); other_conn.start_conn() });
+  // $("#btn-close-conn-other").click(function(){ other_conn.close_conn(); data_other = init_debug_data(); });
+  //
+  //
+  // // Conectarse al server
+  // // eeg_conn.start_conn()
+  // other_conn.start_conn()
 
   console.log("All set");
 });
