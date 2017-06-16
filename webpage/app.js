@@ -105,30 +105,13 @@ class Graph {
   _set_lines(){
     this.lines = new Array(this.n_channels);
     for(var i=0;i<this.n_channels;i++){ this.lines[i] = null; } //HACK: iniciar todo como null
-    var x = this.x_range;
-    var y = this.y_range;
     var graph = this;
     this.lines.forEach(function(l, i){
       graph.lines[i] = d3.svg.line()
-        .x(function(d) { return x(d[0]); })
-        .y(function(d) { return y(d[i + 1]); });
+        .x(function(d) { return graph.x_range(d[0]); })
+        .y(function(d) { return graph.y_range(d[i + 1]); });
     });
 
-    // lines[0] = d3.svg.line()
-    //   .x(function(d) { return x(d.T); })
-    //   .y(function(d) { return y(d.CH1); });
-    // lines[1] = d3.svg.line()
-    //   .x(function(d) { return x(d.T); })
-    //   .y(function(d) { return y(d.CH2); });
-    // lines[2] = d3.svg.line()
-    //   .x(function(d) { return x(d.T); })
-    //   .y(function(d) { return y(d.CH3); });
-    // lines[3] = d3.svg.line()
-    //   .x(function(d) { return x(d.T); })
-    //   .y(function(d) { return y(d.CH4); });
-    // lines[4] = d3.svg.line()
-    //   .x(function(d) { return x(d.T); })
-    //   .y(function(d) { return y(d.CH5); });
 
   }
 
@@ -139,19 +122,21 @@ class Graph {
     this.colors = colors; // REVIEW: copy?
 
     // Create path and bools for each channel
-    this.paths = Array(this.n_channels); // Lines in svg
-    this.plot_bools = Array(this.n_channels); // Bools to show each line
+    this.paths = new Array(this.n_channels); // Lines in svg
+    this.plot_bools = new Array(this.n_channels); // Bools to show each line
+    var graph = this;
     for(var i=0;i<this.n_channels;i++){
       this.plot_bools[i] = true; // Default: show line
-
-      // Append to svg
-      this.paths[i] = this.svg.append("g")
-              .attr("clip-path", "url(#clip)")
-            .append("path")
-              .attr("class", "line")
-              .style("stroke", colors[i])
-              .attr("d", this.lines[i](data));
+      this.paths[i] = null; // HACK
     }
+    this.paths.forEach(function(p, i){
+      graph.paths[i] = graph.svg.append("g")
+        .attr("clip-path", "url(#clip)")
+        .append("path")
+        .attr("class", "line")
+        .style("stroke", colors[i])
+        .attr("d", graph.lines[i](data));
+    });
 
   }
 
@@ -232,19 +217,6 @@ class Graph {
     $(btn_home).click(function(){ graph.home_y_axis(); });
   }
 
-  /**
-   * Update the line in the graph, use when updated the data
-   */
-  _update_graph_line(data, path, line, plot_ch){
-    if(plot_ch){
-      path.attr("d", line(data))
-          .attr("transform", null)
-        .transition()
-          .duration(1000)
-          .ease("linear");
-    }
-  }
-
 
 
   /**
@@ -323,7 +295,6 @@ class Graph {
    * Update all the lines in the graph
    */
   update_graph(data, shift=true) {
-    console.log(data);
     for(var i=0;i<this.n_channels;i++){
       // this._update_graph_line(data, this.paths[i], this.lines[i], this.plot_bools[i]);
       if(this.plot_bools[i]){
@@ -336,14 +307,14 @@ class Graph {
     }
 
     // actualizar rango de tiempo
-    var rango = d3.extent(data, function(d) { return d.T; });
+    var rango = d3.extent(data, function(d) { return d[0]; });
     // if(rango[0] + this.n_secs > rango[1]){ rango[1] = rango[0] + this.n_secs; } // Que el rango minimo sea n_secs
     this.x_range.domain(rango);
 
     this.svg.select(".x.axis").call(this.x_axis); // change the x axis
 
     if(shift){ // shift the data to fit in n_secs
-      while(data[data.length-1].T - data[0].T > this.n_secs){
+      while(data[data.length-1][0] - data[0][0] > this.n_secs){
         data.shift();
       }
     }
@@ -502,66 +473,15 @@ class Connection{
 
 
 
-/**
- * Initialize an empty array that holds eeg data
- */
-function init_eeg_data(){
-  var data = new Array(1);
-  data[0] = {T: 0, CH1: 0, CH2: 0, CH3: 0, CH4: 0, CH5: 0};
-  return data;
-}
-
-
-
-/**
- * Create an array of functions that returns the channels in the debug data
- * @param {d3.scale.linear} x range for x axis
- * @param {d3.scale.linear} y range for y axis
- */
-// function debug_lines(x, y){
-//   var lines = Array(9);
-//
-//   lines[0] = d3.svg.line()
-//       .x(function(d) { return x(d.T); })
-//       .y(function(d) { return y(d.A1); });
-//   lines[1] = d3.svg.line()
-//       .x(function(d) { return x(d.T); })
-//       .y(function(d) { return y(d.A2); });
-//   lines[2] = d3.svg.line()
-//       .x(function(d) { return x(d.T); })
-//       .y(function(d) { return y(d.A3); });
-//   lines[3] = d3.svg.line()
-//       .x(function(d) { return x(d.T); })
-//       .y(function(d) { return y(d.A4); });
-//   lines[4] = d3.svg.line()
-//       .x(function(d) { return x(d.T); })
-//       .y(function(d) { return y(d.A5); });
-//   lines[5] = d3.svg.line()
-//       .x(function(d) { return x(d.T); })
-//       .y(function(d) { return y(d.A6); });
-//   lines[6] = d3.svg.line()
-//       .x(function(d) { return x(d.T); })
-//       .y(function(d) { return y(d.A7); });
-//   lines[7] = d3.svg.line()
-//       .x(function(d) { return x(d.T); })
-//       .y(function(d) { return y(d.A8); });
-//   lines[8] = d3.svg.line()
-//       .x(function(d) { return x(d.T); })
-//       .y(function(d) { return y(d.A9); });
-//
-//   return lines;
-// };
 
 /**
  * Initialize an empty array that holds data
+ * @param {Number} n number of channels
  */
 function init_data(n){
   var data = new Array(1);
   data[0] = new Array(n+1); // one for the time, the rest are channels
-  for(var i=0;i<=n;i++){
-    data[0][i] = 0;
-  }
-  // {T: 0, A1: 0, A2: 0, A3: 0, A4: 0, A5: 0, A6: 0, A7: 0, A8: 0, A9: 0};
+  for(var i=0;i<=n;i++){ data[0][i] = 0; } // init 0
   return data;
 }
 
@@ -576,11 +496,12 @@ $(document).ready( function() {
 
 
   // EEG Data
-  var data = init_data(5);
+  var nchs = 5;
+  var data = init_data(nchs);
   var graph = new Graph({
     container: "#graph_container",
     data: data,
-    n_channels: 5,
+    n_channels: nchs,
     title: "Electrodes",
     colors: ["black", "red", "blue", "green", "cyan"],
     // FIXME: que el metodo mismo cree la leyenda
@@ -603,6 +524,7 @@ $(document).ready( function() {
     dy_zoom: 100,
     dy_move: 50
     });
+
   /**
    * Recibe un mensaje entrante de eeg
    */
@@ -616,10 +538,8 @@ $(document).ready( function() {
     var ch5 = parseFloat(arr[5]);
 
     // Push datos
-    // data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
     data.push([t, ch1, ch2, ch3, ch4, ch5]);
 
-    console.log(graph.lines[0](data));
 
     graph.update_graph(data); // Update grafico
   };
@@ -634,8 +554,8 @@ $(document).ready( function() {
     });
 
   // Botones iniciar/cerrar conexion
-  $("#btn-start-conn").click(function(){ data = init_data(5); eeg_conn.start_conn() });
-  $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_data(5); });
+  $("#btn-start-conn").click(function(){ data = init_data(nchs); eeg_conn.start_conn() });
+  $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_data(nchs); });
 
 
 
