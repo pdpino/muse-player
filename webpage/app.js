@@ -103,14 +103,17 @@ class Graph {
    * [t, ch1, ch2, ch3, ..., chN], where 't' is the time, and the rest are the n channels
    */
   _set_lines(){
-    this.lines = Array(this.n_channels);
+    this.lines = new Array(this.n_channels);
+    for(var i=0;i<this.n_channels;i++){ this.lines[i] = null; } //HACK: iniciar todo como null
+    var x = this.x_range;
+    var y = this.y_range;
+    var graph = this;
     this.lines.forEach(function(l, i){
-      this.lines[i] = d3.svg.line()
-        .x(function(d) { return this.x_range(d[0]); })
-        .y(function(d) { return this.y_range(d[i + 1]); });
+      graph.lines[i] = d3.svg.line()
+        .x(function(d) { return x(d[0]); })
+        .y(function(d) { return y(d[i + 1]); });
     });
 
-    console.log(this.lines);
     // lines[0] = d3.svg.line()
     //   .x(function(d) { return x(d.T); })
     //   .y(function(d) { return y(d.CH1); });
@@ -320,8 +323,16 @@ class Graph {
    * Update all the lines in the graph
    */
   update_graph(data, shift=true) {
+    console.log(data);
     for(var i=0;i<this.n_channels;i++){
-      this._update_graph_line(data, this.paths[i], this.lines[i], this.plot_bools[i]);
+      // this._update_graph_line(data, this.paths[i], this.lines[i], this.plot_bools[i]);
+      if(this.plot_bools[i]){
+        this.paths[i].attr("d", this.lines[i](data))
+            .attr("transform", null)
+          .transition()
+            .duration(1000)
+            .ease("linear");
+      }
     }
 
     // actualizar rango de tiempo
@@ -608,6 +619,8 @@ $(document).ready( function() {
     // data.push({T: t, CH1: ch1, CH2: ch2, CH3: ch3, CH4: ch4, CH5: ch5});
     data.push([t, ch1, ch2, ch3, ch4, ch5]);
 
+    console.log(graph.lines[0](data));
+
     graph.update_graph(data); // Update grafico
   };
 
@@ -621,8 +634,8 @@ $(document).ready( function() {
     });
 
   // Botones iniciar/cerrar conexion
-  $("#btn-start-conn").click(function(){ data = init_data(); eeg_conn.start_conn() });
-  $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_data(); });
+  $("#btn-start-conn").click(function(){ data = init_data(5); eeg_conn.start_conn() });
+  $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_data(5); });
 
 
 
