@@ -45,14 +45,15 @@ footer{
 }
 
 /*Rectangulo de leyenda*/
-.legend-rect{
-  height: inherit;
-  width: inherit;
-}
 .legend-rect-container{
   height: 12px;
   width: 12px;
 }
+.legend-rect{
+  height: inherit;
+  width: inherit;
+}
+
 
 
 /*Graph of d3*/
@@ -79,9 +80,6 @@ path {
 }
 .grid path {
   stroke-width: 0;
-}
-.legend {
-  font-size: 12px;
 }
 rect {
   stroke-width: 2;

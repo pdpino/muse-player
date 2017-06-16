@@ -8,6 +8,12 @@ class Graph {
    * Intialize
    */
   constructor(config) {
+    // Assure that the config object is correct
+    if(this._fill_default_values(config) !== 0){
+      // missing arguments
+      return;
+    }
+
     // Save variables // HACK
     this.n_channels = Number(config.n_channels);
     this.secs_indicator = String(config.sec_x);
@@ -30,13 +36,63 @@ class Graph {
     this._set_axis_params(config.dx_zoom, config.dy_zoom, config.dy_move);
 
     // Set the legend, and the proper events
-    this._set_legend(config.legend_ticks, config.legend_rect);
+    this._set_legend(config.legend_container, config.ch_names);
 
     // Buttons to update axis
     this._add_events_x_axis(config.x_zoom_btn[0], config.x_zoom_btn[1]);
     this._add_events_y_axis(config.y_zoom_btn, config.y_move_btn, config.y_home_btn);
   }
 
+  /**
+   * Receive a configuration object, if a value is missing fill it with default
+   */
+  _fill_default_values(config){
+    if(config.container === undefined){
+      console.log("ERROR: Missing graph container");
+      return 1;
+    }
+    // TODO: handle when there is no legend container
+
+    if(config.n_channels === undefined){
+      console.log("ERROR: Declaring a graph without the number of channels");
+      return 1;
+    }
+
+
+
+    if(config.ch_names === undefined){
+      config.ch_names = new Array(config.n_channels);
+      for(var i=0;i<config.n_channels;i++){
+        config.ch_names[i] = "ch".concat(i);
+      }
+    }
+
+    if(config.title === undefined){
+      config.title = "Graph";
+    }
+
+    /**
+     * Get a random color
+     * source: https://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
+     */
+    function getRandomColor() {
+      var letters = '0123456789ABCDEF';
+      var color = '#';
+      for (var i = 0; i < 6; i++ ) {
+          color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    if(config.colors === undefined){
+      config.colors = new Array(config.n_channels);
+      for(var i=0;i<config.n_channels;i++){
+        config.colors[i] = getRandomColor();
+      }
+    }
+
+    return 0;
+  }
 
   /**
    * Create an empty graph
@@ -143,17 +199,67 @@ class Graph {
   /**
    * Paint the squares in the legend
    */
-  _set_legend(ids_tick, ids_rect){
-    if(ids_rect.length < this.n_channels || ids_tick.length < this.n_channels){
-      return;
+  _set_legend(legend_container, ch_names){
+    // Crear panel para leyenda
+    $(legend_container).append(
+      $('<div>', {
+        'id':'legend-panel',
+        'class':'panel panel-primary',
+        // 'html':'<span>For HTML</span>',
+      })
+    );
+
+    // Agregar header y body a panel
+    $("#legend-panel").append(
+      $('<div>', {
+        'class': 'panel-heading text-center',
+        'html': 'Legend'
+      }),
+      $('<form>', {
+        'id': 'legend-form',
+        'class': 'panel-body'
+      })
+    );
+
+
+
+    // Agregar inputs para cada channel
+    var ids_tick = new Array(this.n_channels);
+    var graph = this;
+    for(var i=0;i<this.n_channels;i++){
+      ids_tick[i] = "ch".concat(String(i)).concat("-tick");
+      var input_i = "<input id='".concat(String(ids_tick[i]))
+        .concat("' type='checkbox' checked/>");
+      var channel_name = String(ch_names[i]).concat('<br>');
+
+      $("#legend-form").append(
+        $('<svg>')
+          .attr('class', 'legend-rect-container')
+          .append(
+            $('<rect>')
+              .attr('class','legend-rect')
+              .css("fill", graph.colors[i]) // Pintar del color
+            )
+      );
+
+      $("#legend-form").append(
+        ' ', // space
+        input_i,
+        ' ', // space
+        channel_name,
+      );
     }
 
-    var graph = this;
+    $("#legend-form").html($("#legend-form").html()); // HACK: Refresh svg
+
+
+
+
 
     // Paint colors
-    for(var i=0;i<this.n_channels;i++){
-      d3.select(ids_rect[i]).style("fill", graph.colors[i]);
-    }
+    // for(var i=0;i<this.n_channels;i++){
+    //   d3.select(ids_rect[i]).style("fill", graph.colors[i]);
+    // }
 
     // Show/hide events
     ids_tick.forEach(function(t, i){
@@ -490,7 +596,6 @@ function init_data(n){
  * Main process
  */
 $(document).ready( function() {
-  // TODO: Hacer que clase Graph cree los elementos en html, que reciba solo los containers
   // TODO: buscar header y footer bootstrap
 
 
@@ -500,13 +605,14 @@ $(document).ready( function() {
   var data = init_data(nchs);
   var graph = new Graph({
     container: "#graph_container",
+    legend_container: '#legend_container',
     data: data,
     n_channels: nchs,
     title: "Electrodes",
-    colors: ["black", "red", "blue", "green", "cyan"],
-    // FIXME: que el metodo mismo cree la leyenda
-    legend_ticks: ["#ch0", "#ch1", "#ch2", "#ch3", "#ch4"],
-    legend_rect: ["#ch0-rect", "#ch1-rect", "#ch2-rect", "#ch3-rect", "#ch4-rect"],
+    // ch_names: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
+    // colors: ["black", "red", "blue", "green", "cyan"],
+
+    // FIXME: que clase cree estos
     x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
     y_zoom_btn: ["#btn-zoomYin", "#btn-zoomYout"],
     y_move_btn: ["#btn-moveYdown", "#btn-moveYup"],
@@ -528,29 +634,20 @@ $(document).ready( function() {
   /**
    * Recibe un mensaje entrante de eeg
    */
-  function receive_eeg(e) {
-    var arr = e.data.split(",");
-    var t = parseFloat(arr[0]); // tiempo
-    var ch1 = parseFloat(arr[1]);
-    var ch2 = parseFloat(arr[2]);
-    var ch3 = parseFloat(arr[3]);
-    var ch4 = parseFloat(arr[4]);
-    var ch5 = parseFloat(arr[5]);
-
-    // Push datos
-    data.push([t, ch1, ch2, ch3, ch4, ch5]);
-
-
-    graph.update_graph(data); // Update grafico
+  function receive_data(e) {
+    // REVIEW: check arr.length == n channels
+    var arr = e.data.split(",").map(parseFloat);
+    data.push(arr); // Push new data
+    graph.update_graph(data); // Update graph
   };
 
   // EEG connection
   var eeg_conn = new Connection({
-    name: "eeg data",
+    name: "data",
     url: "http://localhost:8889/data/muse",
     status_text: "#status-text", //FIXME: que la clase cree estos
     status_icon: "#status-icon",
-    recv_msg: receive_eeg
+    recv_msg: receive_data
     });
 
   // Botones iniciar/cerrar conexion
@@ -558,77 +655,7 @@ $(document).ready( function() {
   $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_data(nchs); });
 
 
-
-
-  // // Other Data
-  // var data_other = init_debug_data();
-  // var graph_other = new Graph({
-  //   container: "#graph_other",
-  //   data: data_other,
-  //   lines: debug_lines,
-  //   n_channels: 9,
-  //   title: "Other",
-  //   colors: ["black", "red", "blue", "green", "cyan", "gold", "brown", "coral", "indigo"],
-  //
-  //   legend_ticks: ["#ch0-other", "#ch1-other", "#ch2-other", "#ch3-other", "#ch4-other", "#ch5-other", "#ch6-other", "#ch7-other", "#ch8-other"],
-  //   legend_rect: ["#ch0-rect-other", "#ch1-rect-other", "#ch2-rect-other", "#ch3-rect-other", "#ch4-rect-other", "#ch5-rect-other", "#ch6-rect-other", "#ch7-rect-other", "#ch8-rect-other"],
-  //   x_zoom_btn: ["#btn-zoomXdec-other", "#btn-zoomXinc-other"],
-  //   y_zoom_btn: ["#btn-zoomYin-other", "#btn-zoomYout-other"],
-  //   y_move_btn: ["#btn-moveYdown-other", "#btn-moveYup-other"],
-  //   y_home_btn: "#btn-homeY-other",
-  //   sec_x: "#segX-other",
-  //
-  //   width: 700,
-  //   height: 400,
-  //   y_min: -1000,
-  //   y_max: 1000,
-  //   x_ticks: 5,
-  //   y_ticks: 5,
-  //   n_secs: 5,
-  //   dx_zoom: 1,
-  //   dy_zoom: 1000,
-  //   dy_move: 100
-  //   });
-  //
-  // /**
-  //  * Recibe un mensaje entrante de eeg
-  //  */
-  // function receive_debug(e) {
-  //   var arr = e.data.split(",");
-  //   var t = parseFloat(arr[0]); // tiempo
-  //   var a1 = parseFloat(arr[1]);
-  //   var a2 = parseFloat(arr[2]);
-  //   var a3 = parseFloat(arr[3]);
-  //   var a4 = parseFloat(arr[4]);
-  //   var a5 = parseFloat(arr[5]);
-  //   var a6 = parseFloat(arr[6]);
-  //   var a7 = parseFloat(arr[7]);
-  //   var a8 = parseFloat(arr[8]);
-  //   var a9 = parseFloat(arr[9]);
-  //
-  //   // Push datos
-  //   data_other.push({T: t, A1: a1, A2: a2, A3: a3, A4: a4, A5: a5, A6: a6, A7: a7, A8: a8, A9: a9});
-  //
-  //   graph_other.update_graph(data_other); // Update grafico
-  // };
-  //
-  // // Other connection
-  // var other_conn = new Connection({
-  //   name: "other data",
-  //   url: "http://localhost:8889/data/other",
-  //   status_text: "#status-text-other",
-  //   status_icon: "#status-icon-other",
-  //   recv_msg: receive_debug
-  //   });
-  //
-  // // Botones iniciar/cerrar conexion
-  // $("#btn-start-conn-other").click(function(){ data_other = init_debug_data(); other_conn.start_conn() });
-  // $("#btn-close-conn-other").click(function(){ other_conn.close_conn(); data_other = init_debug_data(); });
-  //
-  //
-  // // Conectarse al server
-  // // eeg_conn.start_conn()
-  // other_conn.start_conn()
+  eeg_conn.start_conn();
 
   console.log("All set");
 });

@@ -51,29 +51,12 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-md-5">
-              <div class="panel panel-primary">
-                <div class="panel-heading text-center">Legend</div>
-                <form class="panel-body">
-                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch0-rect" /> </svg>
-                  <input id="ch0" type="checkbox" checked> TP9 <br>
-                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch1-rect" /> </svg>
-                  <input id="ch1" type="checkbox" checked> AF7 <br>
-                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch2-rect" /> </svg>
-                  <input id="ch2" type="checkbox" checked> AF8 <br>
-                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch3-rect" /> </svg>
-                  <input id="ch3" type="checkbox" checked> TP10 <br>
-                  <svg class="legend-rect-container"> <rect class="legend-rect" id="ch4-rect" /> </svg>
-                  <input id="ch4" type="checkbox" checked> Right Aux <br>
-                </form>
-              </div>
-            </div>
+            <div class="col-md-5" id="legend_container"></div>
             <div class="col-md-7">
               <div class="panel panel-primary">
                 <div class="panel-heading text-center">Graph</div>
                 <form class="form-inline panel-graph">
                   <label> Zoom X </label>
-                  <!-- <input id="input-zoomX" class="form-control" type="number" value="1" min="1"> -->
                   <div class="btn-group col-4">
                     <button id="btn-zoomXdec" type="button" class="btn btn-primary"> - </button>
                     <button id="btn-zoomXinc" type="button" class="btn btn-primary"> + </button>
