@@ -7,7 +7,7 @@ import pandas as pd
 import basic
 from backend import data
 
-class DataContainer(object):
+class DataBuffer(object):
     """Receives incoming data and provides a generator to yield it."""
 
     def __init__(self, name="", maxsize=10, yield_function=None):
@@ -80,7 +80,7 @@ class DataYielder(object):
         a = DataYielder.yield_string.format(t - t_init, data_str)
         yield a
 
-class EEGContainer(DataContainer):
+class EEGBuffer(DataBuffer):
     """Contains the eeg data produced by Muse, provides provides functionality for eeg data"""
     def get_running_time(self):
         """Return the time that it has been running.

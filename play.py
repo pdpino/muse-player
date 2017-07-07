@@ -86,8 +86,8 @@ def main():
     args = parse_args()
 
     # Container for the incoming data
-    eeg_container = b.EEGContainer(name="eeg", yield_function=b.EEGYielder.get_yielder(args.stream_mode))
-    data_container = b.DataContainer(name="other", yield_function=b.DataYielder.get_data)
+    eeg_container = b.EEGBuffer(name="eeg", yield_function=b.EEGYielder.get_yielder(args.stream_mode))
+    data_container = b.DataBuffer(name="other", yield_function=b.DataYielder.get_data)
 
     # Conectar muse
     muse = Muse(args.address, eeg_container.incoming_data, data_container.incoming_data, norm_factor=args.nfactor, norm_sub=args.nsub)
