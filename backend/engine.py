@@ -91,7 +91,8 @@ class EEGContainer(DataContainer):
 
         t_end = self._full_time[-1][-1]
         t_init = self._full_time[0][0]
-        return t_end - t_init
+        t = t_end - t_init
+        return basic.sec2hr(t)
 
     def _normalize_time(self):
         """Receive a list of np arrays of timestamps. Return the concatenated and normalized (substract initial time) np array"""

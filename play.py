@@ -145,7 +145,7 @@ def main():
 
 
     # Print running time
-    print("\tReceived data for {:.2f} seconds".format(eeg_container.get_running_time()))
+    print("\tReceived data for {}".format(eeg_container.get_running_time()))
 
     if args.save:
         eeg_container.save_csv(args.fname, subfolder=args.subfolder)
