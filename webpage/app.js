@@ -599,9 +599,25 @@ $(document).ready( function() {
   // TODO: buscar header y footer bootstrap
 
 
+  // DEBUG.
+  var use_eeg = false; // CHANGE THIS
+  if(use_eeg){
+    var n_channels = 5;
+    var channel_names = ["TP9", "AF7", "AF8", "TP10", "Right Aux"];
+    var color_names = ["black", "red", "blue", "green", "cyan"];
+  }
+  else{
+    var n_channels = 5;  // CHANGE THIS, if use_eeg is false
+    var channel_names = undefined;
+    var color_names = undefined;
+  }
+  /////////////////
+
+
+  
 
   // EEG Data
-  var nchs = 5;
+  var nchs = n_channels;
   var data = init_data(nchs);
   var graph = new Graph({
     container: "#graph_container",
@@ -609,8 +625,8 @@ $(document).ready( function() {
     data: data,
     n_channels: nchs,
     title: "Electrodes",
-    // ch_names: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
-    // colors: ["black", "red", "blue", "green", "cyan"],
+    ch_names: channel_names,
+    colors: color_names,
 
     // FIXME: que clase cree estos
     x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
@@ -635,8 +651,13 @@ $(document).ready( function() {
    * Recibe un mensaje entrante de eeg
    */
   function receive_data(e) {
-    // REVIEW: check arr.length == n channels
     var arr = e.data.split(",").map(parseFloat);
+
+    // REVIEW: check arr.length == n channels
+    while(arr.length < nchs){
+      arr.push(0.0);
+    }
+
     data.push(arr); // Push new data
     graph.update_graph(data); // Update graph
   };

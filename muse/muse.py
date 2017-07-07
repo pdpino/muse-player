@@ -80,10 +80,7 @@ class Muse():
             self.adapter = pygatt.BGAPIBackend(serial_port=self.interface)
 
         self.adapter.start()
-        try:
-            self.device = self.adapter.connect(self.address)
-        except Exception as e:
-            raise(ConnectionError("Can't connect to Muse headband"))
+        self.device = self.adapter.connect(self.address)
 
 
         # Subscribe to messages
@@ -108,8 +105,6 @@ class Muse():
 
         if not preset is None:
             self._set_preset(preset)
-
-
 
     def _write_cmd(self, cmd):
         """Wrapper to write a command to the Muse device.
@@ -159,9 +154,7 @@ class Muse():
         print("\tmsg: {}".format(msg))
 
     def print_msgs(self):
-        """Print the messages received so far.
-
-        It is not thread safe"""
+        """Print the messages received so far."""
 
         with self._lock_msg:
             n = len(self._msgs)
@@ -292,6 +285,7 @@ class Muse():
                 with self._lock_msg:
                     self._msgs.append(self._current_msg)
                     self._msgs_codes.append(self._current_codes)
+                    # self._print_msg(self._current_codes, self._current_msg) # push msg
 
                 self._init_msg()
                 break
@@ -315,9 +309,9 @@ class Muse():
 
         ### Reciben mucha data por segundo: ## ~17 x seg
         ## handle 0x14
-        # self.device.subscribe('273e0009-4c4d-454d-96be-f03bac821358', callback=self._handle_14)
+        self.device.subscribe('273e0009-4c4d-454d-96be-f03bac821358', callback=self._handle_14)
         ## handle 0x17
-        self.device.subscribe('273e000a-4c4d-454d-96be-f03bac821358', callback=self._handle_17)
+        # self.device.subscribe('273e000a-4c4d-454d-96be-f03bac821358', callback=self._handle_17)
 
 
     def _handle_battery(self, handle, data):
@@ -335,7 +329,7 @@ class Muse():
         string_hex = string_hex[4:] # Quitar tiempo
         self.lista.append([t, *string_hex, *res])
 
-        self.callback_other(t, res)
+        # self.callback_other(t, res)
 
         # print(hex(handle))
         # print("bytes: {}".format(len(data)))
@@ -413,7 +407,7 @@ class Muse():
         string_hex = string_hex[4:] # Quitar tiempo
         string_big = []
         i = 0
-        while i + 4 < len(string_hex):
+        while i + 4 <= len(string_hex):
             string_big.append(string_hex[i:i+4])
             i += 4
         self.lista.append([t, *string_big, *res])

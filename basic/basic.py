@@ -2,7 +2,7 @@
 import sys
 
 def perror(text, exit_code=1, force_continue=False, **kwargs):
-    """ Prints to standard error. If status is non-zero exits """
+    """Prints to standard error. If status is non-zero exits."""
 
     # See how bad is it
     bad = "WARN" if force_continue else "ERROR"
@@ -23,7 +23,7 @@ class SignalCatcher(object):
     """Catch a ctrl-c signal """
     def __init__(self, verbose=True):
         self._keep_running = True
-        self.verbose = True
+        self.verbose = verbose
 
     def keep_running(self):
         return self._keep_running

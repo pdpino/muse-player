@@ -17,16 +17,6 @@ from basic.data_manager import save_data
 import basic
 
 
-# Next TODOs:
-# TODO: handle when muse turns off
-# TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho # opcion para guardarlas como dump o no
-# XXX: ver cuando se desconecta: https://stackoverflow.com/questions/18511119/stop-processing-flask-route-if-request-aborted
-# IDEA: probar qué tanta información se pierde en mandar promedio, un dato o todos
-    # calcular cov o dispersion de 12 samples (?)
-
-# Not urgent
-# TODO: ordenar README_develop seccion "headband en estado normal" y "en estado extraño"
-
 class DataContainer(object):
     """Contains the data produced by Muse, gives it to Flask to stream it"""
 
@@ -73,6 +63,9 @@ class DataContainer(object):
             self._q_data.clear()
             t_init = time() # Set an initial time as marker
 
+        yield "data: 0\n\n" # Start message
+        print("yielded start message")
+
         while True:
             self.lock.acquire()
             if len(self._q_time) == 0 or len(self._q_data) == 0: # NOTE: both lengths should always be the same
@@ -84,6 +77,18 @@ class DataContainer(object):
             self.lock.release()
 
             yield from self._yielder(t, t_init, d, n_data)
+
+class DataYielder(object):
+    """Yield functions to stream any data in the desired way."""
+
+    yield_string = "data: {}. {}\n\n"
+
+    @staticmethod
+    def get_data(t, t_init, data, dummy=None):
+        """Yield out all the points in the data."""
+        data_str = ','.join(map(str, data))
+        a = DataYielder.yield_string.format(t - t_init, data_str)
+        yield a
 
 class EEGContainer(DataContainer):
     """Contains the eeg data produced by Muse"""
@@ -125,7 +130,7 @@ class EEGContainer(DataContainer):
         save_data(res, fname, subfolder, suffix)
 
 class EEGYielder(object):
-    """Yield functions to stream the data in the desired way.
+    """Yield functions to stream the eeg data in the desired way.
 
     Assumes that the shape of the data is:
     len(t) == 12
@@ -201,22 +206,6 @@ class EEGYielder(object):
 
         return yielder
 
-class DataYielder(object):
-    """Yield functions to stream the data in the desired way."""
-
-    # String para hacer yield
-    yield_string = "data: {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n\n"
-
-    @staticmethod
-    def get_data(t, t_init, data, dummy=None):
-        """Yield out 9 points."""
-        if len(data) < 9:
-            while len(data) < 9:
-                data.append(0)
-        elif len(data) > 9:
-            data = data[:9]
-
-        yield DataYielder.yield_string.format(t - t_init, *data)
 
 
 
@@ -227,6 +216,8 @@ def parse_args():
         parser = argparse.ArgumentParser(description='Send muse data to client and save to .csv',
                             usage='%(prog)s [options]', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
+        parser.add_argument('--stream_other', action="store_true",
+                            help="DEBUG option, stream other channels")
         parser.add_argument('-t', '--time', default=None, type=float,
                             help="Seconds to record data (aprox). If none, stop listening only when interrupted")
 
@@ -239,13 +230,13 @@ def parse_args():
         group_data = parser.add_argument_group(title="Data",
                             description="Parameters of the processed and streamed data")
         group_data.add_argument('--stream_mode', choices=["mean", "n", "max", "min"], type=str, default="n",
-                            help="Choose what part of the data to yield to the client. If 'n' is selected consider providing a --stream_n argument as well") # TODO: add to README
+                            help="Choose what part of the data to yield to the client. If 'n' is selected consider providing a --stream_n argument as well")
         group_data.add_argument('--stream_n', default=1, type=int,
                             help="If --stream_mode n is selected, define the amount of data to yield")
         group_data.add_argument('--nsub', default=None, type=int,
-                            help="Normalize substractor. Number to substract to the raw data when incoming, before the factor. If None, it will use the muse module default value") # TODO: add to README
+                            help="Normalize substractor. Number to substract to the raw data when incoming, before the factor. If None, it will use the muse module default value")
         group_data.add_argument('--nfactor', default=None, type=int,
-                            help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default value") # TODO: add to README
+                            help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default value")
 
 
         group_save = parser.add_argument_group(title="File arguments", description=None)
@@ -308,17 +299,16 @@ def main():
     signal.signal(signal.SIGINT, catcher.signal_handler)
 
 
-    # Connect EEGdata
-    # @app.route(args.url)
-    # def stream_eeg():
-    #     """Stream the eeg data."""
-    #     return Response(eeg_container.data_generator(args.stream_n), mimetype="text/event-stream")
-
-    # Connect Other data
-    @app.route('/data/other')
-    def stream_other():
-        """Stream other data."""
-        return Response(data_container.data_generator(), mimetype="text/event-stream")
+    if not args.stream_other: # Connect EEGdata
+        @app.route(args.url)
+        def stream_eeg():
+            """Stream the eeg data."""
+            return Response(eeg_container.data_generator(args.stream_n), mimetype="text/event-stream")
+    else: # Connect Other data
+        @app.route(args.url)
+        def stream_other():
+            """Stream other data."""
+            return Response(data_container.data_generator(), mimetype="text/event-stream")
 
 
     ## Iniciar
@@ -345,7 +335,7 @@ def main():
 
     col0 = df.columns[0]
     df[col0] = df[col0] - df[col0][0] # Normalizar tiempo
-    df.to_csv("debug2.csv", index=False, header=False) # Guardar a archivo
+    df.to_csv("debug_handles/debug2.csv", index=False, header=False) # Guardar a archivo
 
 
 
