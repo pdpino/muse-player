@@ -140,7 +140,7 @@ def main():
 
     col0 = df.columns[0]
     df[col0] = df[col0] - df[col0][0] # Normalizar tiempo
-    df.to_csv("debug_handles/debug2.csv", index=False, header=False) # Guardar a archivo
+    df.to_csv("debug/debug2.csv", index=False, header=False) # Guardar a archivo
 
 
 

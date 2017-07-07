@@ -11,10 +11,11 @@ def main():
 
     # El archivo tiene en cada linea un msje, puede estar comenzado por *, cada byte lo tiene separado por un :
         # llegar y copiar desde wireshark
+        # ejemplo:
+        # * ab:12:34:ef
     fname = "debug.txt"
     with open(fname, "r") as f:
         a = f.readlines()
-
 
     verbose = False
 
