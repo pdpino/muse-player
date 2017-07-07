@@ -586,8 +586,8 @@ class Connection{
  */
 function init_data(n){
   var data = new Array(1);
-  data[0] = new Array(n+1); // one for the time, the rest are channels
-  for(var i=0;i<=n;i++){ data[0][i] = 0; } // init 0
+  data[0] = new Array(n+1); // +1 for the time, the rest are channels
+  for(var i=0;i<=n;i++){ data[0][i] = 0; } // init in 0
   return data;
 }
 
@@ -600,7 +600,7 @@ $(document).ready( function() {
 
 
   // DEBUG.
-  var use_eeg = false; // CHANGE THIS
+  var use_eeg = true; // CHANGE THIS
   if(use_eeg){
     var n_channels = 5;
     var channel_names = ["TP9", "AF7", "AF8", "TP10", "Right Aux"];
@@ -614,7 +614,7 @@ $(document).ready( function() {
   /////////////////
 
 
-  
+
 
   // EEG Data
   var nchs = n_channels;
