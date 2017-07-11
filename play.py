@@ -86,11 +86,11 @@ def main():
     args = parse_args()
 
     # Container for the incoming data
-    eeg_container = b.EEGBuffer(name="eeg", yield_function=b.EEGYielder.get_yielder(args.stream_mode))
-    data_container = b.DataBuffer(name="other", yield_function=b.DataYielder.get_data)
+    eeg_buffer = b.EEGBuffer(name="eeg", yield_function=b.EEGYielder.get_yielder(args.stream_mode))
+    data_buffer = b.DataBuffer(name="other", yield_function=b.DataYielder.get_data)
 
     # Conectar muse
-    muse = Muse(args.address, eeg_container.incoming_data, data_container.incoming_data, norm_factor=args.nfactor, norm_sub=args.nsub)
+    muse = Muse(args.address, eeg_buffer.incoming_data, data_buffer.incoming_data, norm_factor=args.nfactor, norm_sub=args.nsub)
     muse.connect(interface=args.interface)
 
     # Init Flask
@@ -108,12 +108,12 @@ def main():
         @app.route(args.url)
         def stream_eeg():
             """Stream the eeg data."""
-            return Response(eeg_container.data_generator(args.stream_n), mimetype="text/event-stream")
+            return Response(eeg_buffer.data_generator(args.stream_n), mimetype="text/event-stream")
     else: # Connect Other data
         @app.route(args.url)
         def stream_other():
             """Stream other data."""
-            return Response(data_container.data_generator(), mimetype="text/event-stream")
+            return Response(data_buffer.data_generator(), mimetype="text/event-stream")
 
 
     ## Iniciar
@@ -145,10 +145,10 @@ def main():
 
 
     # Print running time
-    print("\tReceived data for {}".format(eeg_container.get_running_time()))
+    print("\tReceived data for {}".format(eeg_buffer.get_running_time()))
 
     if args.save:
-        eeg_container.save_csv(args.fname, subfolder=args.subfolder)
+        eeg_buffer.save_csv(args.fname, subfolder=args.subfolder)
 
     return 0
 

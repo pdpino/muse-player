@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
-from basic.data_manager import read_data
-from basic import perror
+from backend import data
+import basic
 
 
 def compute_feature_vector(eegdata, Fs):
@@ -111,7 +111,7 @@ def compute_feature_vector_one(eegdata, Fs, plot_window=False):
         gamma = filter_wrapper(PSD, (f>=30) & (f<=44)) # Gamma 30-44
 
         if beta == 0 or delta == 0 or theta == 0 or alpha == 0 or gamma == 0: # si son 0, log tira error
-            perror("There are features with value 0 (noise?)", force_continue=True)
+            basic.perror("There are features with value 0 (noise?)", force_continue=True)
 
         return np.array([delta, theta, alpha, beta, gamma]) # Vector de features
 
@@ -281,7 +281,7 @@ def main():
     args = parser.parse_args()
 
     # Read the file
-    df = read_data(args.fname, args.subfolder, args.suffix)
+    df = data.read_data(args.fname, args.subfolder, args.suffix)
 
     # Tomar data
     channel = df[args.channel].as_matrix()

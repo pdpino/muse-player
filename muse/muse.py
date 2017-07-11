@@ -410,7 +410,8 @@ class Muse():
         while i + 4 <= len(string_hex):
             string_big.append(string_hex[i:i+4])
             i += 4
-        self.lista.append([t, *string_big, *res])
+        # self.lista.append([t, *string_big, *res])
+        self.lista.append([t, aa.bin])
 
         self.callback_other(t, res[1:])
 

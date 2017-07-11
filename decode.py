@@ -27,7 +27,7 @@ def get_tipo(tipo):
     else:
         return 'i' # default int 32
 
-def main():
+def read_h14():
     """Try decode handle 14."""
     fname = "debug/debug_handle14_v2.csv" # XXX
     df = pd.read_csv(fname, header=None)
@@ -81,5 +81,123 @@ def main():
     fname = "debug/parsed_handle14_v2_{}.csv".format(tipo)
     parsed_df.to_csv(fname) #, float_format='%.2f')
 
+def read_h14_bin():
+    """Try decode handle 14."""
+    fname = "debug/handle14_bin.csv" # XXX
+    df = pd.read_csv(fname, header=None)
+
+    # Tomar lista de todos los strings
+    all_bits = df[1]
+
+    # Parametros # XXX
+    di = 16 # Saltar de 16 en 16
+    bits_time = 16 # bits de timestamp
+    bits_totales = 160 # msje total tiene eso
+
+    # Matrix vacia para guardar
+    n_chunks = (bits_totales - bits_time) // di # numeros por cada msje
+    n_rows = len(all_bits) # cantidad de mensajes
+    # matrix = np.zeros((n_rows, n_chunks))
+
+    matrix = []
+    tiempos = []
+
+    # Recorrer
+    row = 0
+    for str_bits in all_bits:
+        n = len(str_bits)
+
+        # Leer tiempo
+        i = 0
+        t = str(str_bits[i:i+bits_time])
+        i += bits_time
+        tiempos.append(t)
+
+        # Leer numeros
+        col = 0
+        fila = []
+        while i < n:
+            sl = str_bits[i:i+di] # tomar slice
+            a = str(sl) # transformar # TODO
+            # matrix[row, col] = a
+            fila.append(a)
+            i += di
+            col += 1
+
+        matrix.append(fila)
+
+        row += 1
+
+
+    # Print matrix
+    print_matrix = False
+    if print_matrix:
+        for row in range(n_rows):
+            print(tiempos[row], end=", ")
+            for col in range(n_chunks):
+                print(matrix[row][col], end=", ")
+
+            print("")
+
+
+    # Transformar a numero
+    matrix_nums = np.zeros((n_rows, n_chunks + 1)) # +1 x el tiempo
+    for row in range(n_rows):
+        t = int(tiempos[row], 2)
+        matrix_nums[row, 0] = t
+        for col in range(n_chunks):
+            i_col = col + 1
+            num_bits = matrix[row][col]
+
+            # Pack it
+            num_int = int(num_bits, 2)
+            packed = struct.pack('h', num_int)
+
+            # Unpack it
+            num_float, = struct.unpack('e', packed)
+
+            # save it
+            matrix_nums[row, i_col] = num_float
+
+
+    # Concatenar cols 1,2,3 con 4,5,6 con 7,8,9
+    concat = False
+    if concat:
+        full_rows = n_rows*3
+        full_cols = n_chunks // 3 + 1
+        matrix_concat = np.zeros((full_rows, full_cols))
+
+        row1 = 0 # recorre matrix original
+        row2 = 0 # recorre segunda matrix
+        while row1 < n_rows:
+            # Copiar tiempo 3 veces seguidas
+            t = int(tiempos[row1], 2)
+            for i in range(3):
+                row2 += i
+                matrix_concat[row2, 0] = t
+
+            # Colocar numeros # TODO
+
+            row1 += 1
+
+
+            # matrix_nums[row, 0] = t
+            # for col in range(n_chunks):
+            #     i_col = col + 1
+            #     m = int(matrix[row][col], 2)
+            #     matrix_nums[row, i_col] = m
+
+
+
+
+    df = pd.DataFrame(matrix_nums)
+    print(df)
+
+
+    # Save to file
+    fname = "debug/parsed_handle14_bin.csv"
+    df.to_csv(fname) #, float_format='%.2f')
+
+
 if __name__ == "__main__":
-    main()
+    read_h14_bin()
