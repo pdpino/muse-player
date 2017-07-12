@@ -4,8 +4,6 @@
 Connects with a muse (2016) device, stream the data through a text/event-stream and save the data to a csv"""
 
 from time import sleep, time
-from collections import deque
-import numpy as np
 import pandas as pd
 import argparse
 import threading
@@ -13,142 +11,66 @@ import signal
 from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
-from basic.data_manager import save_data
 import basic
+import backend as b
+
+def parse_args():
+    """Create a parser, get the args, return them preprocessed."""
+    def create_parser():
+        """ Create the console arguments parser"""
+        parser = argparse.ArgumentParser(description='Send muse data to client and save to .csv',
+                            usage='%(prog)s [options]', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+        parser.add_argument('--stream_other', action="store_true",
+                            help="DEBUG option, stream other channels")
+        parser.add_argument('-t', '--time', default=None, type=float,
+                            help="Seconds to record data (aprox). If none, stop listening only when interrupted")
+
+        group_bconn = parser.add_argument_group(title="Bluetooth connection", description=None)
+        group_bconn.add_argument('-i', '--interface', default=None, type=str,
+                            help="Bluetooth interface, e.g: hci0, hci1")
+        group_bconn.add_argument('-a', '--address', default="00:55:DA:B3:20:D7", type=str,
+                            help="Device's MAC address")
+
+        group_data = parser.add_argument_group(title="Data",
+                            description="Parameters of the processed and streamed data")
+        group_data.add_argument('--stream_mode', choices=["mean", "n", "max", "min"], type=str, default="n",
+                            help="Choose what part of the data to yield to the client. If 'n' is selected consider providing a --stream_n argument as well")
+        group_data.add_argument('--stream_n', default=1, type=int,
+                            help="If --stream_mode n is selected, define the amount of data to yield")
+        group_data.add_argument('--nsub', default=None, type=int,
+                            help="Normalize substractor. Number to substract to the raw data when incoming, before the factor. If None, it will use the muse module default value")
+        group_data.add_argument('--nfactor', default=None, type=int,
+                            help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default value")
 
 
-# DEBUG: para saber si se corto la conexion
-    # https://stackoverflow.com/questions/18511119/stop-processing-flask-route-if-request-aborted
-from werkzeug.serving import WSGIRequestHandler
-class CustomRequestHandler(WSGIRequestHandler):
-    """ """
-
-    callback_conn_closed = None
-
-    def connection_dropped(self, error, environ=None):
-        print("connection closed")
-        if not CustomRequestHandler.callback_conn_closed is None:
-            CustomRequestHandler.callback_conn_closed()
-            print("\tcalling callback")
-        else:
-            print("\tnot calling callback")
+        group_save = parser.add_argument_group(title="File arguments", description=None)
+        group_save.add_argument('-s', '--save', action="store_true",
+                            help="Save a .csv with the raw data")
+        group_save.add_argument('-f', '--fname', default="dump", type=str,
+                            help="Name to store the .csv file")
+        group_save.add_argument('--subfolder', default=None, type=str,
+                            help="Subfolder to save the .csv file")
+        # group_save.add_argument('--save_stream', action="store_true",
+        #                     help="Save the data that is streamed on different files")
 
 
-
-# Next TODOs:
-# TODO: handle when muse turns off
-# TODO: despues de un rato vaciar listas full_data y full_time, se llenan mucho # opcion para guardarlas como dump o no
-# IDEA: probar qué tanta información se pierde en mandar promedio, un dato o todos
-    # calcular cov o dispersion de 12 samples (?)
-
-# Not urgent
-# TODO: ordenar README_develop seccion "headband en estado normal"
-# IDEA: expandir muse module para que chequee estado bateria y reciba aceletrometro, etc
-
-def get_running_time(timestamps):
-    """Return the running time, given the list of timestamps"""
-    if timestamps is None:
-        return 0
-
-    if len(timestamps) == 0:
-        return 0
-
-    t_end = timestamps[-1][-1]
-    t_init = timestamps[0][0]
-    return t_end - t_init
-
-def normalize_time(timestamps):
-    """Receive a list of np arrays of timestamps. Return the concatenated and normalized (substract initial time) np array"""
-
-    # Concat y normalizar timestamps
-    timestamps = np.concatenate(timestamps)
-    return timestamps - timestamps[0]
-
-def normalize_data(data):
-    """Return the data concatenated"""
-    return np.concatenate(data, 1).T
-
-def save_csv(timestamps, data, fname, subfolder=None, suffix=None):
-    """Preprocess the data and save it to a csv."""
-    if timestamps is None or data is None:
-        return
-    if len(timestamps) == 0 or len(data) == 0:
-        return
+        group_sconn = parser.add_argument_group(title="Stream connection", description=None)
+        group_sconn.add_argument('--ip', default="localhost", type=str,
+                            help="Host ip to do the streaming")
+        group_sconn.add_argument('--port', default=8889, type=int,
+                            help="Port to send the data to")
+        group_sconn.add_argument('--url', default="/data/muse", type=str,
+                            help="Path in the client to send the data, so it will be sent to 'http://ip:port/url'")
 
 
-    # Concatenar data
-    timestamps = normalize_time(timestamps)
-    data = normalize_data(data)
+        return parser
 
-    # Juntar en dataframe
-    res = pd.DataFrame(data=data, columns=['TP9', 'AF7', 'AF8', 'TP10', 'Right AUX'])
-    res['timestamps'] = timestamps
-
-    # Guardar a csv
-    save_data(res, fname, subfolder, suffix)
-
-def create_parser():
-    """ Create the console arguments parser"""
-    parser = argparse.ArgumentParser(description='Send muse data to client and save to .csv',
-                        usage='%(prog)s [options]', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument('-t', '--time', default=None, type=float,
-                        help="Seconds to record data (aprox). If none, stop listening only when interrupted")
-
-    group_bconn = parser.add_argument_group(title="Bluetooth connection", description=None)
-    group_bconn.add_argument('-i', '--interface', default=None, type=str,
-                        help="Bluetooth interface, e.g: hci0, hci1")
-    group_bconn.add_argument('-a', '--address', default="00:55:DA:B3:20:D7", type=str,
-                        help="Device's MAC address")
-
-    group_data = parser.add_argument_group(title="Data",
-                        description="Parameters of the processed and streamed data")
-    group_data.add_argument('--stream_mode', choices=["mean", "n", "max", "min"], type=str, default="n",
-                        help="Choose what part of the data to yield to the client. If 'n' is selected consider providing a --stream_n argument as well") # TODO: add to README
-    group_data.add_argument('--stream_n', default=1, type=int,
-                        help="If --stream_mode n is selected, define the amount of data to yield")
-    group_data.add_argument('--nsub', default=None, type=int,
-                        help="Normalize substractor. Number to substract to the raw data when incoming, before the factor. If None, it will use the muse module default value") # TODO: add to README
-    group_data.add_argument('--nfactor', default=None, type=int,
-                        help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default value") # TODO: add to README
-
-
-    group_save = parser.add_argument_group(title="File arguments", description=None)
-    group_save.add_argument('-s', '--save', action="store_true",
-                        help="Save a .csv with the raw data")
-    group_save.add_argument('-f', '--fname', default="dump", type=str,
-                        help="Name to store the .csv file")
-    group_save.add_argument('--subfolder', default=None, type=str,
-                        help="Subfolder to save the .csv file")
-    # group_save.add_argument('--save_stream', action="store_true",
-    #                     help="Save the data that is streamed on different files")
-
-
-    group_sconn = parser.add_argument_group(title="Stream connection", description=None)
-    group_sconn.add_argument('--ip', default="localhost", type=str,
-                        help="Host ip to do the streaming")
-    group_sconn.add_argument('--port', default=8889, type=int,
-                        help="Port to send the data to")
-    group_sconn.add_argument('--url', default="/data/muse", type=str,
-                        help="Path in the client to send the data, so it will be sent to 'http://ip:port/url'")
-
-
-    return parser
-
-def main():
-    """Connect with muse and stream the data"""
-    # Parse args
     parser = create_parser()
     args = parser.parse_args()
 
-    # Argumentos
+    # Assure a url well formed
     args.url = basic.assure_startswith(args.url, "/")
-    notify = False
-    if notify:
-        msg = "You choose to stream the data in the '{}' mode".format(args.stream_mode)
-        if args.stream_mode == "n":
-            msg += ", with n = {}".format(args.stream_n)
-        print(msg)
 
     # Cap the amount of data to yield
     if args.stream_n > 12:
@@ -156,159 +78,42 @@ def main():
     elif args.stream_n <= 0:
         args.stream_n = 1
 
-    ##### Queues para stream datos, thread safe
-    # Productor: muse
-    # Consumidor: flask, que manda datos a client
-    msize = 10 # maxsize
-    q_data = deque(maxlen=msize)
-    q_time = deque(maxlen=msize)
-    lock_queues = threading.Lock()
+    return args
 
-    ### Listas para guardar datos
-    # Guardan todos los datos
-    full_time = []
-    full_data = []
-    # Guardar solo los datos que se hace stream
-    streamed_time = []
-    streamed_data = []
-    lock_streamed = threading.Lock()
+def main():
+    """Connect with muse and stream the data"""
+    # Get arguments
+    args = parse_args()
 
-    def process_muse_data(data, timestamps):
-        """Stores and enqueues the incoming muse data
-
-        data -- ndarray of 5x12, 5 channels and 12 samples
-        timestamps -- ndarray of 12x1, 12 samples"""
-
-        # Agregar a full lists
-        full_time.append(timestamps)
-        full_data.append(data)
-
-        # Agregar datos a queue
-        with lock_queues:
-            q_time.append(timestamps)
-            q_data.append(data)
+    # Container for the incoming data
+    eeg_buffer = b.EEGBuffer(name="eeg", yield_function=b.EEGYielder.get_yielder(args.stream_mode))
+    data_buffer = b.DataBuffer(name="other", yield_function=b.DataYielder.get_data)
 
     # Conectar muse
-    muse = Muse(args.address, process_muse_data, interface=args.interface, norm_factor=args.nfactor, norm_sub=args.nsub)
-    status = muse.connect()
-    if status != 0:
-        basic.perror("Can't connect to muse band", exit_code=status)
+    muse = Muse(args.address, eeg_buffer.incoming_data, data_buffer.incoming_data, norm_factor=args.nfactor, norm_sub=args.nsub)
+    muse.connect(interface=args.interface)
 
-
-
-    # Generador para streaming
+    # Init Flask
     app = Flask(__name__) # iniciar app de Flask
     CORS(app) # para que cliente pueda acceder a este puerto
-    @app.route(args.url)
-    def stream_data():
-        """ """
-        # String para hacer yield
-        yield_string = "data: {}, {}, {}, {}, {}, {}\n\n"
-            # Siempre se envia (timestamp, ch0, ch1, ch2, ch3, ch4)
-
-        def get_data_mean(tt, t_init, data, dummy=None):
-            """Yield the mean in the 12 samples for each channel separately."""
-            yield yield_string.format( \
-                    tt.mean() - t_init, \
-                    data[0].mean(), \
-                    data[1].mean(), \
-                    data[2].mean(), \
-                    data[3].mean(), \
-                    data[4].mean() )
-
-        def get_data_max(tt, t_init, data, dummy=None):
-            """Yield the max of the 12 samples for each channel separately"""
-            # NOTE: use tt.max(), tt.mean()?
-            yield yield_string.format( \
-                    tt.max() - t_init, \
-                    data[0].max(), \
-                    data[1].max(), \
-                    data[2].max(), \
-                    data[3].max(), \
-                    data[4].max() )
-
-        def get_data_min(tt, t_init, data, dummy=None):
-            """Yield the min of the 12 samples for each channel separately"""
-            yield yield_string.format( \
-                    tt.min() - t_init, \
-                    data[0].min(), \
-                    data[1].min(), \
-                    data[2].min(), \
-                    data[3].min(), \
-                    data[4].min() )
-
-        def get_data_n(tt, t_init, data, n):
-            """Yield n out of the 12  """
-            for i in range(n):
-                ttt = tt[i] - t_init
-                yield yield_string.format(
-                    ttt, \
-                    data[0][i], \
-                    data[1][i], \
-                    data[2][i], \
-                    data[3][i], \
-                    data[4][i] )
-
-        # Escoger yielder
-        yielders = {
-            "mean": get_data_mean,
-            "min": get_data_min,
-            "max": get_data_max,
-            "n": get_data_n
-            }
-
-        try:
-            get_data = yielders[args.stream_mode]
-        except:
-            basic.perror("yielder: {} not found".format(args.stream_mode), force_continue=True)
-            get_data = get_data_n
-
-        n_data = args.stream_n # Usado para hacer yield de cierta cantidad de datos del total
-
-        def event_stream():
-            # DEBUG:
-            t_act = 0
-            t_old = 0
-            dt = 1 # print cada 1 seg
-
-            # Drop old data in queue
-            with lock_queues:
-                q_time.clear()
-                q_data.clear()
-                t_init = time() # Set an initial time as marker
-
-            # Stream
-            while True:
-                # sleep(0.1)
-                lock_queues.acquire()
-                if(len(q_time) == 0 or len(q_data) == 0): # NOTE: ambas length debiesen ser iguales siempre
-                    # No data, continue
-                    lock_queues.release()
-                    continue
-
-                # Tomar dato que viene
-                t = q_time.popleft()
-                d = q_data.popleft()
-                lock_queues.release()
-
-                # Guardar en listas de streamed datos
-                with lock_streamed:
-                    streamed_time.append(t)
-                    streamed_data.append(d)
-
-                # NOTE: if len(t) != 12 or d.shape != (5, 12) : may be an index exception
-                yield from get_data(t, t_init, d, n_data)
-
-        return Response(event_stream(), mimetype="text/event-stream")
-
-
-    # Thread para streaming
     stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
     stream.daemon = True
 
-    # Capturar ctrl-c
+    # Catch ctrl-c
     catcher = basic.SignalCatcher()
     signal.signal(signal.SIGINT, catcher.signal_handler)
+
+
+    if not args.stream_other: # Connect EEGdata
+        @app.route(args.url)
+        def stream_eeg():
+            """Stream the eeg data."""
+            return Response(eeg_buffer.data_generator(args.stream_n), mimetype="text/event-stream")
+    else: # Connect Other data
+        @app.route(args.url)
+        def stream_other():
+            """Stream other data."""
+            return Response(data_buffer.data_generator(), mimetype="text/event-stream")
 
 
     ## Iniciar
@@ -327,14 +132,23 @@ def main():
     muse.disconnect()
     print("Stopped receiving muse data")
 
+    # Imprimir mensajes que recibio Muse en todo el proceso
+    # muse.print_msgs()
+
+    # DEBUG:
+    df = pd.DataFrame(muse.lista)
+
+    col0 = df.columns[0]
+    df[col0] = df[col0] - df[col0][0] # Normalizar tiempo
+    df.to_csv("debug/debug2.csv", index=False, header=False) # Guardar a archivo
+
+
 
     # Print running time
-    print("\tReceived data for {:.2f} seconds".format(get_running_time(full_time)))
-    print("\tStreamed data for {:.2f} seconds".format(get_running_time(streamed_time)))
+    print("\tReceived data for {}".format(eeg_buffer.get_running_time()))
 
     if args.save:
-        save_csv(full_time, full_data, args.fname, subfolder=args.subfolder, suffix="full")
-        save_csv(streamed_time, streamed_data, args.fname, subfolder=args.subfolder, suffix="streamed")
+        eeg_buffer.save_csv(args.fname, subfolder=args.subfolder)
 
     return 0
 

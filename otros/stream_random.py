@@ -9,7 +9,6 @@ import threading
 import signal
 from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
-import basic
 
 
 def create_parser():
@@ -40,12 +39,13 @@ def create_parser():
 
 def main():
     """ main function"""
+
+    # FIXME: fix imports
+
+
     # Parse args
     parser = create_parser()
     args = parser.parse_args()
-
-    # Argumentos
-    args.url = basic.assure_startswith(args.url, "/")
 
     ##### Queues para stream datos, thread safe
     # Productor: random data
@@ -136,15 +136,11 @@ def main():
     gendata = threading.Thread(target=generate_random_data, args=(args.rmin, args.rmax))
     gendata.daemon = True
 
-    # Capturar ctrl-c
-    catcher = basic.SignalCatcher()
-    signal.signal(signal.SIGINT, catcher.signal_handler)
-
     ## Iniciar
     gendata.start()
     stream.start()
 
-    while catcher.keep_running():
+    while True:
         sleep(1)
 
     return 0
