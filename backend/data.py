@@ -22,7 +22,7 @@ class DumpFileHandler(basic.FileHandler):
     @classmethod
     def get_fname(cls, name, subfolder=None, suffix=None):
         """Return the vocabulary full filename."""
-        return cls._get_fname(lname, folder=subfolder, suffix=suffix, ext=cls.get_ext(status))
+        return cls._get_fname(name, folder=subfolder, suffix=suffix, ext=cls.ext)
 
     @classmethod
     def assure_folder(cls, subfolder):
@@ -30,7 +30,7 @@ class DumpFileHandler(basic.FileHandler):
         cls._assure_folder(subfolder)
 
 def read_data(name, subfolder=None, suffix=None):
-    """Read a .csv file and returns the dataframe"""
+    """Read a .csv file and return the dataframe"""
     fname = DumpFileHandler.get_fname(name, subfolder, suffix)
 
     try:
