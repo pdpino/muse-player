@@ -9,6 +9,7 @@
 
 <a name="usage" />
 ## Usage
+
 ### Play
 Use `python play.py -s` to connect with the Muse device, save the data to a .csv file and stream it to a web client. See more options with `python play.py --help`.
 
@@ -16,7 +17,7 @@ Use `python play.py -s` to connect with the Muse device, save the data to a .csv
 Use `python plotting.py --raw --waves` to plot the raw data and the waves calculated from the data (in time).
 
 ### Webpage
-Get the webpage up using: `python -m http.server <port>`, where port is different than the one used to stream the data (see `--port` option in `play.py`). Then go to http://localhost:<port> and visualize the live muse data.
+Get the webpage up using: `python -m http.server <port>`, where port is different than the one used to stream the data (see `--port` option in `play.py`). Then go to `http://localhost:<port>` and visualize the live muse data.
 
 
 

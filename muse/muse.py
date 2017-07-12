@@ -10,7 +10,7 @@ import threading
 class Muse():
     """Muse 2016 headband"""
 
-    def __init__(self, address, callback, callback_other, info=True, eeg=True, other=True, accelero=False,
+    def __init__(self, address=None, callback=None, callback_other=None, info=True, eeg=True, other=True, accelero=False,
                  giro=False, norm_factor=None, norm_sub=None):
         """Initialize
 
@@ -80,6 +80,14 @@ class Muse():
             self.adapter = pygatt.BGAPIBackend(serial_port=self.interface)
 
         self.adapter.start()
+
+        if self.address is None: # Scan for address
+            address = self.find_muse_address()
+            if address is None:
+                raise(ValueError("Can't find Muse Device"))
+            else:
+                self.address = address
+
         self.device = self.adapter.connect(self.address)
 
 
@@ -145,6 +153,14 @@ class Muse():
         self.device.disconnect()
         self.adapter.stop()
 
+    def find_muse_address(self):
+        """look for ble device with a muse in the name"""
+        devices = []
+        list_devices = self.adapter.scan(timeout=10.5)
+        for device in list_devices:
+            if 'Muse' in device['name']:
+                return device['address']
+        return None
 
 
     """Printing methods"""
