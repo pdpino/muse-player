@@ -30,7 +30,7 @@ def plot_tf_contour(power, title, channel, min_freq=None, max_freq=None, subplot
 
     ax = plt.contourf(arr_times, arr_freqs, matrix, 50, cmap=plt.get_cmap('nipy_spectral'))
     plt.colorbar(ax)
-    plt.xlabel('Tiempo (s)')
+    plt.xlabel('Time (s)')
     plt.ylabel('Frequency (Hz)')
 
     plt.title("{} from {}".format(title, channel))
@@ -57,6 +57,8 @@ def plot_raw(df, ch_names, subplots=False):
             plt.subplot(3, 2, i) # HACK: hardcoded for 6 subplots
             i += 1
         plt.plot(t, df[ch].as_matrix(), label=ch)
+        plt.xlabel('Time (s)')
+        plt.ylabel('Amplitude')
 
     plt.suptitle("Raw channels", fontsize=20)
     plt.legend()
