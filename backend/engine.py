@@ -112,11 +112,11 @@ class EEGBuffer(DataBuffer):
 
 
         # Concatenar data
-        timestamps = normalize_time(self._full_time)
-        data = normalize_data(self._full_data)
+        timestamps = self._normalize_time()
+        eeg_data = self._normalize_data()
 
         # Juntar en dataframe
-        res = pd.DataFrame(data=data, columns=['TP9', 'AF7', 'AF8', 'TP10', 'Right AUX'])
+        res = pd.DataFrame(data=eeg_data, columns=['TP9', 'AF7', 'AF8', 'TP10', 'Right AUX'])
         res['timestamps'] = timestamps
 
         # Guardar a csv

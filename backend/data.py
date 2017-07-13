@@ -45,5 +45,6 @@ def save_data(df, name, subfolder=None, suffix=None):
     DumpFileHandler.assure_folder(subfolder)
     fname = DumpFileHandler.get_fname(name, subfolder, suffix)
 
-    df.to_csv(fname, float_format='%f')
+    # TODO: revisar que la primera columna sea timestamps
+    df.to_csv(fname, float_format='%f') #, index_label='timestamps')
     print("Saved to file: {}".format(fname))

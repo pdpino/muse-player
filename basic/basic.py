@@ -1,5 +1,6 @@
 """Provide a set of basic functions"""
 import sys
+import os
 
 def perror(text, exit_code=1, force_continue=False, **kwargs):
     """Prints to standard error. If status is non-zero exits."""

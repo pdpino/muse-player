@@ -3,6 +3,9 @@
 ## Headband 2016
 * When it is on and disconnected (advertising?) the lights blink rather fast. When connected they blink a bit slower. When streaming data they don't blink at all.
 
+## Data dumps
+* dump3 is 10 seconds long: 5 first seconds sitting down quietly; at second 5 stand up and walk.
+
 ## MAC Addresses
 * MAC de antena bluetooth: 00:1B:DC:06:B1:FB
 * MAC de muse: 00:55:DA:B3:20:D7
@@ -20,8 +23,8 @@
 * raw spectra
     * delta (1-4Hz)
     * theta (4-8Hz)
-    * alpha (8-13Hz)
-    * beta (13-30Hz)
+    * alpha (8-13Hz) -- estado relajo
+    * beta (13-30Hz) -- estado alerta
     * gamma (30-44Hz)
 * total power
 * artifact detection (eye blink, jaw clench)
