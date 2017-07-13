@@ -35,9 +35,9 @@
 ## Conclusion on bluetooth packets
 * You send commands to the 0x000e handle
 * Basics:
-  - 02:64:0a -- Start streaming
-  - 02:68:0a -- Stop streaming
-  - 02:73:0a -- Return a dict with the status (?) -- example:
+  - 02:64:0a -- 'd\n' -- Start streaming
+  - 02:68:0a -- 'h\n' -- Stop streaming
+  - 02:73:0a -- 's\n' -- Return a dict with the status (?) -- example:
     + "hn":"Muse-20D7" -- name
     + "sn":"2021-ZXLY-20D7"
     + "ma":"00-55-da-b3-20-d7" -- mac address
@@ -46,7 +46,7 @@
     + "ts":0
     + "ps":32 -- preset -- value in decimal, transform to hex and you get the Muse preset
     + "rc":0 -- return status, 0: OK, 1: Not OK
-  - 03:76:31:0a -- 'v1' -- get version info? -- example:
+  - 03:76:31:0a -- 'v1\n' -- get version info? -- example:
     {"ap":"headset","sp":"RevE","tp":"consumer","hw":"2.1","bn":27,"fw":"1.2.13","bl":"1.2.3","pv":1,"rc":0}
   - 04:70:32:31:0a -- 'p21\n' -- set preset formed by [0x32, 0x31] in ASCII
 
