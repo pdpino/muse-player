@@ -35,7 +35,7 @@ def read_data(name, subfolder=None, suffix=None):
 
     try:
         df = pd.read_csv(fname, index_col=0)
-        print("Read from file: {}".format(fname))
+        basic.report("Read from file: {}".format(fname))
         return df
     except FileNotFoundError:
         basic.perror("The file {} wasn't found".format(fname))
@@ -47,4 +47,4 @@ def save_data(df, name, subfolder=None, suffix=None):
 
     # TODO: revisar que la primera columna sea timestamps
     df.to_csv(fname, float_format='%f') #, index_label='timestamps')
-    print("Saved to file: {}".format(fname))
+    basic.report("Saved to file: {}".format(fname))

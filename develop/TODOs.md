@@ -1,7 +1,7 @@
 # TODOs
 
 ### Waves
-* Seguir viendo lectures, viene la 26. Terminar capitulo
+* Seguir con capitulo de post-process
 
 * Order `analyze.py`, delete HACKs, use parameters to pass to analyze functions
 * In `convolute` and `ssfft`

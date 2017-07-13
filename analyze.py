@@ -2,11 +2,10 @@
 """Script to analyze the raw eeg data"""
 
 import argparse
-from backend import data, analysis
+from backend import data, tf, plots
 import basic
 
-
-def waves(df, channel):
+def tf_analysis(df, channel):
     """Get and plot the waves."""
 
     if not channel in df.columns:
@@ -16,10 +15,14 @@ def waves(df, channel):
     eeg_data = df[channel].as_matrix()
     times = df['timestamps']
 
-    # power = analysis.sfft(times, eeg_data, window=100, step=20)
-    power = analysis.convolute(times, eeg_data, n_cycles=15)
+    power_stfft = tf.stfft(times, eeg_data, window=100, step=20)
+    power_conv = tf.convolute(times, eeg_data, n_cycles=15)
 
-    analysis.plot_contour(power, min_freq=8, max_freq=30)
+    freq1 = 8
+    freq2 = 30
+
+    plots.plot_tf_contour(power_stfft, min_freq=freq1, max_freq=freq2, subplot=121, show=False)
+    plots.plot_tf_contour(power_conv, min_freq=freq1, max_freq=freq2, subplot=122)
 
 def create_parser():
     """Create the console arguments parser."""
@@ -63,8 +66,8 @@ if __name__ == "__main__":
             ch_names = [args.channel]
 
 
-        analysis.plot_raw(df, ch_names, subplots=False)
+        plots.plot_raw(df, ch_names, subplots=False)
     else:
         if args.channel is None:
-            args.channel = 'AF7'
-        waves(df, args.channel)
+            args.channel = 'AF7' # DEFAULT # HACK
+        tf_analysis(df, args.channel)
