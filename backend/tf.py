@@ -11,7 +11,7 @@ def _tf_df(times, freqs, power):
     """Create a Time-Frequency Dataframe."""
     return pd.DataFrame(power, index=times, columns=freqs)
 
-def stfft(times, eeg_data, srate=256, window=256, step=25):
+def stfft(times, eeg_data, srate=None, window=None, step=None):
     """Apply the Short Time Fast Fourier Transform to eeg data.
 
     Parameters:
@@ -21,21 +21,30 @@ def stfft(times, eeg_data, srate=256, window=256, step=25):
     window -- size of the sliding window
     step -- step to slide the window"""
 
+    # Set DEFAULTs
+    if srate is None:
+        srate = 256
+    if window is None:
+        window = 256
+    if step is None:
+        step = 25
+
+
     def get_n_freqs(n):
         """Return the amount of freqs (resolution), given the number of samples."""
         return n // 2 + 1
 
-    def apply_fft(eeg_data):
+    def apply_fft(eeg_data_win):
         """Apply fft to a window of eeg data
 
         Parameters:
-        eeg_data -- array of dimension [number of samples]."""
+        eeg_data_win -- array of dimension [number of samples]."""
 
-        n_samples = len(eeg_data)
+        n_samples = len(eeg_data_win)
         n_freqs = get_n_freqs(n_samples) # resolution
 
         # Remove offset
-        data_centered = eeg_data - np.mean(eeg_data) # no interesa el offset de la onda
+        data_centered = eeg_data_win - np.mean(eeg_data_win) # no interesa el offset de la onda
 
         # Apply Hamming window # to taper the data
         w = np.hamming(n_samples)
@@ -76,30 +85,38 @@ def stfft(times, eeg_data, srate=256, window=256, step=25):
 
         i += step
 
+
     # Transformar a matriz de numpy # nececsary?
     power = np.matrix(matrix_power)
     power = np.log10(power) # Normalization
 
     return _tf_df(arr_times, arr_freqs, power)
 
-def convolute(times, eeg_data, srate=256, n_cycles=7):
+def convolute(times, eeg_data, srate=None, n_cycles=None):
     """Compute a convolution, of the data, via freq-domain."""
-    def create_wavelet(freq, srate, n_cycles):
+
+    # Set DEFAULTs
+    if srate is None:
+        srate = 256
+    if n_cycles is None:
+        n_cycles = 7
+
+
+    # Wavelet time
+    bound = 2
+    wavelet_time = np.linspace(-bound, bound, srate)
+
+    def create_wavelet(freq):
         """Create a wavelet given certain parameters."""
-        bound = 2
-        tiempo = np.linspace(-bound, bound, srate)
-
-
         # Create sine wave
-        sine_wave = np.exp(1j*2*math.pi*freq*tiempo) # use np.exp because is an array
-
+        sine_wave = np.exp(1j*2*math.pi*freq*wavelet_time) # use np.exp because is an array
 
         # Create gaussian
         sigma = n_cycles/(2*math.pi*freq)
-        gaus = np.exp(-np.square(tiempo)/(2*sigma**2))
+        gaus = np.exp(-np.square(wavelet_time)/(2*sigma**2))
 
-        wavelet = np.multiply(sine_wave, gaus)
-        return wavelet
+        # multiply
+        return np.multiply(sine_wave, gaus)
 
     # Lengths
     n_data = len(eeg_data)
@@ -120,7 +137,7 @@ def convolute(times, eeg_data, srate=256, n_cycles=7):
 
     for freq in arr_freqs:
         # wave and its fft
-        wave = create_wavelet(freq, srate, n_cycles)
+        wave = create_wavelet(freq)
         wave_fft = np.fft.fft(wave, n_conv)
         wave_fft /= max(wave_fft)
 

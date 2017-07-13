@@ -120,7 +120,7 @@ class EEGBuffer(DataBuffer):
         res['timestamps'] = timestamps
 
         # Guardar a csv
-        data.save_data(res, fname, subfolder, suffix)
+        data.save(res, fname, subfolder, suffix)
 
 class EEGYielder(object):
     """Yield functions to stream the eeg data in the desired way.

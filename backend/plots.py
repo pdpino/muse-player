@@ -3,10 +3,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 # import basic
 
-def plot_tf_contour(power, min_freq=4, max_freq=50, subplot=None, show=True):
+def plot_tf_contour(power, title, channel, min_freq=None, max_freq=None, subplot=None, show=True):
     """Plot a contour plot with the power.
 
     power -- dataframe, columns are frequencies, index are times"""
+
+    # Set DEFAULTs
+    if min_freq is None:
+        min_freq = 4
+    if max_freq is None:
+        max_freq = 50
 
     # Select frequencies
     arr_freqs = []
@@ -27,7 +33,18 @@ def plot_tf_contour(power, min_freq=4, max_freq=50, subplot=None, show=True):
     plt.xlabel('Tiempo (s)')
     plt.ylabel('Frequency (Hz)')
 
+    plt.title("{} from {}".format(title, channel))
+
+
     if show:
+        # Maximize window
+        mng = plt.get_current_fig_manager()
+        # mng.frame.Maximize(True) # 'wx' backend
+        # mng.window.showMaximized() # 'Qt4Agg' backend
+        mng.resize(*mng.window.maxsize()) # 'TkAgg' backend
+        # mng.full_screen_toggle() # Screen to full size (cant even see the exit button)
+
+        # Show
         plt.show()
 
 def plot_raw(df, ch_names, subplots=False):
