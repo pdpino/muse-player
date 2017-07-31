@@ -1,5 +1,11 @@
 # TODOs
 
+### Junta denis, lo que viene:
+* marks in time
+* review and fix FT code
+* baseline and normalization
+* accelerometer, decompile library
+
 ### Waves
 * In `ssfft`, review the way to obtain `n_freqs` (see videos).
 * Review `convolute` code.
