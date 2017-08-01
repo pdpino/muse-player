@@ -25,11 +25,19 @@ Get the webpage up using: `python -m http.server <port>`, where port is differen
 ## Requirements
 Python 3.5, Muse headband 2016.
 
+### With pip:
+`pip install -r develop/requirements.txt`
+
+You may also need to install the `TKinter` package for python3. In ubuntu this is done with:
+`sudo apt install python3-tk`
+
+
 Python libraries:
 * numpy, pandas, matplotlib
 * flask, flask_cors: stream data to js client
 * pygatt, pexpect: bluetooth connection
 * bitstring: unpack bytes
+
 
 
 ## Acknowledgment
