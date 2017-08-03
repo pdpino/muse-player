@@ -63,3 +63,19 @@ def plot_raw(df, ch_names, subplots=False):
     plt.suptitle("Raw channels", fontsize=20)
     plt.legend()
     plt.show()
+
+def plot_waves(waves, ch_name):
+    """Receive a list of waves and plots them. waves is a pd.DataFrame"""
+
+    times = list(waves.index)
+    for wave_name in waves.columns:
+        wave = waves[wave_name].as_matrix()
+        plt.plot(times, wave, label=wave_name)
+
+
+    plt.xlabel('Time (s)')
+    plt.ylabel('Power')
+
+    plt.suptitle("Waves from {}".format(ch_name), fontsize=20)
+    plt.legend()
+    plt.show()

@@ -158,3 +158,34 @@ def convolute(times, eeg_data, srate=None, n_cycles=None):
     power = np.log10(power) # Normalization
 
     return _tf_df(times, arr_freqs, power)
+
+def get_waves(power):
+    """Receive a TF dataframe (time, freq, power) and return the alpha, beta, etc waves."""
+
+    # Grab columns names (frequencies)
+    cols = list(power.columns)
+
+
+    # Function to get wave
+    def get_wave(min_freq, max_freq):
+        """ """
+        # Filter freqs
+        filter_freqs = [freq for freq in cols if freq >= min_freq and freq <= max_freq]
+        if len(filter_freqs) == 0:
+            basic.perror("0 freqs encontradas entre {} y {}".format(min_freq, max_freq)) # REVIEW
+
+        # Filter power df
+        array = power[filter_freqs]
+
+        # Return average all frequencies in that range
+        return array.mean(1)
+
+    waves = pd.DataFrame()
+
+    waves["delta"] = get_wave(1, 4)
+    waves["theta"] = get_wave(4, 8)
+    waves["alpha"] = get_wave(8, 13)
+    waves["beta"] = get_wave(13, 30)
+    waves["gamma"] = get_wave(30, 44)
+
+    return waves
