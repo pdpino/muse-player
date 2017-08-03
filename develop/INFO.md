@@ -1,5 +1,22 @@
 # Developing Info
 
+## Waves
+* Lectures: http://www.mikexcohen.com/lectures.html
+* Different waves that you can detect (they are not exclusive, but one may express more than the others)
+  + delta (1-4Hz)
+  + theta (4-8Hz)
+  + alpha (8-13Hz) -- estado relajo
+  + beta (13-30Hz) -- estado alerta
+  + gamma (30-44Hz)
+* Video experimenting with alpha wave, using Muse (2014), eyes closed and opened: https://www.youtube.com/watch?v=pGWHhclDV1c
+* Alpha wave increases when the eyes are closed. Even more with the TP9 and TP10, because they are closer to the zone of the brain that handles visual information (occipital lobe?)
+* Screenshots of experiment: eyes closed, eyes opened and hypnosis. If not available, screenshots are downloaded in `demos/screenshots/experiment_hypnosis_forum` folder. https://forum.choosemuse.com/t/effect-on-brainwave-when-eyes-are-open/1841
+
+* More info (TODO: read)
+  + https://www.scientificamerican.com/article/what-is-the-function-of-t-1997-12-22/
+  + https://forum.choosemuse.com/t/learn-more-about-brainwaves/1625/5
+  + (referenced by last link) http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0130129
+
 ## Headband 2016
 * When it is on and disconnected (advertising?) the lights blink rather fast. When connected they blink a bit slower. When streaming data they don't blink at all.
 
@@ -10,22 +27,17 @@
 * MAC de antena bluetooth: 00:1B:DC:06:B1:FB
 * MAC de muse: 00:55:DA:B3:20:D7
 
-## Channel order (segun barachant)
-* 0: TP9 -- atrás oreja izquierda
-* 1: AF7 -- lado izquierdo frente
-* 2: AF8 -- lado derecho frente
-* 3: TP10 -- atrás oreja derecha
-* 4: Right AUX -- medio frente (reference)
+## Channel order
+* 0: TP9 -- behind left ear
+* 1: AF7 -- right side forehead
+* 2: AF8 -- right side forehead
+* 3: TP10 -- behind right ear
+* 4: Right AUX -- middle forehead (reference)
 
 ## Datasheet de muse dice que libreria trae:
 * raw EEG data
 * raw accelerometer data
-* raw spectra
-    * delta (1-4Hz)
-    * theta (4-8Hz)
-    * alpha (8-13Hz) -- estado relajo
-    * beta (13-30Hz) -- estado alerta
-    * gamma (30-44Hz)
+* raw spectra (delta, theta, alpha, beta, gamma)
 * total power
 * artifact detection (eye blink, jaw clench)
 * Fast Fourier Transform (FFT) coefficients

@@ -229,7 +229,9 @@ class Muse():
         data = res[1:]
 
         # 12 bits on a 2 mVpp range
-        # data = 0.48828125 * (np.array(data) - 2048) # in microVolts # default value chosen by the autor # QUESTION: why?
+        # data = 0.48828125 * (np.array(data) - 2048) # in microVolts # default values chosen by barachant
+        # NOTE: the norm factor comes from passing the unsigned ints in (0, 4096) to a float in (0, 2mV).
+            # the substractor factor comes from substracting 1024 (=2048*0.488), which is done to center the data (because the hardware is AC coupled)
         data = self.norm_factor * (np.array(data) - self.norm_sub)
         return timestamp, data
 
