@@ -64,7 +64,7 @@ def plot_raw(df, ch_names, subplots=False):
     plt.legend()
     plt.show()
 
-def plot_waves(waves, ch_name):
+def plot_waves(waves, ch_name, method):
     """Receive a list of waves and plots them. waves is a pd.DataFrame"""
 
     times = list(waves.index)
@@ -76,6 +76,6 @@ def plot_waves(waves, ch_name):
     plt.xlabel('Time (s)')
     plt.ylabel('Power')
 
-    plt.suptitle("Waves from {}".format(ch_name), fontsize=20)
+    plt.suptitle("Waves from {}, using {}".format(ch_name, method), fontsize=20)
     plt.legend()
     plt.show()

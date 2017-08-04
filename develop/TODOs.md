@@ -1,10 +1,22 @@
 # TODOs
 
 ## Next
-* Continue post-process book chapter
+* Do EEG101 course
+
+* Revisar el dict que retorna muse por bluetooth (ver bluetooth section en INFO.md), comparar con section "configuration" en "available data" en pagina de muse.
+
+* Ver video laplacian (para terminar capitulo)
+
+* Revisar codigos sfft y convolute (follow FIXMEs and QUESTIONs; review code from scratch)
+
+* Hacer tests:
+  + crear onda con N sinewaves, procesarlas y ver fft.
+
+* Ver links de mail
+
 
 #### Review raw eeg
-* Normalization, etc
+* Normalization (in muse module), etc
 
 #### Review wave code
 * Review `ssfft`. Review the way to obtain `n_freqs` (see videos).
@@ -18,10 +30,10 @@
 
 
 ## Others
-* To play with waves: See barachant code (P300)
+* Play with waves: See barachant code (P300)
 
 ### Accelerometer and other data
-* Continue trying to get accelerometer, analyze bytes from handle 14 (run it, save it as csv, decode the bytes in batches of 16bits.
+* Continue trying to get accelerometer, analyze bytes from handle 14 (run it, save it as csv, decode the bytes in batches of 16bits. (See option of (u)ints and map linearly)
 * Try to decompile the library code (libmuse_android.so)
 
 ### In `play.py`

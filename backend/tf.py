@@ -1,13 +1,49 @@
 """Module that provide functions to analyze eeg data in Time-Frequency.
 
 All the different methods provided (morlet wavelet convolution, stfft, etc)
-should return a dataframe, using the _tf_df() function."""
+should return a dataframe, using the _new_tf_df() function."""
 import numpy as np
 import pandas as pd
 import math
 import basic
 
-def _tf_df(times, freqs, power):
+def _normalize_tf(times, power):
+    """Receive a matrix of power (columns are frequencies and row are times) and returns it normalized."""
+
+    return np.log10(power) # Return a "simple" normalization
+
+    # FIXME: fix this code
+
+    # Baseline times # parameters
+    bl_init_time = 5.8
+    bl_end_time = 6
+
+    # Indexes:
+    find_nearest = lambda val: np.searchsorted(times, val, side="left")[0]
+
+    bl_init_index = find_nearest(bl_init_time)
+    bl_end_index = find_nearest(bl_end_time)
+
+    # Real time:
+    bl_init_rt = times[bl_init_index]
+    bl_end_rt = times[bl_end_index]
+    print("Baseline time: ({}, {})".format(bl_init_rt, bl_end_rt))
+
+    # Get size
+    n_rows, n_cols = power.shape
+
+    # Recorrer columns (freqs) and divide # HACK: do it without the for, using numpy.mean(axis=1)
+    for col in range(n_cols):
+        # Calculate baseline
+        baseline = np.mean(power[bl_init_index:bl_end_index, col])
+
+        # Divide
+        power[:, col] /= baseline
+
+    # Log and multiply
+    return 10*np.log10(power) # Decibels
+
+def _new_tf_df(times, freqs, power):
     """Create a Time-Frequency Dataframe."""
     return pd.DataFrame(power, index=times, columns=freqs)
 
@@ -88,12 +124,14 @@ def stfft(times, eeg_data, srate=None, window=None, step=None):
 
     # Transformar a matriz de numpy # nececsary?
     power = np.matrix(matrix_power)
-    power = np.log10(power) # Normalization
 
-    return _tf_df(arr_times, arr_freqs, power)
+    # Normalization
+    power = _normalize_tf(arr_times, power)
+
+    return _new_tf_df(arr_times, arr_freqs, power)
 
 def convolute(times, eeg_data, srate=None, n_cycles=None):
-    """Compute a convolution, of the data, via freq-domain."""
+    """Compute a convolution of the data, via freq-domain."""
 
     # Set DEFAULTs
     if srate is None:
@@ -120,13 +158,14 @@ def convolute(times, eeg_data, srate=None, n_cycles=None):
 
     # Lengths
     n_data = len(eeg_data)
-    n_wavelet = srate # REVIEW: is ok???
+    n_wavelet = srate # QUESTION: is ok???
     n_conv = n_data + n_wavelet - 1
     half_wavelet = n_wavelet // 2
 
 
     # Data's fft
-    data_fft = np.fft.fft(eeg_data, n_conv)
+    data_fft = np.fft.fft(eeg_data, n_conv) / n_data
+    # FIXME: slice, absolute and multiply by 2 !!! But match the size of the wave_fft
 
     # Array of freqs to calculate for
     n_freqs = 100
@@ -142,10 +181,9 @@ def convolute(times, eeg_data, srate=None, n_cycles=None):
         wave_fft /= max(wave_fft)
 
         # Calculate convolution
-        conv = np.fft.ifft(np.multiply(data_fft, wave_fft)) # element-wise multiplication
-        conv = conv[half_wavelet:-half_wavelet+1] # trim edges
-        conv = abs(conv) # Get amplitude
-
+        conv = np.fft.ifft(np.multiply(data_fft, wave_fft))
+        conv = conv[half_wavelet:-half_wavelet+1] # trim edges # FIXME: +- 1 ???
+        conv = abs(conv) # Get amplitude # FIXME: square to get power
 
         # Add to matrix
         matrix_power.append(conv)
@@ -154,10 +192,10 @@ def convolute(times, eeg_data, srate=None, n_cycles=None):
     power = np.matrix(matrix_power)
     power = np.transpose(power)
 
+    # Normalization
+    power = _normalize_tf(times, power)
 
-    power = np.log10(power) # Normalization
-
-    return _tf_df(times, arr_freqs, power)
+    return _new_tf_df(times, arr_freqs, power)
 
 def get_waves(power):
     """Receive a TF dataframe (time, freq, power) and return the alpha, beta, etc waves."""
