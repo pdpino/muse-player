@@ -47,6 +47,15 @@ def plot_tf_contour(power, title, channel, min_freq=None, max_freq=None, subplot
         # Show
         plt.show()
 
+def plot_channel(t, arr, title):
+    """Plot a channel."""
+
+    plt.plot(t, arr)
+    plt.xlabel('Time (s)') # DEFAULT is time and amplitude
+    plt.ylabel('Amplitude')
+    plt.suptitle(title, fontsize=20)
+    plt.show()
+
 def plot_raw(df, ch_names, subplots=False):
     """Plot raw channels."""
 
