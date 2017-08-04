@@ -1,12 +1,12 @@
 # TODOs
 
 ## Next
-* Ver video laplacian (para terminar capitulo)
-
 * Revisar codigos sfft y convolute (follow FIXMEs and QUESTIONs; review code from scratch)
 
 * Hacer tests:
   + crear onda con N sinewaves, procesarlas y ver fft.
+
+* Ver video laplacian (para terminar capitulo)
 
 * Ver links de mail
 
