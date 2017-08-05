@@ -2,7 +2,6 @@
 
 ## Next
 #### Order code
-* Make option to not stream data from play.py to js client
 * In `analyze.py`
   + move `load_data()` to backend and move `raw` option to another script (`plot_raw.py`)
   + merge `test.py` into `analyze.py` (the parameters are very similar)

@@ -241,8 +241,11 @@ class Muse():
         # print("\tcodes: {}".format(codes))
         # print("\tmsg: {}".format(msg))
 
+        # medium print:
+        print("\treceived: {}".format(msg))
+
         # Simple print:
-        print(msg)
+        # print(msg)
 
     def _handle_messages(self, handle, data):
         """Handle the incoming messages from the 0x000e handle."""

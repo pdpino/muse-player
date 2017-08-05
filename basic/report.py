@@ -1,11 +1,16 @@
 """Submodule that provides functions to report to console."""
 
 
-def report(text, end="\n", level=1):
+def report(text, *args, end="\n", level=1):
     """Display a message in the console"""
-    tabs = "\t" * level
-    print("{}{}".format(tabs, text), flush=True, end=end)
-
+    try:
+        text = text.format(*args)
+    except IndexError:
+        # the amount of args don't match the amount of brackets
+        pass
+    msg = "{}{}".format("\t" * level, text)
+    print(msg, flush=True, end=end)
+    
 class ProgressReporter:
     """Wrapper to report the progress of a process."""
 
