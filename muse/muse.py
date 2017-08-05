@@ -237,8 +237,12 @@ class Muse():
 
     def _push_msg(self, codes, msg):
         """Pushes the message."""
-        print("\tcodes: {}".format(codes))
-        print("\tmsg: {}".format(msg))
+        # Full print:
+        # print("\tcodes: {}".format(codes))
+        # print("\tmsg: {}".format(msg))
+
+        # Simple print:
+        print(msg)
 
     def _handle_messages(self, handle, data):
         """Handle the incoming messages from the 0x000e handle."""

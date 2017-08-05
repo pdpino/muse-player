@@ -89,7 +89,11 @@ def main():
     data_buffer = b.DataBuffer(name="other", yield_function=b.DataYielder.get_data)
 
     # Conectar muse
-    muse = Muse(args.address, eeg_buffer.incoming_data, data_buffer.incoming_data, norm_factor=args.nfactor, norm_sub=args.nsub)
+    muse = Muse(address=args.address,
+                callback=eeg_buffer.incoming_data,
+                callback_other=data_buffer.incoming_data,
+                push_info=True, # DEBUG: to see battery percentage
+                norm_factor=args.nfactor, norm_sub=args.nsub)
     muse.connect(interface=args.interface)
 
     # Init Flask
@@ -130,6 +134,12 @@ def main():
                 message = input("Mark (optional message): ")
                 t = eeg_buffer.get_last_timestamp()
 
+                # DEBUG: in the meantime, you can input this to see what comes
+                if message == "-c": # Magic word
+                    muse.ask_config()# only works if push_info was enabled
+                    sleep(0.5) # let it print
+                    continue
+
                 # Save
                 marks.append(t)
                 messages.append(message)
@@ -144,9 +154,6 @@ def main():
     muse.stop()
     muse.disconnect()
     print("Stopped receiving muse data")
-
-    # Imprimir mensajes que recibio Muse en todo el proceso
-    # muse.print_msgs()
 
     # # DEBUG: save a file with the handles
     # df = pd.DataFrame(muse.lista)

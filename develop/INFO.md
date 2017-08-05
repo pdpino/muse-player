@@ -63,7 +63,7 @@ NOTE: some of the meanings were inflicted from http://developer.choosemuse.com/r
     + "sn":"2021-ZXLY-20D7" -- serial number
     + "ma":"00-55-da-b3-20-d7" -- mac address
     + "id":"07473435 32313630 00210042"
-    + "bp":88 -- battery percent remaining?
+    + "bp":88 -- battery percent remaining? if you see it in time, it may be
     + "ts":0
     + "ps":32 -- preset -- value in decimal, transform to hex and you get the Muse preset
     + "rc":0 -- return status, 0: OK, 1: Not OK
