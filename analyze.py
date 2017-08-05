@@ -16,12 +16,12 @@ def tf_analysis(df, channels, min_freq=None, max_freq=None, window=None, step=No
         eeg_data = df[ch].as_matrix()
 
         # Compute FT
-        # power_stfft = tf.stfft(times, eeg_data, window=window, step=step)
+        power_stfft = tf.stfft(times, eeg_data, window=window, step=step)
         power_conv = tf.convolute(times, eeg_data, n_cycles=n_cycles)
 
         # Plot as contour
-        # plots.plot_tf_contour(power_stfft, "STFFT", ch, min_freq=min_freq, max_freq=max_freq, subplot=121, show=False)
-        plots.plot_tf_contour(power_conv, "Convolution", ch, min_freq=min_freq, max_freq=max_freq)#, subplot=122)
+        plots.plot_tf_contour(power_stfft, "STFFT", ch, min_freq=min_freq, max_freq=max_freq, subplot=121, show=False)
+        plots.plot_tf_contour(power_conv, "Convolution", ch, min_freq=min_freq, max_freq=max_freq, subplot=122)
 
         # Get and plot waves
         # waves = tf.get_waves(power_conv)

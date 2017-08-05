@@ -8,17 +8,19 @@ def plot_tf_contour(power, title, channel, min_freq=None, max_freq=None, subplot
 
     power -- dataframe, columns are frequencies, index are times"""
 
-    # Set DEFAULTs
+    # Set DEFAULTs # 4, 50 is decent
     if min_freq is None:
-        min_freq = 4
+        min_freq = 0
     if max_freq is None:
-        max_freq = 50
+        max_freq = 100
 
     # Select frequencies
     arr_freqs = []
     for f in power.columns:
         if min_freq < f and f < max_freq:
             arr_freqs.append(f)
+
+    # arr_freqs = list(power.columns) # DEBUG: to plot all frequencies
     power = power[arr_freqs]
 
     arr_times = np.array(power.index)
@@ -47,12 +49,25 @@ def plot_tf_contour(power, title, channel, min_freq=None, max_freq=None, subplot
         # Show
         plt.show()
 
-def plot_channel(t, arr, title):
+def plot_channel(t, arr, title, xlab='Time (s)', ylab='Amplitude'):
     """Plot a channel."""
+    # REVIEW: move xlab and ylab to a centralize place?
 
     plt.plot(t, arr)
-    plt.xlabel('Time (s)') # DEFAULT is time and amplitude
-    plt.ylabel('Amplitude')
+    plt.xlabel(xlab) # DEFAULT is time and amplitude
+    plt.ylabel(ylab)
+    plt.suptitle(title, fontsize=20)
+    plt.show()
+
+def plot_multiple(t, arrays, title, labels, xlab='Time (s)', ylab='Amplitude'):
+    """Plot multiple channels."""
+    i = 0
+    for arr in arrays:
+        plt.plot(t, arr, label=labels[i])
+        i += 1
+        
+    plt.xlabel(xlab) # DEFAULT is time and amplitude
+    plt.ylabel(ylab)
     plt.suptitle(title, fontsize=20)
     plt.show()
 

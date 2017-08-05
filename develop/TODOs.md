@@ -3,8 +3,7 @@
 ## Next
 * Revisar codigos sfft y convolute (follow FIXMEs and QUESTIONs; review code from scratch)
 
-* Hacer tests:
-  + crear onda con N sinewaves, procesarlas y ver fft.
+* Fix normalization
 
 * Ver video laplacian (para terminar capitulo)
 
