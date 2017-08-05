@@ -1,8 +1,9 @@
 # TODOs
 
 ## Next
+* Change in analyze.py, make better options (argparse)
 #### Testing
-* Revisar codigos sfft y convolute (follow FIXMEs and QUESTIONs) (Review `ssfft`. Review the way to obtain `n_freqs` (see videos).)
+* Revisar codigos sfft y convolute (follow FIXMEs and QUESTIONs)
 * Test with sine waves
 * Marks in time
 * Test closing eyes, eyes open, etc
@@ -20,6 +21,9 @@
 
 
 ## Others
+* In `analyze.py`
+  + move `load_data()` to backend and move `raw` option to another script (`plot_raw.py`)
+  + merge `test.py` into `analyze.py` (the parameters are very similar)
 * Play with waves: See barachant code (P300)
 * Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
 

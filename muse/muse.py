@@ -135,7 +135,7 @@ class Muse():
         self._write_cmd([0x04, 0x70, num1, num2, 0x0a])
         # meaning: 'pNum', where Num is preset
             # 0x04: code
-            # 0x70: p
+            # 0x70: 'p'
             # num1, num2: preset in ASCII
             # 0x0a: '\n'
 

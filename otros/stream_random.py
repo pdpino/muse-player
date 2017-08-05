@@ -40,7 +40,7 @@ def create_parser():
 def main():
     """ main function"""
 
-    # FIXME: fix imports
+    # REVIEW: fix imports
 
 
     # Parse args

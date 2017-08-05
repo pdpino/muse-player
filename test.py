@@ -23,16 +23,42 @@ def test_tf(t, wave, plot_waves=False, hide_result=False, min_freq=None, max_fre
         waves = tf.get_waves(power_conv)
         plots.plot_waves(waves, ch, "Convolution")
 
-def create_sine_wave(time, freq, amp, phase, srate, plot=False):
+def create_sine_wave(time, srate, freqs, amps, phases, plot=False):
     """Create a sine wave."""
     # REVIEW: move to backend?
+
+    # Time
     t = np.linspace(0, time, srate*time)
-    wave = np.sin(2*np.pi*freq*t)*amp
+    n_points = len(t)
+
+    # Function to create wave
+    new_sine_wave = lambda f, a, ph: np.sin(2*np.pi*f*t + ph)*a
+
+    # Empty sine wave
+    sine_wave = np.zeros(n_points)
+
+    # Prepare freq, amp and phase
+    def get_value(values, index):
+        """ """
+        if index >= len(values):
+            return values[-1] # by default, return last value
+        return values[index]
+
+    # Iterate waves
+    n_waves = len(freqs) # Freqs define the amount
+    i = 0
+    while i < n_waves:
+        freq = get_value(freqs, i)
+        amp = get_value(amps, i)
+        phase = get_value(phases, i)
+        sine_wave += new_sine_wave(freq, amp, phase)
+
+        i += 1
 
     if plot:
-        plots.plot_channel(t, wave, title="Sine wave, {} Hz, amp={}, phi={}".format(freq, amp, phase))
+        plots.plot_channel(t, sine_wave, title="Sine wave, {} Hz, amp={}, phi={}".format(freqs, amps, phases))
 
-    return t, wave
+    return t, sine_wave
 
 def create_parser():
     """Create the console arguments parser."""
@@ -45,10 +71,12 @@ def create_parser():
 
     group_wave = parser.add_argument_group(title='Sine wave arguments')
     group_wave.add_argument('-t', '--time', type=float, default=1, help='Time to simulate')
-    group_wave.add_argument('--freq', type=float, default=10, help='Frequency')
-    group_wave.add_argument('--amp', type=float, default=1, help='Amplitude')
-    group_wave.add_argument('--phase', type=float, default=0, help='Phase angle')
     group_wave.add_argument('--srate', type=int, default=256, help='Sampling rate')
+
+    # HACK: hardcoded default values # DEFAULT
+    group_wave.add_argument('--freq', nargs='+', type=float, default=[10], help='Frequency')
+    group_wave.add_argument('--amp', nargs='+', type=float, default=[1], help='Amplitude')
+    group_wave.add_argument('--phase', nargs='+', type=float, default=[0], help='Phase angle')
 
     group_conv = parser.add_argument_group(title="Morlet wavelet convolution")
     group_conv.add_argument('--cycles', type=int, help='Amount of cycles')
@@ -65,7 +93,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Create wave
-    t, wave = create_sine_wave(args.time, args.freq, args.amp, args.phase, args.srate, plot=args.plot_sine)
+    t, wave = create_sine_wave(args.time, args.srate, args.freq, args.amp, args.phase, args.plot_sine)
 
     # Test wave
     # if args.range_freq is None:
