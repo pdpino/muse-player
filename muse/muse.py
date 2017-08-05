@@ -10,14 +10,14 @@ import threading
 class Muse():
     """Muse 2016 headband"""
 
-    def __init__(self, address=None, callback=None, callback_other=None, info=True, eeg=True, other=True, accelero=False,
+    def __init__(self, address=None, callback=None, callback_other=None, push_info=True, eeg=True, other=True, accelero=False,
                  giro=False, norm_factor=None, norm_sub=None):
         """Initialize
 
         Parameters:
         address --
         callback --
-        info -- bool, subscribe to info messages from muse
+        push_info -- bool, subscribe to info messages from muse and push them in screen
         eeg -- bool, subscribe to eeg streaming
         accelero -- bool, subscribe to accelerometer messages
         giro -- bool, subscribe to giroscope messages
@@ -29,7 +29,7 @@ class Muse():
         self.address = address
         self.callback = callback
         self.callback_other = callback_other
-        self.info = info
+        self.push_info = push_info
         self.other = other
         self.eeg = eeg
         self.accelero = accelero
@@ -37,13 +37,11 @@ class Muse():
         self.norm_factor = 0.48828125 if norm_factor is None else norm_factor # default values used by barachant
         self.norm_sub = 2048 if norm_sub is None else norm_sub # default values used by barachant
 
-        # To handle info messages
-        self._msgs = [] # Info messages # Each is a string encoding a dict (key, value pairs)
-        self._msgs_codes = [] # Initial number that comes in the messages # For each message there is a list of error codes
+        if push_info:
+            # Lock to use the messages variables, you may want to print the last message while still receiving messages!
+            self._lock_msg = threading.Lock()
+            self._init_msg() # Current messages variables
 
-        # Lock to use the messages variables, you may want to print the last message while still receiving messages!
-        self._lock_msg = threading.Lock()
-        self._init_msg() # Current messages variables
 
 
         # DEBUG: reverse engineering bluetooth conn
@@ -92,9 +90,8 @@ class Muse():
 
 
         # Subscribe to messages
-        if self.info:
-            # self._subscribe_admin()
-            pass
+        if self.push_info:
+            self._subscribe_admin()
 
         # Subscribe to other # DEBUG
         if self.other:
@@ -156,7 +153,7 @@ class Muse():
         self.adapter.stop()
 
     def find_muse_address(self):
-        """look for ble device with a muse in the name"""
+        """Look for ble device with a muse in the name."""
         devices = []
         list_devices = self.adapter.scan(timeout=10.5)
         for device in list_devices:
@@ -164,45 +161,9 @@ class Muse():
                 return device['address']
         return None
 
-
-    """Printing methods"""
-
-    def _print_msg(self, codes, msg):
-        print("\tcodes: {}".format(codes))
-        print("\tmsg: {}".format(msg))
-
-    def print_msgs(self):
-        """Print the messages received so far."""
-
-        with self._lock_msg:
-            n = len(self._msgs)
-            print("There are {} messages:".format(n))
-            for i in range(n):
-                self._print_msg(self._msgs_codes[i], self._msgs[i])
-
-        return
-
-    def print_last_msg(self, incoming=False):
-        """Print the last message received
-
-        Parameters:
-        incoming -- bool, if True, try to print the still incoming message. If there isn't one or False, print the last saved"""
-
-        with self._lock_msg:
-            if incoming:
-                if len(self._current_msg) > 0: # There is an incoming message
-                    self._print_msg(self._current_codes, self._current_msg)
-                    return
-
-            # Print the last saved message
-            if len(self._msgs) == 0:
-                print("There are no messages")
-                return
-            self._print_msg(self._msgs_codes[-1], self._msg[-1])
-
-        return
-
-
+    def ask_config(self):
+        """Ask for the config info message to Muse."""
+        self._write_cmd([0x02, 0x73, 0x0a])
 
     """Handle EEG methods"""
 
@@ -262,7 +223,7 @@ class Muse():
             self._init_sample()
 
 
-    """Handle Admin msg methods"""
+    """Handle Admin messages methods"""
 
     def _subscribe_admin(self):
         """Subscribe to administrative channels."""
@@ -274,38 +235,39 @@ class Muse():
             self._current_msg = ""
             self._current_codes = []
 
-    def _handle_messages(self, handle, data):
-        """Handle the incoming messages from the 0x000e handle"""
+    def _push_msg(self, codes, msg):
+        """Pushes the message."""
+        print("\tcodes: {}".format(codes))
+        print("\tmsg: {}".format(msg))
 
-        if handle != 14:
-            # Mensajes tienen que llegar de ese handle
+    def _handle_messages(self, handle, data):
+        """Handle the incoming messages from the 0x000e handle."""
+        if handle != 14: # Messages have to be from that handle
             return
 
-        # Decodificar data
+        # Decode data
         aa = bitstring.Bits(bytes=data)
         pattern = "uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8, \
-                    uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8" # Vienen en chars
+                    uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8" # All are chars
         res = aa.unpack(pattern)
 
-        # Guardar numero inicial
+        # Save initial number
         with self._lock_msg:
             self._current_codes.append(res[0])
 
-        # Recorrer numeros siguientes
+        # Iterate over next numbers
         for a in res[1:]:
             c = chr(a)
 
             with self._lock_msg:
                 self._current_msg += c
 
-            if c == ',': # Esta data termino
+            if c == ',': # This incoming message ended, but not the whole dict
                 break
 
-            if c == '}': # Msg termino completo
+            if c == '}': # Msg ended completely
                 with self._lock_msg:
-                    self._msgs.append(self._current_msg)
-                    self._msgs_codes.append(self._current_codes)
-                    # self._print_msg(self._current_codes, self._current_msg) # push msg
+                    self._push_msg(self._current_codes, self._current_msg)
 
                 self._init_msg()
                 break

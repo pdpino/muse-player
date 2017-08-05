@@ -3,7 +3,6 @@
 ## Next
 #### Order code
 * Make option to not stream data from play.py to js client
-* With messages in Muse only habilitate option to print them push, not send them back to main.
 * In `analyze.py`
   + move `load_data()` to backend and move `raw` option to another script (`plot_raw.py`)
   + merge `test.py` into `analyze.py` (the parameters are very similar)
