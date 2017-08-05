@@ -24,8 +24,8 @@ def tf_analysis(df, channels, min_freq=None, max_freq=None, window=None, step=No
         plots.plot_tf_contour(power_conv, "Convolution", ch, min_freq=min_freq, max_freq=max_freq, subplot=122)
 
         # Get and plot waves
-        # waves = tf.get_waves(power_conv)
-        # plots.plot_waves(waves, ch, "Convolution")
+        waves = tf.get_waves(power_stfft)
+        plots.plot_waves(waves, ch, "STFFT")
 
 def load_data(channels, *file_args):
     """Read the data, assure the channels and return it."""

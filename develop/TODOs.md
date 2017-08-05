@@ -1,27 +1,22 @@
 # TODOs
 
 ## Next
-* Revisar codigos sfft y convolute (follow FIXMEs and QUESTIONs; review code from scratch)
+#### Testing
+* Revisar codigos sfft y convolute (follow FIXMEs and QUESTIONs) (Review `ssfft`. Review the way to obtain `n_freqs` (see videos).)
+* Test with sine waves
+* Marks in time
+* Test closing eyes, eyes open, etc
 
+#### Post-process (after TF analysis)
 * Fix normalization
 
+#### Learn
 * Ver video laplacian (para terminar capitulo)
-
 * Ver links de mail
 
-
-#### Review raw eeg
-* Normalization (in muse module), etc
-
-#### Review wave code
-* Review `ssfft`. Review the way to obtain `n_freqs` (see videos).
-* Review `convolute` code.
-
-
-#### Testing
-* Multiple tries, closing and opening eyes.
-* In `play.py`: implement marks in time (not necessary, but useful)
-
+#### Pre-process (before TF analysis)
+* Notch filter in 50Hz
+* high-pass filter at 0.5 or 1Hz ???
 
 
 ## Others

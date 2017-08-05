@@ -283,7 +283,7 @@ def get_waves(power):
         # Filter freqs
         filter_freqs = [freq for freq in cols if freq >= min_freq and freq <= max_freq]
         if len(filter_freqs) == 0:
-            basic.perror("0 freqs encontradas entre {} y {}".format(min_freq, max_freq)) # REVIEW
+            basic.perror("get_waves() No freqs founded between {} and {}".format(min_freq, max_freq)) # REVIEW
 
         # Filter power df
         array = power[filter_freqs]
