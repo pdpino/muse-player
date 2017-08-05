@@ -29,16 +29,39 @@ class DumpFileHandler(basic.FileHandler):
         """Assure the existence of a folder."""
         cls._assure_folder(subfolder)
 
-def load_eeg(name, subfolder=None, suffix=None):
-    """Read a .csv file and return the dataframe"""
+def _cmp_chs(real_chs, wanted_chs):
+    """Compare the existing channels with the wanted ones, return the intersection and notifies the difference."""
+    # Make sets
+    real_chs = set(real_chs)
+    wanted_chs = set(wanted_chs)
+
+    eff_chs = list(real_chs.intersection(wanted_chs)) # effective channels
+    none_chs = list(wanted_chs - real_chs) # non existing channels
+    if len(none_chs) > 0:
+        basic.perror("The channel '{}' is not in the loaded file".format(ch), force_continue=True)
+
+    return eff_chs
+
+def load_eeg(channels, name, subfolder=None, suffix=None):
+    """Read the data from csv, assure the channels and return the dataframe"""
     fname = DumpFileHandler.get_fname(name, subfolder, suffix)
 
     try:
         df = pd.read_csv(fname, index_col=0)
         basic.report("EEG loaded from file: {}".format(fname))
-        return df
     except FileNotFoundError:
         basic.perror("The file {} wasn't found".format(fname))
+
+    if channels is None:
+        # Get all channels
+        channels = ch_names()
+
+    # Assure channels in columns
+    channels = _cmp_chs(df.columns, channels)
+    times = df['timestamps']
+    df = df[channels]
+
+    return times, df, channels
 
 def save_eeg(df, name, subfolder=None, suffix=None):
     """Save a dataframe to a .csv"""
@@ -46,7 +69,7 @@ def save_eeg(df, name, subfolder=None, suffix=None):
     fname = DumpFileHandler.get_fname(name, subfolder, suffix)
 
     # TODO: revisar que la primera columna sea timestamps
-    df.to_csv(fname, float_format='%f') #, index_label='timestamps')
+    df.to_csv(fname, float_format='%f')
     basic.report("EEG saved to file: {}".format(fname))
 
 def load_marks(name, subfolder=None):

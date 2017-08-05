@@ -1,10 +1,7 @@
 # TODOs
 
 ## Next
-#### Order code
-* In `analyze.py`
-  + move `load_data()` to backend and move `raw` option to another script (`plot_raw.py`)
-  + merge `test.py` into `analyze.py` (the parameters are very similar)
+* Play with waves: See barachant code (P300)
 
 #### Testing
 * Play with parameters in both methods
@@ -22,7 +19,6 @@
 
 
 ## Others
-* Play with waves: See barachant code (P300)
 * Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
 
 ### Accelerometer and other data

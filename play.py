@@ -52,13 +52,7 @@ def parse_args():
         group_stream_data.add_argument('--stream_n', default=1, type=int,
                             help="If --stream_mode n is selected, define the amount of data to yield")
 
-
-        group_save = parser.add_argument_group(title="File arguments", description=None)
-        group_save.add_argument('-f', '--fname', default="dump", type=str,
-                            help="Name to store the .csv file")
-        group_save.add_argument('--subfolder', default=None, type=str,
-                            help="Subfolder to save the .csv file")
-
+        b.parsers.add_file_args(parser) # File arguments
         return parser
 
     parser = create_parser()

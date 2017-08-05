@@ -100,20 +100,26 @@ def plot_multiple(t, arrays, title, labels, xlab='Time (s)', ylab='Amplitude'):
     plt.suptitle(title, fontsize=20)
     plt.show()
 
-def plot_raw(df, ch_names, marks_t=None, marks_m=None, subplots=False):
+def plot_raw(t, df, ch_names, marks_t=None, marks_m=None, subplots=False):
     """Plot raw channels."""
 
-    t = df['timestamps'].as_matrix()
+    # t = t.as_matrix()
+
     i = 1
     for ch in ch_names:
         if subplots:
             plt.subplot(3, 2, i) # HACK: hardcoded for 6 subplots
             i += 1
         plt.plot(t, df[ch].as_matrix(), label=ch)
+
+        if subplots: # OPTIMIZE
+            _plot_marks(marks_t, marks_m)
+
         plt.xlabel('Time (s)')
         plt.ylabel('Amplitude')
 
-    _plot_marks(marks_t, marks_m)
+    if not subplots:
+        _plot_marks(marks_t, marks_m)
 
     plt.suptitle("Raw channels", fontsize=20)
     plt.legend()

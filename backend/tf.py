@@ -96,9 +96,10 @@ def stfft(times, eeg_data, srate=None, norm=True, window=None, step=None):
 
 
     n_data = len(eeg_data)
+    n_times = len(times)
 
-    if len(times) != n_data:
-        basic.perror("Length of times and data don't match")
+    if n_times != n_data:
+        basic.perror("stfft(): Length of times and data don't match: {} vs {}".format(n_times, n_data))
 
     # Array of frequencies
     n_freqs = get_n_freqs(window) # resolution of freqs
