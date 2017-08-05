@@ -12,6 +12,7 @@ from flask_cors import CORS
 from muse import Muse
 import basic
 import backend as b
+from backend import parsers
 
 def parse_args():
     """Create a parser, get the args, return them preprocessed."""
@@ -52,7 +53,7 @@ def parse_args():
         group_stream_data.add_argument('--stream_n', default=1, type=int,
                             help="If --stream_mode n is selected, define the amount of data to yield")
 
-        b.parsers.add_file_args(parser) # File arguments
+        parsers.add_file_args(parser) # File arguments
         return parser
 
     parser = create_parser()
@@ -109,7 +110,6 @@ def main():
     marks = []
     messages = []
 
-    # REVIEW: move receiving data to a Receiver class?
     basic.report("Started receiving data", level=0)
     if args.time is None:
         # Wait for a buffer zone
@@ -121,7 +121,7 @@ def main():
                 message = input("Mark (optional message): ")
                 t = eeg_buffer.get_last_timestamp()
 
-                # DEBUG: in the meantime, you can input this to see what comes
+                # DEBUG: you can input this to see what comes in config in muse
                 if message == "-c": # Magic word
                     muse.ask_config()# only works if push_info was enabled
                     sleep(0.5) # let it print
