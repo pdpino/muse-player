@@ -61,10 +61,14 @@ def load_marks(name, subfolder=None):
         basic.report("Marks loaded from file: {}".format(fname))
         return times, messages
     except FileNotFoundError:
-        basic.perror("The file {} wasn't found".format(fname))
+        basic.perror("The file {} wasn't found".format(fname), force_continue=True)
+        return None, None
 
 def save_marks(times, messages, name, subfolder=None):
     """Save marks to a file."""
+    if len(times) == 0 or len(messages) == 0: # No marks provided
+        return
+
     DumpFileHandler.assure_folder(subfolder)
     fname = DumpFileHandler.get_fname(name, subfolder, "marks") #HACK: marks hardcoded
 

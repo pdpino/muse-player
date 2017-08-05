@@ -1,9 +1,15 @@
 # TODOs
 
 ## Next
+#### Order code
+* Make option to not stream data from play.py to js client
+* In play.py, move marks to SignalCatcher (use callback)
+* With messages in Muse only habilitate option to print them push, not send them back to main.
+* In `analyze.py`
+  + move `load_data()` to backend and move `raw` option to another script (`plot_raw.py`)
+  + merge `test.py` into `analyze.py` (the parameters are very similar)
+
 #### Testing
-* Test closing eyes, eyes open, etc
-* Implement marks in time (in play)
 * Play with parameters in both methods
 
 #### Post-process (after TF analysis)
@@ -19,14 +25,10 @@
 
 
 ## Others
-* In `analyze.py`
-  + move `load_data()` to backend and move `raw` option to another script (`plot_raw.py`)
-  + merge `test.py` into `analyze.py` (the parameters are very similar)
 * Play with waves: See barachant code (P300)
 * Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
 
 ### Accelerometer and other data
-* With messages in Muse only habilitate option to print them push, not send them back to main.
 * What to do? Options:
   + decompile library code (libmuse_android.so)
   + analyze bytes from handle 14, decode in different formats (uint12, float16, etc)

@@ -56,7 +56,6 @@ class DataBuffer(object):
             t_init = time() # Set an initial time as marker
 
         yield "data: 0\n\n" # Start message
-        print("yielded start message")
 
         while True:
             self.lock_q.acquire()

@@ -44,7 +44,7 @@ def tf_analysis(df, channels, method, plot_waves=False, hide_result=False,
         # Get and plot waves
         if plot_waves:
             waves = tf.get_waves(power)
-            plots.plot_waves(waves, ch, method_name)
+            plots.plot_waves(waves, ch, method_name, marks_t=marks_t, marks_m=marks_m)
 
 def load_data(channels, *file_args):
     """Read the data, assure the channels and return it."""
@@ -99,8 +99,8 @@ def create_parser():
                     help='Method to perform the TF analysis')
 
     # Main arguments
-    parser.add_argument('-r', '--hide_result', action='store_true', help='Don\'t plot result of convolution and stfft')
-    parser.add_argument('-w', '--plot_waves', action='store_true', help='Plot alpha, beta, etc waves')
+    p2.add_argument('-r', '--hide_result', action='store_true', help='Don\'t plot result of convolution and stfft')
+    p2.add_argument('-w', '--plot_waves', action='store_true', help='Plot alpha, beta, etc waves')
     p2.add_argument('--range_freq', nargs=2, type=float, help='min and max frequency to plot')
     # p2.add_argument('--range_time', nargs=2, type=float, help='min and max time to plot')
     # TODO: que estos args influyan en que se analiza menos frecuencias (en convolution se puede, stfft no)
