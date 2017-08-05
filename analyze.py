@@ -5,7 +5,11 @@ import argparse
 from backend import data, tf, plots
 import basic
 
-def tf_analysis(df, channels, method, plot_waves=False, hide_result=False, min_freq=None, max_freq=None, window=None, step=None, n_cycles=None):
+def tf_analysis(df, channels, method, plot_waves=False, hide_result=False,
+                marks_t=None, marks_m=None, # Marks in time
+                min_freq=None, max_freq=None, # Range of freq
+                window=None, step=None, # Parameters to stfft
+                n_cycles=None): # parameters to convolute
     """Get and plot the waves."""
 
     # Grab time
@@ -33,7 +37,9 @@ def tf_analysis(df, channels, method, plot_waves=False, hide_result=False, min_f
 
         # Plot as contour
         if not hide_result:
-            plots.plot_tf_contour(power, method_name, ch, min_freq=min_freq, max_freq=max_freq) #, subplot=122)
+            plots.plot_tf_contour(power, method_name, ch,
+                            marks_t=marks_t, marks_m=marks_m,
+                            min_freq=min_freq, max_freq=max_freq) #, subplot=122)
 
         # Get and plot waves
         if plot_waves:
@@ -117,10 +123,14 @@ if __name__ == "__main__":
     parser = create_parser()
     args = parser.parse_args()
 
+    # Read dataframe and channels
     df, channels = load_data(args.channels, args.fname, args.subfolder, args.suffix)
 
+    # Read marks in time
+    marks_time, marks_msg = data.load_marks(args.fname, args.subfolder)
+
     if args.option == "raw":
-        plots.plot_raw(df, channels, subplots=args.subplot)
+        plots.plot_raw(df, channels, marks_t=marks_time, marks_m=marks_msg, subplots=args.subplot)
     elif args.option == "tf":
         if args.range_freq is None:
             min_freq = None
@@ -132,6 +142,7 @@ if __name__ == "__main__":
         tf_analysis(df, channels, args.method,
                 hide_result=args.hide_result,
                 plot_waves=args.plot_waves,
+                marks_t=marks_time, marks_m=marks_msg,
                 min_freq=min_freq,
                 max_freq=max_freq,
                 window=args.window,

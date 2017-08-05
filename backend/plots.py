@@ -3,10 +3,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 # import basic
 
-def plot_tf_contour(power, title, channel, min_freq=None, max_freq=None, subplot=None, show=True):
+def _plot_marks(marks_t, marks_m):
+    """Plot marks in time."""
+    if marks_t is None or marks_m is None:
+        return
+
+    if len(marks_t) != len(marks_m):
+        basic.perror("Marks times and messages do not match", force_continue=True)
+    else:
+        for i in range(len(marks_t)):
+            t = marks_t[i]
+            m = marks_m[i]
+            plt.axvline(t, color='black', label=m)
+        plt.legend()
+
+def plot_tf_contour(power, title, channel, marks_t=None, marks_m=None, min_freq=None, max_freq=None, subplot=None, show=True):
     """Plot a contour plot with the power.
 
-    power -- dataframe, columns are frequencies, index are times"""
+    power -- dataframe, columns are frequencies, index are times
+    title -- title to the plot
+    channel -- name of the channel is added to the title
+    marks_t -- time marks
+    marks_m -- messages of the marks
+    min_freq -- minimum frequency to the plot
+    max_freq -- maximum frequency to the plot
+    subplot -- call a subplot
+    show -- if present, show the plot when finished
+    """
 
     # Set DEFAULTs # 4, 50 is decent
     if min_freq is None:
@@ -34,6 +57,11 @@ def plot_tf_contour(power, title, channel, min_freq=None, max_freq=None, subplot
     plt.colorbar(ax)
     plt.xlabel('Time (s)')
     plt.ylabel('Frequency (Hz)')
+
+
+    # Add marks in time
+    _plot_marks(marks_t, marks_m)
+
 
     plt.title("{} from {}".format(title, channel))
 
@@ -72,7 +100,7 @@ def plot_multiple(t, arrays, title, labels, xlab='Time (s)', ylab='Amplitude'):
     plt.suptitle(title, fontsize=20)
     plt.show()
 
-def plot_raw(df, ch_names, subplots=False):
+def plot_raw(df, ch_names, marks_t=None, marks_m=None, subplots=False):
     """Plot raw channels."""
 
     t = df['timestamps'].as_matrix()
@@ -84,6 +112,8 @@ def plot_raw(df, ch_names, subplots=False):
         plt.plot(t, df[ch].as_matrix(), label=ch)
         plt.xlabel('Time (s)')
         plt.ylabel('Amplitude')
+
+    _plot_marks(marks_t, marks_m)
 
     plt.suptitle("Raw channels", fontsize=20)
     plt.legend()

@@ -63,7 +63,6 @@ def load_marks(name, subfolder=None):
     except FileNotFoundError:
         basic.perror("The file {} wasn't found".format(fname))
 
-
 def save_marks(times, messages, name, subfolder=None):
     """Save marks to a file."""
     DumpFileHandler.assure_folder(subfolder)
