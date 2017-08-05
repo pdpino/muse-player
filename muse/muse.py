@@ -93,11 +93,13 @@ class Muse():
 
         # Subscribe to messages
         if self.info:
-            self._subscribe_admin()
+            # self._subscribe_admin()
+            pass
 
         # Subscribe to other # DEBUG
         if self.other:
-            self._subscribe_other()
+            # self._subscribe_other()
+            pass
 
         # subscribes to EEG stream
         if self.eeg:
@@ -248,7 +250,7 @@ class Muse():
         """
         timestamp = time()
         index = int((handle - 32) / 3)
-        tm, d = self._unpack_eeg_channel(data)
+        tm, d = self._unpack_eeg_channel(data) # timestamp from muse is ignored
         self.data[index] = d
         self.timestamps[index] = timestamp
 
