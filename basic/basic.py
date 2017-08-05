@@ -1,6 +1,7 @@
 """Provide a set of basic functions"""
 import sys
 import os
+import signal
 
 def perror(text, exit_code=1, force_continue=False, **kwargs):
     """Prints to standard error. If status is non-zero exits."""
@@ -51,6 +52,8 @@ class SignalCatcher(object):
     def __init__(self, verbose=True):
         self._keep_running = True
         self.verbose = verbose
+
+        signal.signal(signal.SIGINT, self.signal_handler)
 
     def keep_running(self):
         return self._keep_running
