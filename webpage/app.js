@@ -223,7 +223,7 @@ class Graph {
 
 
 
-    // Agregar inputs para cada channel
+    // Add checkbox for each channel
     var ids_tick = new Array(this.n_channels);
     var graph = this;
     for(var i=0;i<this.n_channels;i++){
@@ -251,9 +251,6 @@ class Graph {
     }
 
     $("#legend-form").html($("#legend-form").html()); // HACK: Refresh svg
-
-
-
 
 
     // Paint colors
@@ -523,16 +520,17 @@ class Connection{
       return;
     }
 
+    // Update stream
     if(this.stream !== null){
-      if(this.stream.readyState === 2){ // Esta closed
+      if(this.stream.readyState < 2){ // Is not closed
         //States. 0: connecting, 1: ready, 2: closed
-        this._set_status(StatusEnum.DISCONNECTED);
-        return;
+        this.stream.close();
       }
-      this.stream.close();
     }
 
+    // Change in screen
     this._set_status(StatusEnum.DISCONNECTED);
+
     console.log("Connection closed with", this.name);
   }
 
@@ -540,12 +538,13 @@ class Connection{
    * Start a connection
    */
   start_conn(){
-    if(!this._is_disconnected()){ // Esta conectado o conectando
+    if(!this._is_disconnected()){ // Is connecting or connected
       return;
     }
 
     if(this.stream !== null){
-      if(this.stream.readyState === 1){ //States. 0: connecting, 1: ready, 2: closed
+      if(this.stream.readyState === 1){ // Is already connected (but enum not updated)
+        //States. 0: connecting, 1: ready, 2: closed
         this._set_status(StatusEnum.CONNECTED);
         return;
       }
@@ -553,9 +552,9 @@ class Connection{
 
     var conn = this;
     this._set_status(StatusEnum.CONNECTING);
-    this.stream = new EventSource(this.url); // Conectar por url
+    this.stream = new EventSource(this.url);
 
-    // Conectar eventos
+    // Events
     this.stream.onopen = function (e) {
       conn._set_status(StatusEnum.CONNECTED);
       console.log("Connected:", conn.name);
@@ -599,21 +598,7 @@ $(document).ready( function() {
   // TODO: buscar header y footer bootstrap
 
 
-  // DEBUG.
-  var use_eeg = true; // CHANGE THIS
-  if(use_eeg){
-    var n_channels = 5;
-    var channel_names = ["TP9", "AF7", "AF8", "TP10", "Right Aux"];
-    var color_names = ["black", "red", "blue", "green", "cyan"];
-  }
-  else{
-    var n_channels = 5;  // CHANGE THIS, if use_eeg is false
-    var channel_names = undefined;
-    var color_names = undefined;
-  }
-  /////////////////
-
-
+  var n_channels = 5;
 
 
   // EEG Data
@@ -625,8 +610,8 @@ $(document).ready( function() {
     data: data,
     n_channels: nchs,
     title: "Electrodes",
-    ch_names: channel_names,
-    colors: color_names,
+    ch_names: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
+    colors: ["black", "red", "blue", "green", "cyan"],
 
     // FIXME: que clase cree estos
     x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
@@ -654,7 +639,7 @@ $(document).ready( function() {
     var arr = e.data.split(",").map(parseFloat);
 
     // REVIEW: check arr.length == n channels
-    while(arr.length < nchs){
+    while(arr.length < nchs + 1){ // Fill with 0s if received less channels
       arr.push(0.0);
     }
 
@@ -664,7 +649,7 @@ $(document).ready( function() {
 
   // EEG connection
   var eeg_conn = new Connection({
-    name: "data",
+    name: "eeg data",
     url: "http://localhost:8889/data/muse",
     status_text: "#status-text", //FIXME: que la clase cree estos
     status_icon: "#status-icon",

@@ -1,9 +1,12 @@
 # TODOs
 
 ## Next
-* Play with waves: See barachant code (P300)
+* Fix app.js:
+  + see why a stream of 5 elements (not 6) is being sent from python
+  + fix checkboxes (are disconnected)
 
 #### Testing
+* Play with waves: See barachant code (P300)
 * Play with parameters in both methods
 
 #### Learn
