@@ -5,7 +5,7 @@ def mute_ctrlc():
     """Inhabilitates ctrl-c."""
     def nothing(signum, frame):
         pass
-    signal.signal(signal.SIGINT, self.signal_handler)
+    signal.signal(signal.SIGINT, nothing)
 
 class SignalCatcher(object):
     """Catch a ctrl-c signal """

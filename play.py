@@ -98,9 +98,6 @@ def main():
     stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
     stream.daemon = True
 
-    # Catch ctrl-c
-    # catcher = basic.SignalCatcher()
-
     # Connect data to send
     if not args.stream_other: # Connect EEGdata
         @app.route(args.url)
@@ -124,25 +121,25 @@ def main():
 
     print("Started receiving data")
     if args.time is None:
-        # while catcher.keep_running():
-        #     sleep(1)
+        # Wait for a buffer zone
+        sleep(1)
 
-        # HACK: use this in SignalCatcher, or make a permanent solution (that can be used when fixing time to listen)
         try:
             while True:
-                message = input("Mark (optional message): ")
                 # Mark time
+                message = input("Mark (optional message): ")
                 t = eeg_buffer.get_last_timestamp()
+
+                # Save
                 marks.append(t)
                 messages.append(message)
-        except: # Ctrl-c
-            print("You pressed ctrl c")
-            catcher = basic.SignalCatcher() # Add a catcher so you don't press ctrl-c twice
-
+        except KeyboardInterrupt: # Ctrl-c
+            print("\nYou pressed ctrl c")
+            basic.mute_ctrlc() # So the finishing process isn't interrupted
     else:
+        basic.mute_ctrlc()
         print("\tfor (aprox) {} seconds".format(args.time)) # HACK
         sleep(args.time)
-
 
     muse.stop()
     muse.disconnect()

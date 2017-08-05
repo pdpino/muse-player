@@ -3,7 +3,6 @@
 ## Next
 #### Order code
 * Make option to not stream data from play.py to js client
-* In play.py, move marks to SignalCatcher (use callback)
 * With messages in Muse only habilitate option to print them push, not send them back to main.
 * In `analyze.py`
   + move `load_data()` to backend and move `raw` option to another script (`plot_raw.py`)
