@@ -7,7 +7,6 @@ from time import sleep, time
 import pandas as pd
 import argparse
 import threading
-import signal
 from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
@@ -100,33 +99,50 @@ def main():
     stream.daemon = True
 
     # Catch ctrl-c
-    catcher = basic.SignalCatcher()
-    signal.signal(signal.SIGINT, catcher.signal_handler)
+    # catcher = basic.SignalCatcher()
 
-
+    # Connect data to send
     if not args.stream_other: # Connect EEGdata
         @app.route(args.url)
         def stream_eeg():
             """Stream the eeg data."""
             return Response(eeg_buffer.data_generator(args.stream_n), mimetype="text/event-stream")
-    else: # Connect Other data
+    else: # Connect Other data # DEPRECATED: delete this
+        basic.perror("Streaming other data is deprecated", force_continue=True)
         @app.route(args.url)
         def stream_other():
             """Stream other data."""
             return Response(data_buffer.data_generator(), mimetype="text/event-stream")
 
-
     ## Iniciar
     muse.start()
     stream.start()
 
+    # To save marks in time
+    marks = []
+    messages = []
+
     print("Started receiving data")
     if args.time is None:
-        while catcher.keep_running():
-            sleep(1)
+        # while catcher.keep_running():
+        #     sleep(1)
+
+        # HACK: use this in SignalCatcher, or make a permanent solution (that can be used when fixing time to listen)
+        try:
+            while True:
+                message = input("Mark (optional message): ")
+                # Mark time
+                t = eeg_buffer.get_last_timestamp()
+                marks.append(t)
+                messages.append(message)
+        except: # Ctrl-c
+            print("You pressed ctrl c")
+            catcher = basic.SignalCatcher() # Add a catcher so you don't press ctrl-c twice
+
     else:
         print("\tfor (aprox) {} seconds".format(args.time)) # HACK
         sleep(args.time)
+
 
     muse.stop()
     muse.disconnect()
@@ -135,20 +151,23 @@ def main():
     # Imprimir mensajes que recibio Muse en todo el proceso
     # muse.print_msgs()
 
-    # DEBUG:
-    df = pd.DataFrame(muse.lista)
-
-    col0 = df.columns[0]
-    df[col0] = df[col0] - df[col0][0] # Normalizar tiempo
-    df.to_csv("debug/debug2.csv", index=False, header=False) # Guardar a archivo
+    # # DEBUG: save a file with the handles
+    # df = pd.DataFrame(muse.lista)
+    #
+    # col0 = df.columns[0]
+    # df[col0] = df[col0] - df[col0][0] # Normalizar tiempo
+    # df.to_csv("debug/debug2.csv", index=False, header=False) # Guardar a archivo
 
 
 
     # Print running time
     print("\tReceived data for {}".format(eeg_buffer.get_running_time()))
 
+
     if args.save:
         eeg_buffer.save_csv(args.fname, subfolder=args.subfolder)
+        marks = eeg_buffer.normalize_marks(marks)
+        b.data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
 
     return 0
 

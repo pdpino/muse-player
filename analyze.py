@@ -44,7 +44,7 @@ def load_data(channels, *file_args):
     """Read the data, assure the channels and return it."""
     # REVIEW: move this to backend?
 
-    df = data.load(*file_args)
+    df = data.load_eeg(*file_args)
 
     if channels is None:
         # Get all channels

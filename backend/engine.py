@@ -101,9 +101,13 @@ class EEGBuffer(DataBuffer):
         with self.lock_l:
             return self._full_time[-1][-1]
 
+    def normalize_marks(self, marks):
+        """Receive a marks list, normalize the time."""
+        times = np.array(marks)
+        return times - self._full_time[0][0]
 
     def _normalize_time(self):
-        """Receive a list of np arrays of timestamps. Return the concatenated and normalized (substract initial time) np array"""
+        """Concatenate and return its timestamps."""
 
         # Concat y normalizar timestamps
         timestamps = np.concatenate(self._full_time)
@@ -127,7 +131,7 @@ class EEGBuffer(DataBuffer):
         res['timestamps'] = timestamps
 
         # Guardar a csv
-        data.save(res, fname, subfolder, suffix)
+        data.save_eeg(res, fname, subfolder, suffix)
 
 class EEGYielder(object):
     """Yield functions to stream the eeg data in the desired way.

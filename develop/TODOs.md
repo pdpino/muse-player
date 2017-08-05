@@ -1,12 +1,10 @@
 # TODOs
 
 ## Next
-* Change in analyze.py, make better options (argparse)
 #### Testing
-* Revisar codigos sfft y convolute (follow FIXMEs and QUESTIONs)
-* Test with sine waves
-* Marks in time
 * Test closing eyes, eyes open, etc
+* Implement marks in time (in play)
+* Play with parameters in both methods
 
 #### Post-process (after TF analysis)
 * Fix normalization
@@ -28,7 +26,8 @@
 * Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
 
 ### Accelerometer and other data
-* Options:
+* With messages in Muse only habilitate option to print them push, not send them back to main.
+* What to do? Options:
   + decompile library code (libmuse_android.so)
   + analyze bytes from handle 14, decode in different formats (uint12, float16, etc)
   + map linearly from (u)ints to a certain space, e.g. [0, 1]. That way you see the fluctuation of the value. If it makes sense, this may be the transformation used by muse
