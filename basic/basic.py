@@ -45,20 +45,3 @@ def sec2hr(t):
     else:
         pattern = patt_d + patt_hr + patt_min + patt_sec
         return pattern.format(d, h, m, s)
-
-class SignalCatcher(object):
-    """Catch a ctrl-c signal """
-    def __init__(self, verbose=True):
-        self._keep_running = True
-        self.verbose = verbose
-
-        signal.signal(signal.SIGINT, self.signal_handler)
-
-    def keep_running(self):
-        return self._keep_running
-
-    def signal_handler(self, signum, frame):
-        if self.verbose and self._keep_running:
-            print("You pressed ctrl-c")
-
-        self._keep_running = False
