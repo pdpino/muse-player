@@ -17,11 +17,12 @@ class DataBuffer(object):
         # All the data
         self._full_time = []
         self._full_data = []
+        self.lock_l = threading.Lock() # Lock lists
 
         # Queues para stream de datos, # thread safe
         self._q_time = deque(maxlen=maxsize)
         self._q_data = deque(maxlen=maxsize)
-        self.lock = threading.Lock()
+        self.lock_q = threading.Lock() # Lock queues
 
         # Yielder
         self._yielder = yield_function
@@ -29,11 +30,12 @@ class DataBuffer(object):
     def incoming_data(self, timestamps, data):
         """Process the incoming data."""
         # Add to full lists
-        self._full_time.append(timestamps)
-        self._full_data.append(data)
+        with self.lock_l:
+            self._full_time.append(timestamps)
+            self._full_data.append(data)
 
         # Add to queue
-        with self.lock:
+        with self.lock_q:
             self._q_time.append(timestamps)
             self._q_data.append(data)
 
@@ -47,7 +49,7 @@ class DataBuffer(object):
             basic.perror("Can't stream the data without a yielder")
             return
 
-        with self.lock:
+        with self.lock_q:
             # Drop old data in queue
             self._q_time.clear()
             self._q_data.clear()
@@ -57,14 +59,14 @@ class DataBuffer(object):
         print("yielded start message")
 
         while True:
-            self.lock.acquire()
+            self.lock_q.acquire()
             if len(self._q_time) == 0 or len(self._q_data) == 0: # NOTE: both lengths should always be the same
-                self.lock.release()
+                self.lock_q.release()
                 continue
 
             t = self._q_time.popleft()
             d = self._q_data.popleft()
-            self.lock.release()
+            self.lock_q.release()
 
             yield from self._yielder(t, t_init, d, n_data)
 
@@ -94,6 +96,12 @@ class EEGBuffer(DataBuffer):
         t = t_end - t_init
         return basic.sec2hr(t)
 
+    def get_last_timestamp(self):
+        """Return the last timestamp. Thread safe"""
+        with self.lock_l:
+            return self._full_time[-1][-1]
+
+
     def _normalize_time(self):
         """Receive a list of np arrays of timestamps. Return the concatenated and normalized (substract initial time) np array"""
 
@@ -109,7 +117,6 @@ class EEGBuffer(DataBuffer):
         """Preprocess the data and save it to a csv."""
         if len(self._full_time) == 0 or len(self._full_data) == 0:
             return
-
 
         # Concatenar data
         timestamps = self._normalize_time()
