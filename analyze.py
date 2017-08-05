@@ -101,9 +101,11 @@ def parse_args():
         # Channels argument
         parsers.add_ch_args(parser)
 
-        # TODO: que estos args influyan en que se analiza menos frecuencias (en convolution se puede, stfft no)
-        parser.add_argument('--range_freq', nargs=2, type=float, help='min and max frequency to plot')
-        # parser.add_argument('--range_time', nargs=2, type=float, help='min and max time to plot')
+
+        # Methods arguments
+        group_tf = parser.add_argument_group(title="TF general options")
+        group_tf.add_argument('--norm', action='store_true', help='If present, normalize the TF')
+        group_tf.add_argument('--range_freq', nargs=2, type=float, help='min and max frequency to plot')
 
 
         # Methods arguments
@@ -168,6 +170,7 @@ if __name__ == "__main__":
 
     # Analyze
     tf_analysis(times, df, channels, args.method,
+            normalize=args.norm,
             hide_result=args.hide_result,
             plot_waves=args.plot_waves,
             marks_t=marks_time, marks_m=marks_msg,

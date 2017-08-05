@@ -6,9 +6,6 @@
 #### Testing
 * Play with parameters in both methods
 
-#### Post-process (after TF analysis)
-* Fix normalization
-
 #### Learn
 * Ver video laplacian (para terminar capitulo)
 * Ver links de mail
@@ -17,9 +14,13 @@
 * Notch filter in 50Hz
 * high-pass filter at 0.5 or 1Hz ???
 
+#### Post-process (after TF analysis)
+* when normalizing: add parameters to set the time window to use as Baseline
+
 
 ## Others
 * Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
+* Question: is normalizing OK?
 
 ### Accelerometer and other data
 * What to do? Options:

@@ -8,22 +8,22 @@ import matplotlib.pyplot as plt # DEBUG
 from backend import plots # DEBUG
 import basic
 
-def _normalize_tf(times, power):
+def _normalize_tf(times, power, norm=False):
     """Receive a matrix of power (columns are frequencies and row are times) and returns it normalized."""
 
-    return np.log10(power) # Return a "simple" normalization
-
-    # FIXME: fix this code
+    if not norm: # Only change scale
+        return np.log10(power)
 
     # Baseline times # parameters
-    bl_init_time = 0.7
-    bl_end_time = 0.9
+    bl_init_time = 13.7
+    bl_end_time = 14
 
     # Indexes:
     find_nearest = lambda val: np.searchsorted(times, val, side="left") #[0]
 
     bl_init_index = find_nearest(bl_init_time)
     bl_end_index = find_nearest(bl_end_time)
+    print("Baseline length: {}".format(bl_end_index - bl_init_index))
 
     # Real time:
     bl_init_rt = times[bl_init_index]
@@ -33,7 +33,7 @@ def _normalize_tf(times, power):
     # Get size
     n_rows, n_cols = power.shape
 
-    # Recorrer columns (freqs) and divide # HACK: do it without the for, using numpy.mean(axis=1)
+    # Recorrer columns (freqs) and divide # TASK: do it without the for, using numpy.mean(axis=1)
     for col in range(n_cols):
         # Calculate baseline
         baseline = np.mean(power[bl_init_index:bl_end_index, col])
@@ -41,8 +41,10 @@ def _normalize_tf(times, power):
         # Divide
         power[:, col] /= baseline
 
+
     # Log and multiply
-    return 10*np.log10(power) # Decibels
+    return np.log10(power)
+    # NOTE: is not mult by 10 because it goes to numbers to big
 
 def _new_tf_df(times, freqs, power):
     """Create a Time-Frequency Dataframe."""
@@ -129,8 +131,7 @@ def stfft(times, eeg_data, srate=None, norm=True, window=None, step=None):
     power = np.matrix(matrix_power)
 
     # Normalization
-    if norm:
-        power = _normalize_tf(arr_times, power)
+    power = _normalize_tf(arr_times, power, norm)
 
     return _new_tf_df(arr_times, arr_freqs, power)
 
@@ -266,8 +267,7 @@ def convolute(times, eeg_data, srate=None, norm=True, n_cycles=None):
     power = np.transpose(power)
 
     # Normalization
-    if norm:
-        power = _normalize_tf(times, power)
+    power = _normalize_tf(times, power, norm)
 
     return _new_tf_df(times, arr_freqs, power)
 
