@@ -562,7 +562,13 @@ class Connection{
     this.stream.onopen = function (e) {
       conn._set_status(StatusEnum.CONNECTED);
       console.log("Connected:", conn.name);
+      // console.log("Opened");
     };
+    // REVIEW: use a different event for start? redundant?
+    // this.stream.addEventListener('start', function(e) {
+    //   conn._set_status(StatusEnum.CONNECTED);
+    //   console.log("Connected:", conn.name);
+    // }, false);
     this.stream.onmessage = this.recv_msg;
     this.stream.onerror = function (e) {
       if(conn._is_connecting()){

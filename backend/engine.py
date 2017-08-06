@@ -55,7 +55,8 @@ class DataBuffer(object):
             self._q_data.clear()
             t_init = time() # Set an initial time as marker
 
-        yield "data: 0\n\n" # Start message
+        # yield "event: start\ndata: 0\n\n" # Start message
+        yield "data: 0\n\n" # Start message # REVIEW: send other type of message?
 
         while True:
             self.lock_q.acquire()
@@ -68,18 +69,6 @@ class DataBuffer(object):
             self.lock_q.release()
 
             yield from self._yielder(t, t_init, d, n_data)
-
-class DataYielder(object):
-    """Yield functions to stream any data in the desired way."""
-
-    yield_string = "data: {}. {}\n\n"
-
-    @staticmethod
-    def get_data(t, t_init, data, dummy=None):
-        """Yield out all the points in the data."""
-        data_str = ','.join(map(str, data))
-        a = DataYielder.yield_string.format(t - t_init, data_str)
-        yield a
 
 class EEGBuffer(DataBuffer):
     """Contains the eeg data produced by Muse, provides provides functionality for eeg data"""
@@ -101,9 +90,8 @@ class EEGBuffer(DataBuffer):
             return self._full_time[-1][-1]
 
     def normalize_marks(self, marks):
-        """Receive a marks list, normalize the time."""
-        times = np.array(marks)
-        return times - self._full_time[0][0]
+        """Receive a marks list (timestamps), normalize the time."""
+        return np.array(marks) - self._full_time[0][0]
 
     def _normalize_time(self):
         """Concatenate and return its timestamps."""
@@ -117,7 +105,9 @@ class EEGBuffer(DataBuffer):
         return np.concatenate(self._full_data, 1).T
 
     def save_csv(self, fname, subfolder=None, suffix=None):
-        """Preprocess the data and save it to a csv."""
+        """Preprocess the data and save it to a csv.
+
+        It doesn't affect the saved data, creates copies"""
         if len(self._full_time) == 0 or len(self._full_data) == 0:
             return
 
@@ -131,6 +121,18 @@ class EEGBuffer(DataBuffer):
 
         # Guardar a csv
         data.save_eeg(res, fname, subfolder, suffix)
+
+class DataYielder(object):
+    """Yield functions to stream any data in the desired way."""
+
+    yield_string = "data: {}, {}\n\n"
+
+    @staticmethod
+    def get_data(t, t_init, data, dummy=None):
+        """Yield out all the points in the data."""
+        data_str = ','.join(map(str, data))
+        a = DataYielder.yield_string.format(t - t_init, data_str)
+        yield a
 
 class EEGYielder(object):
     """Yield functions to stream the eeg data in the desired way.
