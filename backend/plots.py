@@ -3,6 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 # import basic
 
+def _maximize():
+    """Maximize the window."""
+    # Maximize window
+    mng = plt.get_current_fig_manager()
+    # mng.frame.Maximize(True) # 'wx' backend
+    # mng.window.showMaximized() # 'Qt4Agg' backend
+    mng.resize(*mng.window.maxsize()) # 'TkAgg' backend
+    # mng.full_screen_toggle() # Screen to full (really full) size (can't even see the exit button)
+
 def _plot_marks(marks_t, marks_m):
     """Plot marks in time."""
     if marks_t is None or marks_m is None:
@@ -68,11 +77,7 @@ def plot_tf_contour(power, title, channel, marks_t=None, marks_m=None, min_freq=
 
     if show:
         # Maximize window
-        mng = plt.get_current_fig_manager()
-        # mng.frame.Maximize(True) # 'wx' backend
-        # mng.window.showMaximized() # 'Qt4Agg' backend
-        mng.resize(*mng.window.maxsize()) # 'TkAgg' backend
-        # mng.full_screen_toggle() # Screen to full size (cant even see the exit button)
+        _maximize()
 
         # Show
         plt.show()
@@ -123,6 +128,7 @@ def plot_raw(t, df, ch_names, marks_t=None, marks_m=None, subplots=False):
 
     plt.suptitle("Raw channels", fontsize=20)
     plt.legend()
+    _maximize()
     plt.show()
 
 def plot_waves(waves, ch_name, method, marks_t=None, marks_m=None):
@@ -140,4 +146,5 @@ def plot_waves(waves, ch_name, method, marks_t=None, marks_m=None):
 
     plt.suptitle("Waves from {}, using {}".format(ch_name, method), fontsize=20)
     plt.legend()
+    _maximize()
     plt.show()
