@@ -1,10 +1,6 @@
 # TODOs
 
 ## Next
-* Fix app.js:
-  + see why a stream of 5 elements (not 6) is being sent from python
-  + fix checkboxes (are disconnected)
-
 #### Testing
 * Play with waves: See barachant code (P300)
 * Play with parameters in both methods
@@ -23,7 +19,7 @@
 
 ## Others
 * Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
-* Question: is normalizing OK?
+* Python is streaming wrong one time? sending 5 elements instead of 6 (time + channels)
 
 ### Accelerometer and other data
 * What to do? Options:

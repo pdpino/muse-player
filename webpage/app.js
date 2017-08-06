@@ -232,6 +232,7 @@ class Graph {
         .concat("' type='checkbox' checked/>");
       var channel_name = String(ch_names[i]).concat('<br>');
 
+      // Add square with color
       $("#legend-form").append(
         $('<svg>')
           .attr('class', 'legend-rect-container')
@@ -242,12 +243,15 @@ class Graph {
             )
       );
 
+      // Add input
       $("#legend-form").append(
         ' ', // space
-        input_i,
+        input_i, // input
         ' ', // space
         channel_name,
       );
+
+      ids_tick[i] = "#".concat(ids_tick[i]); // Generate id-like tag
     }
 
     $("#legend-form").html($("#legend-form").html()); // HACK: Refresh svg
