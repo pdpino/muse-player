@@ -26,6 +26,9 @@ def parse_args():
                             help="Seconds to record data (aprox). If none, stop listening only when interrupted")
         parser.add_argument('--save', action="store_true", help="Save a .csv with the raw data")
         parser.add_argument('--stream', action="store_true", help="Stream the data to a web client")
+        parser.add_argument('-w', '--stream_waves', action="store_true",
+                            help="Stream the wave data (instead of EEG) (beta)")
+
 
         group_bconn = parser.add_argument_group(title="Bluetooth connection")
         group_bconn.add_argument('-i', '--interface', default=None, type=str,
@@ -76,13 +79,18 @@ def main():
     args = parse_args()
 
     # Container for the incoming data
-    eeg_buffer = b.EEGBuffer(name="eeg",
+    if args.stream_waves:
+        data_buffer = b.WaveBuffer(name="waves", window=256, step=25, srate=256)
+    else:
+        data_buffer = b.EEGBuffer(name="eeg",
                             yield_function=b.EEGYielder.get_yielder(args.stream_mode))
+
+
 
     # Conectar muse
     muse = Muse(address=args.address,
-                callback=eeg_buffer.incoming_data,
-                # callback_other=data_buffer.incoming_data, # DEBUG: see other data
+                callback=data_buffer.incoming_data,
+                # callback_other=other_buffer.incoming_data, # DEBUG: see other data
                 push_info=True, # DEBUG: to ask config, see battery percentage
                 norm_factor=args.nfactor, norm_sub=args.nsub)
     muse.connect(interface=args.interface)
@@ -90,16 +98,26 @@ def main():
     # Init Flask
     if args.stream:
         basic.report("Streaming enabled", level=0)
+
+        # Flask app
         app = Flask(__name__) # iniciar app de Flask
         CORS(app) # para que cliente pueda acceder a este puerto
+
+        # Thread
         stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
         stream.daemon = True
+
+        # Set args
+        if args.stream_waves:
+            gen_args = []
+        else:
+            gen_args = [args.stream_n]
 
         # Connect data to send
         @app.route(args.url)
         def stream_eeg():
             """Stream the eeg data."""
-            return Response(eeg_buffer.data_generator(args.stream_n), mimetype="text/event-stream")
+            return Response(data_buffer.data_generator(*gen_args), mimetype="text/event-stream")
 
     ## Iniciar
     muse.start()
@@ -120,7 +138,7 @@ def main():
             while True:
                 # Mark time
                 message = input("\tcmd: ")
-                t = eeg_buffer.get_last_timestamp()
+                t = data_buffer.get_last_timestamp()
 
                 # DEBUG: you can input this to see what comes in config in muse
                 if message == "-c": # Magic word
@@ -153,12 +171,12 @@ def main():
 
 
     # Print running time
-    basic.report("Received data for {}", eeg_buffer.get_running_time(), level=1)
+    basic.report("Received data for {}", data_buffer.get_running_time(), level=1)
 
 
     if args.save:
-        eeg_buffer.save_csv(args.fname, subfolder=args.subfolder)
-        marks = eeg_buffer.normalize_marks(marks)
+        data_buffer.save_csv(args.fname, subfolder=args.subfolder)
+        marks = data_buffer.normalize_marks(marks)
         b.data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
 
     return 0

@@ -5,7 +5,7 @@ import threading
 import numpy as np
 import pandas as pd
 import basic
-from backend import data
+from backend import data, tf
 
 class DataBuffer(object):
     """Receives incoming data and provides a generator to yield it."""
@@ -47,7 +47,7 @@ class DataBuffer(object):
 
         if self._yielder is None:
             basic.perror("Can't stream the data without a yielder")
-            return
+            return # NOTREACHED
 
         with self.lock_q:
             # Drop old data in queue
@@ -121,6 +121,111 @@ class EEGBuffer(DataBuffer):
 
         # Guardar a csv
         data.save_eeg(res, fname, subfolder, suffix)
+
+class WaveBuffer(EEGBuffer):
+    """Buffer to stream waves data (alpha, beta, etc)."""
+
+    def __init__(self, name="", window=256, step=25, srate=256):
+        """Initialize."""
+        super().__init__(name, maxsize=None, yield_function=None)
+
+        # TODO: delete queue and yielder (so they don't waste space)
+
+
+        # Buffer # HACK: 12 samples and 6 (5chs + time) hardcoded
+        self._size_buffer = 12*1000 # TODO: define adecuate value
+        self._buffer = np.zeros((6, self._size_buffer))
+
+        # Pointers to the buffer
+        self._start = 0 # Inclusive # The first data is in _start (if _end is bigger)
+        self._end = 0 # Exclusive # There is no data in _end
+
+        # Lock to use anything from the buffer
+        self._lock_b = threading.Lock()
+
+        # Parameters to perform stfft
+        self.window = window
+        self.step = step
+
+        # Array of frequencies to order the fft
+        self.arr_freqs = tf.get_arr_freqs(window, srate)
+
+    def incoming_data(self, timestamps, data):
+        """Override the method for incoming data."""
+        # Add eeg to full lists
+        with self.lock_l:
+            self._full_time.append(timestamps)
+            self._full_data.append(data)
+
+        n_chs, n_data = data.shape
+
+        # Add data to buffer array
+        with self._lock_b:
+            # Check if new data fits
+            new_end = self._end + n_data
+            if new_end >= self._size_buffer: # The data would overflow (out of the buffer)
+                n_useful = self._end - self._start # Useful data
+
+                if n_useful + n_data <= self._size_buffer: # All data (old + new) fits
+                    # print("moving to the beginning") # DEBUG
+                    # Copy the old useful data to the beginning
+                    self._buffer[:, :n_useful] = self._buffer[:, self._start:self._end]
+
+                    # move start and end
+                    self._start = 0
+                    self._end = n_useful
+                    new_end = self._end + n_data
+                else: # All the data doesn't fit
+                    # print("erasing") # DEBUG
+                    # Solution: erase useful data, start over # Bad solution?
+                    self._start = 0
+                    self._end = 0
+                    new_end = self._end + n_data
+
+
+            # Copy the new data to buffer
+            self._buffer[0, self._end:new_end] = timestamps # Copy time
+            self._buffer[1:, self._end:new_end] = data # Copy data
+            self._end = new_end # Move end
+
+    def data_generator(self):
+        """Generator to stream the data."""
+
+        with self._lock_b:
+            # Drop old data in buffer
+            self._start = self._end
+            t_init = time() # Set an initial time as marker
+
+        # Start transmitting
+        while True:
+            self._lock_b.acquire()
+            if self._end - self._start < self.window: # No enough data to make a window
+                self._lock_b.release()
+                continue
+
+            # Copy data to a new array
+            t = self._buffer[0, self._end - 1] # Get last timestamp
+            d = np.copy(self._buffer[1:, self._start:self._start + self.window]) # Copy the rest of the channels
+
+            # Move start
+            self._start += self.step
+            self._lock_b.release()
+
+            # Normalize time
+            t -= t_init
+
+            # Calculate
+            power = tf.apply_fft(d[-1,:]) # Number to choose a channel
+
+            # Normalization (divide by baseline, save baseline!)
+            # TODO!!!
+
+            # Get waves
+            alpha = tf.get_wave(power, self.arr_freqs, 8, 13)
+
+            # Yield
+            yield "data: {}, {}\n\n".format(t, alpha)
+
 
 class DataYielder(object):
     """Yield functions to stream any data in the desired way."""

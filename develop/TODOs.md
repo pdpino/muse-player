@@ -1,6 +1,7 @@
 # TODOs
 
 ## Next
+
 #### Testing
 * Play with waves: See barachant code (P300)
 * Play with parameters in both methods
@@ -14,10 +15,13 @@
 * high-pass filter at 0.5 or 1Hz ???
 
 #### Post-process (after TF analysis)
-* when normalizing: add parameters to set the time window to use as Baseline
+* when normalizing: add parameters to set the time window to use as Baseline (now is hardcoded)
 
 
 ## Others
+* Use a first message from server defining the type of data that will be sent (EEG or Waves). Then the client js changes the Graph accordingly
+* Separate tf in submodules (convolution, sttft and common)
+* Evaluate changing deque to queue (used for messaging between threads)
 * Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
 * Python is streaming wrong one time? sending 5 elements instead of 6 (time + channels)
 

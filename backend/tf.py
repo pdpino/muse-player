@@ -50,7 +50,41 @@ def _new_tf_df(times, freqs, power):
     """Create a Time-Frequency Dataframe."""
     return pd.DataFrame(power, index=times, columns=freqs)
 
-def stfft(times, eeg_data, srate=None, norm=True, window=None, step=None):
+
+### STFFT
+def _get_n_freqs(n_samples):
+    """Return the amount of freqs (resolution), given the number of samples."""
+    return n_samples // 2 + 1
+
+def apply_fft(eeg_data_win):
+    """Apply fft to a window of eeg data
+
+    Parameters:
+    eeg_data_win -- array of dimension [number of samples]."""
+
+    n_samples = len(eeg_data_win)
+    n_freqs = _get_n_freqs(n_samples) # resolution
+
+    # Remove offset
+    data_centered = eeg_data_win - np.mean(eeg_data_win) # no interesa el offset de la onda
+
+    # Apply Hamming window # to taper the data
+    w = np.hamming(n_samples)
+    data_centered_ham = (data_centered.T*w).T # dot product
+
+    # Apply fft to the window
+    Y = np.fft.fft(data_centered_ham)/n_samples # dividir por n para normalizar unidades
+    PSD = 2*np.abs(Y[0:n_freqs]) # Obtain amplitude
+
+    return PSD**2 # Return power
+
+def get_arr_freqs(window, srate):
+    """Return the array of frequencies for stfft."""
+    n_freqs = _get_n_freqs(window) # resolution of freqs (amount of intervals)
+    # srate/2 is the nyquist frequency, the max freq u can get
+    return np.linspace(0, srate/2, n_freqs)
+
+def stfft(times, eeg_data, window=None, step=None, srate=None, norm=True):
     """Apply the Short Time Fast Fourier Transform to eeg data.
 
     Parameters:
@@ -69,52 +103,21 @@ def stfft(times, eeg_data, srate=None, norm=True, window=None, step=None):
     if step is None:
         step = 25
 
-
-    def get_n_freqs(n):
-        """Return the amount of freqs (resolution), given the number of samples."""
-        return n // 2 + 1
-
-    def apply_fft(eeg_data_win):
-        """Apply fft to a window of eeg data
-
-        Parameters:
-        eeg_data_win -- array of dimension [number of samples]."""
-
-        n_samples = len(eeg_data_win)
-        n_freqs = get_n_freqs(n_samples) # resolution
-
-        # Remove offset
-        data_centered = eeg_data_win - np.mean(eeg_data_win) # no interesa el offset de la onda
-
-        # Apply Hamming window # to taper the data
-        w = np.hamming(n_samples)
-        data_centered_ham = (data_centered.T*w).T # dot product
-
-        # Apply fft to the window
-        Y = np.fft.fft(data_centered_ham)/n_samples # dividir por n para normalizar unidades
-        PSD = 2*np.abs(Y[0:n_freqs]) # Obtain amplitude
-
-        return PSD**2 # Return power
-
-
     n_data = len(eeg_data)
     n_times = len(times)
 
     if n_times != n_data:
         basic.perror("stfft(): Length of times and data don't match: {} vs {}".format(n_times, n_data))
 
-    # Array of frequencies
-    n_freqs = get_n_freqs(window) # resolution of freqs
-    arr_freqs = np.linspace(0, srate/2, n_freqs) # srate/2: nyquist frequency; n_freqs: intervalos
-
-    # Array of times
+    # Arrays
+    arr_freqs = get_arr_freqs(window, srate)
     arr_times = []
 
     # Empty matrix # will be filled with arrays of len=n_freqs
     matrix_power = []
 
-    # Recorrer
-    i = 0 # contador del slice
+    # Iterate
+    i = 0 # counter to slice
     while i < n_data:
         data_window = eeg_data[i:i+window]
         if(len(data_window) >= window):
@@ -135,6 +138,8 @@ def stfft(times, eeg_data, srate=None, norm=True, window=None, step=None):
 
     return _new_tf_df(arr_times, arr_freqs, power)
 
+
+### Convolution
 def convolute(times, eeg_data, srate=None, norm=True, n_cycles=None):
     """Compute a convolution of the data, via freq-domain.
 
@@ -185,7 +190,7 @@ def convolute(times, eeg_data, srate=None, norm=True, n_cycles=None):
     # plots.plot_channel(range(n_conv), data_fft, "fft data", xlab="freq")
 
     # Array of freqs to calculate for
-    arr_freqs = np.linspace(1, srate/2, n_freqs) # srate/2: nyquist frequency; n_freqs: intervalos
+    arr_freqs = np.linspace(1, srate/2, n_freqs)
     # arr_freqs = np.linspace(5, 30, 100) # arbitrary interval of frequencies
 
 
@@ -271,34 +276,42 @@ def convolute(times, eeg_data, srate=None, norm=True, n_cycles=None):
 
     return _new_tf_df(times, arr_freqs, power)
 
+
+### Waves
+def get_wave(power, freqs, min_freq, max_freq):
+    """Return the wave (avg) of the values in a range of frequencies.
+
+    power and freqs must be type np.array"""
+
+    filter_freqs, = np.where((freqs >= min_freq) & (freqs <= max_freq))
+
+    # Return the average all frequencies in that range
+    return power[filter_freqs].mean()
+
 def get_waves(power):
     """Receive a TF dataframe (time, freq, power) and return the alpha, beta, etc waves."""
 
     # Grab columns names (frequencies)
-    cols = list(power.columns)
+    freqs = list(power.columns)
 
-
-    # Function to get wave
-    def get_wave(min_freq, max_freq):
-        """ """
+    def _get_wave(min_freq, max_freq):
+        """Return the wave (avg) of the values in a range of frequencies."""
+        # TODO: merge this method with public one get_wave()
         # Filter freqs
-        filter_freqs = [freq for freq in cols if freq >= min_freq and freq <= max_freq]
+        filter_freqs = [f for f in freqs if f >= min_freq and f <= max_freq]
         if len(filter_freqs) == 0:
             basic.perror("get_waves(): no data founded between {} and {} Hz, averaging all frequencies".format(min_freq, max_freq), force_continue=True)
-            filter_freqs = list(cols)
+            filter_freqs = list(freqs)
 
-        # Filter power df
-        array = power[filter_freqs]
+        # Return the average frequencies in that range
+        return power[filter_freqs].mean(1)
 
-        # Return average all frequencies in that range
-        return array.mean(1)
-
+    # Dataframe to save all waves
     waves = pd.DataFrame()
-
-    waves["delta"] = get_wave(1, 4)
-    waves["theta"] = get_wave(4, 8)
-    waves["alpha"] = get_wave(8, 13)
-    waves["beta"] = get_wave(13, 30)
-    waves["gamma"] = get_wave(30, 44)
+    waves["delta"] = _get_wave(1, 4)
+    waves["theta"] = _get_wave(4, 8)
+    waves["alpha"] = _get_wave(8, 13)
+    waves["beta"] = _get_wave(13, 30)
+    waves["gamma"] = _get_wave(30, 44)
 
     return waves
