@@ -24,7 +24,7 @@ def parse_args():
 
         parser.add_argument('-t', '--time', default=None, type=float,
                             help="Seconds to record data (aprox). If none, stop listening only when interrupted")
-        parser.add_argument('-s', '--save', action="store_true", help="Save a .csv with the raw data")
+        parser.add_argument('--save', action="store_true", help="Save a .csv with the raw data")
         parser.add_argument('--stream', action="store_true", help="Stream the data to a web client")
 
         group_bconn = parser.add_argument_group(title="Bluetooth connection")
@@ -116,9 +116,10 @@ def main():
         sleep(1)
 
         try:
+            basic.report("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):", level=0)
             while True:
                 # Mark time
-                message = input("Mark (optional message): ")
+                message = input("\tcmd: ")
                 t = eeg_buffer.get_last_timestamp()
 
                 # DEBUG: you can input this to see what comes in config in muse
@@ -131,7 +132,7 @@ def main():
                 marks.append(t)
                 messages.append(message)
         except KeyboardInterrupt: # Ctrl-c
-            print("\nYou pressed ctrl c")
+            print("Exiting")
             basic.mute_ctrlc() # So the finishing process isn't interrupted
     else:
         basic.mute_ctrlc()
