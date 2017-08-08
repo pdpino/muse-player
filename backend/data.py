@@ -84,7 +84,7 @@ def load_marks(name, subfolder=None):
         basic.report("Marks loaded from file: {}".format(fname))
         return times, messages
     except FileNotFoundError:
-        basic.perror("The file {} wasn't found".format(fname), force_continue=True)
+        basic.report("Can't find marks file: {}".format(fname), force_continue=True)
         return None, None
 
 def save_marks(times, messages, name, subfolder=None):
