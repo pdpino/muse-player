@@ -24,6 +24,7 @@
 * Evaluate changing deque to queue (used for messaging between threads)
 * Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
 * Python is streaming wrong one time? sending 5 elements instead of 6 (time + channels)
+* Move parsers to frontend/ ??
 
 ### Accelerometer and other data
 * What to do? Options:
