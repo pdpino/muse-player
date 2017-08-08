@@ -4,8 +4,16 @@ from collections import deque
 import threading
 import numpy as np
 import pandas as pd
+from enum import Enum
 import basic
 from backend import data, tf
+
+class WaveStatus(Enum):
+    """Status of the calculated wave."""
+    NonCalib = 1 # Signal isn't normalized by baseline
+    Calibrating = 2 # Baseline is being recorded to future use
+    Calibrated = 3 # Baseline is already recorded and is being used to normalize
+
 
 class DataBuffer(object):
     """Receives incoming data and provides a generator to yield it."""
@@ -150,6 +158,20 @@ class WaveBuffer(EEGBuffer):
         # Array of frequencies to order the fft
         self.arr_freqs = tf.get_arr_freqs(window, srate)
 
+        # Status of the waves
+        self._lock_s = threading.Lock() # Lock the status
+        self.status = WaveStatus.NonCalib
+
+    def start_calibrating(self):
+        """Set the status to start recording calibrating data."""
+        with self._lock_s:
+            self.status = WaveStatus.Calibrating
+
+    def stop_calibrating(self):
+        """Set the status to stop recording calibrating data."""
+        with self._lock_s:
+            self.status = WaveStatus.Calibrated
+
     def incoming_data(self, timestamps, data):
         """Override the method for incoming data."""
         # Add eeg to full lists
@@ -217,8 +239,23 @@ class WaveBuffer(EEGBuffer):
             # Calculate
             power = tf.apply_fft(d) # Number to choose a channel
 
-            # Normalization (divide by baseline, save baseline!)
-            # TODO!!!
+            # Get status
+            with self._lock_s:
+                status = self.status
+
+            if status == WaveStatus.NonCalib:
+                # Send non-calibrated waves to client
+                pass # Yield normally
+            elif status == WaveStatus.Calibrating:
+                # TODO: Save baseline data
+                pass # Yield normally
+            elif status == WaveStatus.Calibrated:
+                # Use baseline data to normalize
+                # TODO: normalization
+                pass
+            else: # Status non-recognized
+                continue
+
 
             # Get waves
             alpha = tf.get_wave(power[0,:], self.arr_freqs, 8, 13)
