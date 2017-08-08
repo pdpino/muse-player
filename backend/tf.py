@@ -69,7 +69,12 @@ def apply_fft(eeg_data_win):
     n_freqs = _get_n_freqs(n_samples) # resolution
 
     # Remove offset (isn't relevant)
-    if axis == 0:
+    if axis == 0: # OPTIMIZE
+        # NOTE:
+        # This function is called a lot of times repeatedly,
+        # this if will always do the same: if analyze.py is called it will use axis == 0 every time; if stream waves is calling it will use axis == 1 every time
+        # Same with the if in Y = Y[...]
+        # FIX: make stfft() function use multiple channels instead of one (also convolute()?)
         data_centered = eeg_data_win - np.mean(eeg_data_win, axis=0)
     else:
         data_centered = (eeg_data_win.T - np.mean(eeg_data_win, axis=1)).T # Transpose to match axis
