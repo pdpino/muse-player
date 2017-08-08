@@ -216,7 +216,7 @@ class WaveBuffer(EEGBuffer):
 
             # Calculate
             power = tf.apply_fft(d) # Number to choose a channel
-            
+
             # Normalization (divide by baseline, save baseline!)
             # TODO!!!
 

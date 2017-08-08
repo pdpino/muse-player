@@ -11,8 +11,7 @@ from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
 import basic
-import backend as b
-from backend import parsers
+from backend import parsers, data, engine
 
 def parse_args():
     """Create a parser, get the args, return them preprocessed."""
@@ -80,10 +79,10 @@ def main():
 
     # Container for the incoming data
     if args.stream_waves:
-        data_buffer = b.WaveBuffer(name="waves", window=256, step=25, srate=256)
+        data_buffer = engine.WaveBuffer(name="waves", window=256, step=25, srate=256)
     else:
-        data_buffer = b.EEGBuffer(name="eeg",
-                            yield_function=b.EEGYielder.get_yielder(args.stream_mode))
+        data_buffer = engine.EEGBuffer(name="eeg",
+                            yield_function=engine.EEGYielder.get_yielder(args.stream_mode))
 
 
 
@@ -177,7 +176,7 @@ def main():
     if args.save:
         data_buffer.save_csv(args.fname, subfolder=args.subfolder)
         marks = data_buffer.normalize_marks(marks)
-        b.data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
+        data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
 
     return 0
 
