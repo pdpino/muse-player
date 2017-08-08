@@ -68,12 +68,16 @@ def apply_fft(eeg_data_win):
     n_samples = eeg_data_win.shape[-1] # Get the last dimension
     n_freqs = _get_n_freqs(n_samples) # resolution
 
-    # Remove offset
-    data_centered = eeg_data_win - np.mean(eeg_data_win, axis=axis) # The offset of the wave isn't relevant
+    # Remove offset (isn't relevant)
+    if axis == 0:
+        data_centered = eeg_data_win - np.mean(eeg_data_win, axis=0)
+    else:
+        data_centered = (eeg_data_win.T - np.mean(eeg_data_win, axis=1)).T # Transpose to match axis
 
     # Apply Hamming window # to taper the data
     w = np.hamming(n_samples)
-    data_centered_ham = (data_centered.T*w).T # each row does dot product with the w vector
+    # data_centered_ham = (data_centered.T*w).T # each row does dot product with the w vector
+    data_centered_ham = data_centered*w
 
     # Apply fft to the window
     Y = np.fft.fft(data_centered_ham, axis=axis)/n_samples # dividir por n para normalizar unidades

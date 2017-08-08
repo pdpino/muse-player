@@ -215,13 +215,13 @@ class WaveBuffer(EEGBuffer):
             t -= t_init
 
             # Calculate
-            power = tf.apply_fft(d[-1,:]) # Number to choose a channel
-
+            power = tf.apply_fft(d) # Number to choose a channel
+            
             # Normalization (divide by baseline, save baseline!)
             # TODO!!!
 
             # Get waves
-            alpha = tf.get_wave(power, self.arr_freqs, 8, 13)
+            alpha = tf.get_wave(power[0,:], self.arr_freqs, 8, 13)
 
             # Yield
             yield "data: {}, {}\n\n".format(t, alpha)
