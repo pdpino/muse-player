@@ -60,22 +60,25 @@ def apply_fft(eeg_data_win):
     """Apply fft to a window of eeg data
 
     Parameters:
-    eeg_data_win -- array of dimension [number of samples]."""
+    eeg_data_win -- np.array of dimension [number of samples]."""
 
-    n_samples = len(eeg_data_win)
+    # Choose amount of axis
+    axis = eeg_data_win.ndim - 1
+
+    n_samples = eeg_data_win.shape[-1] # Get the last dimension
     n_freqs = _get_n_freqs(n_samples) # resolution
 
     # Remove offset
-    data_centered = eeg_data_win - np.mean(eeg_data_win) # no interesa el offset de la onda
+    data_centered = eeg_data_win - np.mean(eeg_data_win, axis=axis) # The offset of the wave isn't relevant
 
     # Apply Hamming window # to taper the data
     w = np.hamming(n_samples)
-    data_centered_ham = (data_centered.T*w).T # dot product
+    data_centered_ham = (data_centered.T*w).T # each row does dot product with the w vector
 
     # Apply fft to the window
-    Y = np.fft.fft(data_centered_ham)/n_samples # dividir por n para normalizar unidades
-    PSD = 2*np.abs(Y[0:n_freqs]) # Obtain amplitude
-
+    Y = np.fft.fft(data_centered_ham, axis=axis)/n_samples # dividir por n para normalizar unidades
+    Y = Y[0:n_freqs] if axis == 0 else Y[:, 0:n_freqs] # Slice according to axis
+    PSD = 2*np.abs(Y) # Obtain amplitude
     return PSD**2 # Return power
 
 def get_arr_freqs(window, srate):
@@ -89,7 +92,7 @@ def stfft(times, eeg_data, window=None, step=None, srate=None, norm=True):
 
     Parameters:
     times -- array of time
-    eeg_data -- array of data
+    eeg_data -- array of data from one channel
     srate -- sample rate of the measured data
     norm -- boolean indicating if normalization should be done
     window -- size of the sliding window

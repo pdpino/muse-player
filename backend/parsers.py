@@ -7,7 +7,7 @@ from backend import data
 def add_file_args(parser):
     """Add file arguments to a parser."""
     group_data = parser.add_argument_group(title="File arguments")
-    group_data.add_argument('-f', '--fname', default=None, type=str, help="Name of the .csv file to read")
+    group_data.add_argument('-f', '--fname', default="data", type=str, help="Name of the .csv file to read")
     group_data.add_argument('--subfolder', default=None, type=str, help="Subfolder to read the .csv file")
 
 def add_ch_args(parser, aux=False):
