@@ -348,7 +348,7 @@ class Graph {
 
     // Safe to zoom in
     if(!out){
-      if(y_max_new - y_min_new < 10){ // At least a window of that size
+      if(y_max_new - y_min_new < 10){
         return;
       }
     }
@@ -636,13 +636,13 @@ $(document).ready( function() {
 
     width: 700,
     height: 400,
-    y_min: -1000,
-    y_max: 1000,
+    y_min: -100,
+    y_max: 100,
     x_ticks: 5,
     y_ticks: 5,
     n_secs: 5,
-    dx_zoom: 1, // FIXME: que clase calcule esto
-    dy_zoom: 100,
+    dx_zoom: 1, // FIXME: que clase calcule esto y vaya cambiando
+    dy_zoom: 10,
     dy_move: 50
     });
 
