@@ -30,6 +30,13 @@ def tf_analysis(times, df, channels, method,
     method_name = names[method]
     method_function = ft_functions[method]
 
+    # HACK: reorder channels
+    if len(channels) == 4: # If they are all of them
+        channels = ['TP9', 'TP10', 'AF7', 'AF8']
+
+    # Save all powers
+    powers = []
+
     for ch in channels:
         # Grab data
         eeg_data = df[ch].as_matrix()
@@ -37,16 +44,19 @@ def tf_analysis(times, df, channels, method,
         # Compute FT
         power = method_function(times, eeg_data, baseline=baseline, norm=normalize, **method_kwargs)
 
-        # Plot as contour
-        if not hide_result:
-            plots.plot_tf_contour(power, method_name, ch,
-                            marks_t=marks_t, marks_m=marks_m,
-                            min_freq=min_freq, max_freq=max_freq) #, subplot=122)
+        # Save FT
+        powers.append(power)
 
-        # Get and plot waves
-        if plot_waves:
-            waves = tf.get_waves(power)
-            plots.plot_waves(waves, ch, method_name, marks_t=marks_t, marks_m=marks_m)
+    # Plot as contour
+    if not hide_result:
+        plots.plot_tf_contour(powers, channels, method_name,
+                        marks_t=marks_t, marks_m=marks_m,
+                        min_freq=min_freq, max_freq=max_freq)
+
+    # Get and plot waves
+    if plot_waves:
+        waves = tf.get_waves(powers)
+        plots.plot_waves(waves, channels, method_name, marks_t=marks_t, marks_m=marks_m)
 
 def create_sine_wave(time, srate, freqs, amps, phases):
     """Create a sine wave."""

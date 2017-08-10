@@ -15,13 +15,8 @@ def normalize_power(power, baseline):
 def _normalize_tf_df(times, power, norm=False, baseline=None):
     """Receive a matrix of power (columns are frequencies and row are times) and returns it normalized."""
 
-    if not norm: # Only change scale
+    if not norm or baseline is None: # Only change scale
         return np.log10(power)
-
-    if baseline is None:
-        baseline = (0, 1)
-
-    print(baseline)
 
     # Baseline times # parameters
     bl_init_time = float(baseline[0])
@@ -312,29 +307,39 @@ def get_wave(power, freqs, min_freq, max_freq):
     return np.mean(power[:, filter_freqs], axis=1)
 
 def get_waves(power):
-    """Receive a TF dataframe (time, freq, power) and return the alpha, beta, etc waves."""
+    """Receive a power matrix or a list of powers and get the waves."""
 
-    # Grab columns names (frequencies)
-    freqs = list(power.columns)
+    def _do_get_wave(power):
+        """Receive a TF dataframe (time, freq, power) and return the alpha, beta, etc waves."""
+        # Grab columns names (frequencies)
+        freqs = list(power.columns)
 
-    def _get_wave(min_freq, max_freq):
-        """Return the wave (avg) of the values in a range of frequencies."""
-        # TODO: merge this method with public one get_wave()
-        # Filter freqs
-        filter_freqs = [f for f in freqs if f >= min_freq and f <= max_freq]
-        if len(filter_freqs) == 0:
-            basic.perror("get_waves(): no data founded between {} and {} Hz, averaging all frequencies".format(min_freq, max_freq), force_continue=True)
-            filter_freqs = list(freqs)
+        def _get_wave(min_freq, max_freq):
+            """Return the wave (avg) of the values in a range of frequencies."""
+            # TODO: merge this method with public one get_wave()
+            # Filter freqs
+            filter_freqs = [f for f in freqs if f >= min_freq and f <= max_freq]
+            if len(filter_freqs) == 0:
+                basic.perror("get_waves(): no data founded between {} and {} Hz, averaging all frequencies".format(min_freq, max_freq), force_continue=True)
+                filter_freqs = list(freqs)
 
-        # Return the average frequencies in that range
-        return power[filter_freqs].mean(1)
+            # Return the average frequencies in that range
+            return power[filter_freqs].mean(1)
 
-    # Dataframe to save all waves
-    waves = pd.DataFrame()
-    waves["delta"] = _get_wave(1, 4)
-    waves["theta"] = _get_wave(4, 8)
-    waves["alpha"] = _get_wave(8, 13)
-    waves["beta"] = _get_wave(13, 30)
-    waves["gamma"] = _get_wave(30, 44)
+        # Dataframe to save all waves
+        waves = pd.DataFrame()
+        waves["delta"] = _get_wave(1, 4)
+        waves["theta"] = _get_wave(4, 8)
+        waves["alpha"] = _get_wave(8, 13)
+        waves["beta"] = _get_wave(13, 30)
+        waves["gamma"] = _get_wave(30, 44)
 
-    return waves
+        return waves
+
+    if type(power) is list:
+        all_waves = []
+        for p in power:
+            all_waves.append(_do_get_wave(p))
+        return all_waves
+
+    return _do_get_wave(power)

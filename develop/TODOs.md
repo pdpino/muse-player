@@ -2,6 +2,11 @@
 
 ## Next
 
+* in analyze.py plot all channels in subplots
+* add marks in time to app.js
+* add axis labels to app.js
+* add axis label for colour in contourplot
+
 #### Testing
 * Play with waves: See barachant code (P300)
 * Play with parameters in both methods
@@ -15,7 +20,6 @@
 * high-pass filter at 0.5 or 1Hz ???
 
 #### Post-process (after TF analysis)
-* when normalizing: add parameters to set the time window to use as Baseline (now is hardcoded)
 
 
 ## Others

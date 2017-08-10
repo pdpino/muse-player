@@ -26,61 +26,74 @@ def _plot_marks(marks_t, marks_m):
             plt.axvline(t, color='black', label=m)
         plt.legend()
 
-def plot_tf_contour(power, title, channel, marks_t=None, marks_m=None, min_freq=None, max_freq=None, subplot=None, show=True):
+def plot_tf_contour(power, ch, title, marks_t=None, marks_m=None, min_freq=None, max_freq=None):
     """Plot a contour plot with the power.
 
-    power -- dataframe, columns are frequencies, index are times
+    power -- dataframe (or list of), columns are frequencies, index are times
+    ch -- name of the channel(s)
     title -- title to the plot
-    channel -- name of the channel is added to the title
     marks_t -- time marks
     marks_m -- messages of the marks
     min_freq -- minimum frequency to the plot
     max_freq -- maximum frequency to the plot
-    subplot -- call a subplot
-    show -- if present, show the plot when finished
+
+    if power is a list, ch must be a list of the same len
     """
 
-    # Set DEFAULTs # 4, 50 is decent
-    if min_freq is None:
-        min_freq = 0
-    if max_freq is None:
-        max_freq = 100
+    def _do_plot(power, channel, marks_t, marks_m, min_freq, max_freq):
+        """Plot a power contour."""
+        # Set DEFAULTs # 4, 50 is decent
+        if min_freq is None:
+            min_freq = 0
+        if max_freq is None:
+            max_freq = 100
 
-    # Select frequencies
-    arr_freqs = []
-    for f in power.columns:
-        if min_freq < f and f < max_freq:
-            arr_freqs.append(f)
+        # Select frequencies
+        arr_freqs = []
+        for f in power.columns:
+            if min_freq < f and f < max_freq:
+                arr_freqs.append(f)
 
-    # arr_freqs = list(power.columns) # DEBUG: to force plotting all frequencies
-    power = power[arr_freqs]
+        power = power[arr_freqs]
 
-    arr_times = np.array(power.index)
-    matrix = power.as_matrix()
-    matrix = np.transpose(matrix) # fix axis
+        arr_times = np.array(power.index)
+        matrix = power.as_matrix()
+        matrix = np.transpose(matrix) # fix axis
 
-    if not subplot is None:
-        plt.subplot(subplot)
-
-    ax = plt.contourf(arr_times, arr_freqs, matrix, 50, cmap=plt.get_cmap('nipy_spectral'))
-    plt.colorbar(ax)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Frequency (Hz)')
-
-
-    # Add marks in time
-    _plot_marks(marks_t, marks_m)
+        # Plot
+        ax = plt.contourf(arr_times, arr_freqs, matrix, 50, cmap=plt.get_cmap('nipy_spectral'))
+        plt.colorbar(ax)
+        plt.xlabel('Time (s)')
+        plt.ylabel('Frequency (Hz)')
 
 
-    plt.title("{} from {}".format(title, channel))
+        # Add marks in time
+        _plot_marks(marks_t, marks_m)
+
+        # Title with channel
+        plt.title(channel)
 
 
-    if show:
-        # Maximize window
-        _maximize()
+    args = [marks_t, marks_m, min_freq, max_freq]
 
-        # Show
-        plt.show()
+    if type(power) is list:
+        # NOTE: Assume that ch is also a list
+        if len(power) > 1:
+            for i in range(len(power)):
+                plt.subplot(2, 2, i+1)
+                _do_plot(power[i], ch[i], *args)
+        else:
+            _do_plot(power[0], ch[0], *args)
+    else:
+        _do_plot(power, ch, *args)
+
+
+    # Superior title
+    plt.suptitle(title)
+
+    # Show
+    _maximize()
+    plt.show()
 
 def plot_channel(t, arr, title, xlab='Time (s)', ylab='Amplitude'):
     """Plot a channel."""
@@ -131,20 +144,36 @@ def plot_raw(t, df, ch_names, marks_t=None, marks_m=None, subplots=False):
     _maximize()
     plt.show()
 
-def plot_waves(waves, ch_name, method, marks_t=None, marks_m=None):
-    """Receive a list of waves and plots them. waves is a pd.DataFrame"""
+def plot_waves(waves, ch, method, marks_t=None, marks_m=None):
+    """Receive a list of waves or a list of lists of waves (one for each channel)."""
 
-    times = list(waves.index)
-    for wave_name in waves.columns:
-        wave = waves[wave_name].as_matrix()
-        plt.plot(times, wave, label=wave_name)
+    def _do_plot_waves(waves, ch_name, marks_t, marks_m):
+        """Receive a list of waves and plots them. waves is a pd.DataFrame"""
+        times = list(waves.index)
+        for wave_name in waves.columns:
+            wave = waves[wave_name].as_matrix()
+            plt.plot(times, wave, label=wave_name)
 
-    _plot_marks(marks_t, marks_m)
+        _plot_marks(marks_t, marks_m)
 
-    plt.xlabel('Time (s)')
-    plt.ylabel('Power')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Power')
 
-    plt.suptitle("Waves from {}, using {}".format(ch_name, method), fontsize=20)
-    plt.legend()
+        plt.title(ch_name)
+        plt.legend()
+
+    if type(waves) is list:
+        if len(waves) > 1:
+            for i in range(len(waves)):
+                w = waves[i]
+                c = ch[i]
+                plt.subplot(2, 2, i+1)
+                _do_plot_waves(w, c, marks_t, marks_m)
+        else:
+            _do_plot_waves(waves[0], ch[0], marks_t, marks_m)
+    else:
+        _do_plot_waves(waves, ch, marks_t, marks_m)
+
+    plt.suptitle("Waves using {}".format(method), fontsize=20)
     _maximize()
     plt.show()
