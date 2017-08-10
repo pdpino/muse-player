@@ -287,11 +287,24 @@ class WaveBuffer(EEGBuffer):
                 power = 10*np.log10(power/calib_arr)
 
 
-            # NOTE: if status is No, send non-calibrated waves to client
+            # NOTE: if status is No, just send non-calibrated waves to client
 
 
             # Get waves
+            deltas = tf.get_wave(power, self.arr_freqs, 1, 4)
+            thetas = tf.get_wave(power, self.arr_freqs, 4, 8)
             alphas = tf.get_wave(power, self.arr_freqs, 8, 13)
+            betas = tf.get_wave(power, self.arr_freqs, 13, 30)
+            gammas = tf.get_wave(power, self.arr_freqs, 30, 44)
+
+            channel = 0 # DEBUG
 
             # Yield
-            yield "data: {}, {}, {}, {}, {}, {}\n\n".format(t, *alphas) # HACK: use yielders?
+            yield "data: {}, {}, {}, {}, {}, {}\n\n".format(t,
+                deltas[channel],
+                thetas[channel],
+                alphas[channel],
+                betas[channel],
+                gammas[channel])
+
+            # HACK: use yielders? There could be an option of what to yield (alphas from all, waves from one channel or everything)

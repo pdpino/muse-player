@@ -286,7 +286,7 @@ class Graph {
    */
   _update_y_axis(y1, y2){
     if(y1 < y2){
-      this.y_min = Number(y1); // ccpy by value // HACK
+      this.y_min = Number(y1); // copy by value // HACK
       this.y_max = Number(y2);
       this.y_range.domain([y1, y2]);
       this.svg.select(".y.axis").call(this.y_axis); // update svg
@@ -348,7 +348,7 @@ class Graph {
 
     // Safe to zoom in
     if(!out){
-      if(y_max_new - y_min_new < 100){ // At least a 100 window
+      if(y_max_new - y_min_new < 10){ // At least a window of that size
         return;
       }
     }
@@ -428,7 +428,6 @@ class Graph {
   }
 
 }
-
 
 var StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
 class Connection{
@@ -585,10 +584,6 @@ class Connection{
 
 }
 
-
-
-
-
 /**
  * Initialize an empty array that holds data
  * @param {Number} n number of channels
@@ -600,7 +595,6 @@ function init_data(n){
   return data;
 }
 
-
 /**
  * Main process
  */
@@ -608,10 +602,20 @@ $(document).ready( function() {
   // TODO: buscar header y footer bootstrap
 
 
+
   var n_channels = 5;
+  var waves = true; // HACK: select type hardcoded
+  if(waves){
+    var channel_names = ["delta", "theta", "alpha", "beta", "gamma"];
+    var titulo = "Waves";
+    var conn_name = "waves data";
+  }
+  else{
+    var channel_names = ["TP9", "AF7", "AF8", "TP10", "Right Aux"];
+    var titulo = "Electrodes";
+    var conn_name = "eeg data";
+  }
 
-
-  // EEG Data
   var nchs = n_channels;
   var data = init_data(nchs);
   var graph = new Graph({
@@ -619,8 +623,8 @@ $(document).ready( function() {
     legend_container: '#legend_container',
     data: data,
     n_channels: nchs,
-    title: "Electrodes",
-    ch_names: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
+    title: titulo,
+    ch_names: channel_names,
     colors: ["black", "red", "blue", "green", "cyan"],
 
     // FIXME: que clase cree estos
@@ -663,7 +667,7 @@ $(document).ready( function() {
 
   // EEG connection
   var eeg_conn = new Connection({
-    name: "eeg data",
+    name: conn_name,
     url: "http://localhost:8889/data/muse",
     status_text: "#status-text", //FIXME: que la clase cree estos
     status_icon: "#status-icon",
