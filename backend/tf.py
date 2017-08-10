@@ -8,7 +8,11 @@ import matplotlib.pyplot as plt # DEBUG
 from backend import plots # DEBUG
 import basic
 
-def _normalize_tf(times, power, norm=False):
+def normalize_power(power, baseline):
+    """Receive a power and a baseline and apply the normalization."""
+    return 10*np.log10(power/baseline)
+
+def _normalize_tf_df(times, power, norm=False):
     """Receive a matrix of power (columns are frequencies and row are times) and returns it normalized."""
 
     if not norm: # Only change scale
@@ -33,7 +37,9 @@ def _normalize_tf(times, power, norm=False):
     # Get size
     n_rows, n_cols = power.shape
 
-    # Recorrer columns (freqs) and divide # TASK: do it without the for, using numpy.mean(axis=1)
+    # Recorrer columns (freqs) and divide
+    # TASK: do it without the for, using numpy.mean(axis=1)
+    # TASK: use normalize_power() function
     for col in range(n_cols):
         # Calculate baseline
         baseline = np.mean(power[bl_init_index:bl_end_index, col])
@@ -146,7 +152,7 @@ def stfft(times, eeg_data, window=None, step=None, srate=None, norm=True):
     power = np.matrix(matrix_power)
 
     # Normalization
-    power = _normalize_tf(arr_times, power, norm)
+    power = _normalize_tf_df(arr_times, power, norm)
 
     return _new_tf_df(arr_times, arr_freqs, power)
 
@@ -284,7 +290,7 @@ def convolute(times, eeg_data, srate=None, norm=True, n_cycles=None):
     power = np.transpose(power)
 
     # Normalization
-    power = _normalize_tf(times, power, norm)
+    power = _normalize_tf_df(times, power, norm)
 
     return _new_tf_df(times, arr_freqs, power)
 
@@ -298,7 +304,7 @@ def get_wave(power, freqs, min_freq, max_freq):
     filter_freqs, = np.where((freqs >= min_freq) & (freqs <= max_freq))
 
     # Return the average all frequencies in that range
-    return power[filter_freqs].mean()
+    return np.mean(power[:, filter_freqs], axis=1)
 
 def get_waves(power):
     """Receive a TF dataframe (time, freq, power) and return the alpha, beta, etc waves."""

@@ -648,6 +648,10 @@ $(document).ready( function() {
   function receive_data(e) {
     var arr = e.data.split(",").map(parseFloat);
 
+    if(arr[0] < 0){ // Ignore negative time (wrong streaming from python?)
+      return;
+    }
+
     // REVIEW: check arr.length == n channels
     while(arr.length < nchs + 1){ // Fill with 0s if received less channels
       arr.push(0.0);

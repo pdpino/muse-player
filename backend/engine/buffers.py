@@ -4,8 +4,18 @@ from collections import deque
 import threading
 import numpy as np
 import pandas as pd
+from enum import Enum
 import basic
 from backend import data, tf
+
+class WaveCalibStatus(Enum):
+    """Status of the calibration of the wave."""
+    No = 0 # There is no calibration
+    Start = 1 # A start_calibrating() signal has been received
+    Calibrating = 2 # Currently saving baseline
+    Stop = 3 # A stop_calibrating() signal has been received
+    Yes = 4 # The baseline is already saved and the data is being normalized
+
 
 class DataBuffer(object):
     """Receives incoming data and provides a generator to yield it."""
@@ -26,6 +36,15 @@ class DataBuffer(object):
 
         # Yielder
         self._yielder = yield_function
+
+    def start_calibrating(self):
+        """Method to start calibrating, override it."""
+        print("No calibrating method is set for {}".format(self.name))
+
+    def stop_calibrating(self):
+        """Method to stop calibrating, override it."""
+        print("No calibrating method is set for {}".format(self.name))
+
 
     def incoming_data(self, timestamps, data):
         """Process the incoming data."""
@@ -150,6 +169,23 @@ class WaveBuffer(EEGBuffer):
         # Array of frequencies to order the fft
         self.arr_freqs = tf.get_arr_freqs(window, srate)
 
+        # Status of the wave (about calibration)
+        self._lock_s = threading.Lock() # Lock the status
+        self.status = WaveCalibStatus.No
+        self._is_calibrated = False
+        # self.calib_callback = calib_callback # DEBUG: to use a notify callback
+
+    def start_calibrating(self):
+        """Set the status to start recording calibrating data."""
+        with self._lock_s:
+            self.status = WaveCalibStatus.Start
+
+    def stop_calibrating(self):
+        """Set the status to stop recording calibrating data."""
+        with self._lock_s:
+            if self.status == WaveCalibStatus.Calibrating:
+                self.status = WaveCalibStatus.Stop
+
     def incoming_data(self, timestamps, data):
         """Override the method for incoming data."""
         # Add eeg to full lists
@@ -191,10 +227,11 @@ class WaveBuffer(EEGBuffer):
     def data_generator(self):
         """Generator to stream the data."""
 
+        # Drop old data in buffer
         with self._lock_b:
-            # Drop old data in buffer
             self._start = self._end
             t_init = time() # Set an initial time as marker
+
 
         # Start transmitting
         while True:
@@ -214,14 +251,44 @@ class WaveBuffer(EEGBuffer):
             # Normalize time
             t -= t_init
 
-            # Calculate
-            power = tf.apply_fft(d) # Number to choose a channel
+            # Calculate TF
+            power = tf.apply_fft(d) # shape: (n_chs, n_freqs)
 
-            # Normalization (divide by baseline, save baseline!)
-            # TODO!!!
+            # Check status of calibration
+            with self._lock_s: # Get status
+                status = self.status
+
+            if status == WaveCalibStatus.Start:
+                # Signal has been received, start variables
+                calib_arr = np.zeros(power.shape)
+                calib_counter = 0
+
+                # Change status to start calibrating in the next iteration
+                with self._lock_s:
+                    self.status = WaveCalibStatus.Calibrating
+
+            elif status == WaveCalibStatus.Calibrating:
+                # Add data to the array
+                calib_arr += power
+                calib_counter += 1
+
+            elif status == WaveCalibStatus.Stop:
+                # Average the collected data
+                if calib_counter > 0:
+                    calib_arr /= calib_counter
+                    self._is_calibrated = True
+
+            elif status == WaveCalibStatus.Yes:
+                # Use baseline data to normalize
+                # power = tf.normalize_power(power, calib_arr)
+                power = 10*np.log10(power/calib_arr)
+
+
+            # NOTE: if status is No, send non-calibrated waves to client
+
 
             # Get waves
-            alpha = tf.get_wave(power[0,:], self.arr_freqs, 8, 13)
+            alphas = tf.get_wave(power, self.arr_freqs, 8, 13)
 
             # Yield
-            yield "data: {}, {}\n\n".format(t, alpha)
+            yield "data: {}, {}, {}, {}, {}, {}\n\n".format(t, *alphas) # HACK: use yielders?

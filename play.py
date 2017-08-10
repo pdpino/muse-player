@@ -108,7 +108,7 @@ def main():
 
         # Set args
         if args.stream_waves:
-            gen_args = []
+            gen_args = [] # No arguments
         else:
             gen_args = [args.stream_n]
 
@@ -140,9 +140,21 @@ def main():
                 t = data_buffer.get_last_timestamp()
 
                 # DEBUG: you can input this to see what comes in config in muse
-                if message == "-c": # Magic word
+                if message == "-c": # config
                     muse.ask_config()# only works if push_info was enabled
                     sleep(0.5) # let it print
+                    continue
+                elif message == "-s": # start calibrating
+                    data_buffer.start_calibrating()
+                    message = "started calibrating"
+                    print(message)
+                elif message == "-h": # halt calibrating
+                    data_buffer.stop_calibrating()
+                    message = "stopped calibrating"
+                    print(message)
+                elif message == "--save": # Toggle save option
+                    args.save = not args.save
+                    print("save status = {}".format(args.save))
                     continue
 
                 # Save
@@ -154,7 +166,7 @@ def main():
     else:
         basic.mute_ctrlc()
         basic.report("for (aprox) {} seconds", args.time, level=1)
-        sleep(args.time) # HACK
+        sleep(args.time) # HACK: its aprox time
 
     muse.stop()
     muse.disconnect()
