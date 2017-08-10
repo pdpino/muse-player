@@ -9,6 +9,7 @@ import basic
 
 def tf_analysis(times, df, channels, method,
                 normalize=True,
+                baseline=None,
                 plot_waves=False, hide_result=False, # Hide/show options
                 marks_t=None, marks_m=None, # Marks in time
                 min_freq=None, max_freq=None, # Range of freq
@@ -34,7 +35,7 @@ def tf_analysis(times, df, channels, method,
         eeg_data = df[ch].as_matrix()
 
         # Compute FT
-        power = method_function(times, eeg_data, norm=normalize, **method_kwargs)
+        power = method_function(times, eeg_data, baseline=baseline, norm=normalize, **method_kwargs)
 
         # Plot as contour
         if not hide_result:
@@ -81,6 +82,22 @@ def create_sine_wave(time, srate, freqs, amps, phases):
 
     return t, sine_wave
 
+def find_baseline(times, marks):
+    """Find baseline marks."""
+    # HACK: names hardcoded
+    start = "started calibrating"
+    stop = "stopped calibrating"
+
+    if start in marks and stop in marks:
+        print("found a baseline in the marks")
+        i1 = marks.index(start)
+        i2 = marks.index(stop)
+
+        return [times[i1], times[i2]]
+    else:
+        print("baseline not found in the marks")
+        return None
+
 def parse_args():
     """Create parser, parse args, format them and return."""
     def create_parser():
@@ -105,6 +122,7 @@ def parse_args():
         # Methods arguments
         group_tf = parser.add_argument_group(title="TF general options")
         group_tf.add_argument('--norm', action='store_true', help='If present, normalize the TF')
+        group_tf.add_argument('--baseline', nargs=2, help='Range of seconds to normalize the TF')
         group_tf.add_argument('--range_freq', nargs=2, type=float, help='min and max frequency to plot')
 
 
@@ -142,11 +160,14 @@ def parse_args():
     else:
         args.min_freq, args.max_freq = args.range_freq
 
+
     return args
 
 if __name__ == "__main__":
     # Parse args
     args = parse_args()
+
+    baseline = args.baseline
 
     if args.test: # Use simulated data
         # Simulate sine wave
@@ -168,9 +189,15 @@ if __name__ == "__main__":
         # Read marks in time
         marks_time, marks_msg = data.load_marks(args.fname, args.subfolder)
 
+        # Find baseline
+        if args.baseline is None:
+            baseline = find_baseline(marks_time, marks_msg)
+
+
     # Analyze
     tf_analysis(times, df, channels, args.method,
             normalize=args.norm,
+            baseline=baseline,
             hide_result=args.hide_result,
             plot_waves=args.plot_waves,
             marks_t=marks_time, marks_m=marks_msg,

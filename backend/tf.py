@@ -12,15 +12,20 @@ def normalize_power(power, baseline):
     """Receive a power and a baseline and apply the normalization."""
     return 10*np.log10(power/baseline)
 
-def _normalize_tf_df(times, power, norm=False):
+def _normalize_tf_df(times, power, norm=False, baseline=None):
     """Receive a matrix of power (columns are frequencies and row are times) and returns it normalized."""
 
     if not norm: # Only change scale
         return np.log10(power)
 
+    if baseline is None:
+        baseline = (0, 1)
+
+    print(baseline)
+
     # Baseline times # parameters
-    bl_init_time = 13.7
-    bl_end_time = 14
+    bl_init_time = float(baseline[0])
+    bl_end_time = float(baseline[1])
 
     # Indexes:
     find_nearest = lambda val: np.searchsorted(times, val, side="left") #[0]
@@ -102,7 +107,7 @@ def get_arr_freqs(window, srate):
     # srate/2 is the nyquist frequency, the max freq u can get
     return np.linspace(0, srate/2, n_freqs)
 
-def stfft(times, eeg_data, window=None, step=None, srate=None, norm=True):
+def stfft(times, eeg_data, baseline=None, norm=True, window=None, step=None, srate=None):
     """Apply the Short Time Fast Fourier Transform to eeg data.
 
     Parameters:
@@ -152,13 +157,13 @@ def stfft(times, eeg_data, window=None, step=None, srate=None, norm=True):
     power = np.matrix(matrix_power)
 
     # Normalization
-    power = _normalize_tf_df(arr_times, power, norm)
+    power = _normalize_tf_df(arr_times, power, norm, baseline=baseline)
 
     return _new_tf_df(arr_times, arr_freqs, power)
 
 
 ### Convolution
-def convolute(times, eeg_data, srate=None, norm=True, n_cycles=None):
+def convolute(times, eeg_data, baseline=None, norm=True, srate=None, n_cycles=None):
     """Compute a convolution of the data, via freq-domain.
 
     Parameters:
@@ -290,7 +295,7 @@ def convolute(times, eeg_data, srate=None, norm=True, n_cycles=None):
     power = np.transpose(power)
 
     # Normalization
-    power = _normalize_tf_df(times, power, norm)
+    power = _normalize_tf_df(times, power, norm, baseline=baseline)
 
     return _new_tf_df(times, arr_freqs, power)
 

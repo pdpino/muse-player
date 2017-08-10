@@ -277,6 +277,9 @@ class WaveBuffer(EEGBuffer):
                 if calib_counter > 0:
                     calib_arr /= calib_counter
                     self._is_calibrated = True
+                    with self._lock_s: # Set status to yes
+                        self.status = WaveCalibStatus.Yes
+
 
             elif status == WaveCalibStatus.Yes:
                 # Use baseline data to normalize

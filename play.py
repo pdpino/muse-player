@@ -90,7 +90,7 @@ def main():
     muse = Muse(address=args.address,
                 callback=data_buffer.incoming_data,
                 # callback_other=other_buffer.incoming_data, # DEBUG: see other data
-                push_info=True, # DEBUG: to ask config, see battery percentage
+                push_info=True, # DEBUG: push info msgs from muse (to ask config, see battery percentage)
                 norm_factor=args.nfactor, norm_sub=args.nsub)
     muse.connect(interface=args.interface)
 
@@ -146,11 +146,11 @@ def main():
                     continue
                 elif message == "-s": # start calibrating
                     data_buffer.start_calibrating()
-                    message = "started calibrating"
+                    message = "started calibrating" # HACK: hardcoded (as in analyze.py)
                     print(message)
                 elif message == "-h": # halt calibrating
                     data_buffer.stop_calibrating()
-                    message = "stopped calibrating"
+                    message = "stopped calibrating" # HACK: hardcoded (as in analyze.py)
                     print(message)
                 elif message == "--save": # Toggle save option
                     args.save = not args.save
