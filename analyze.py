@@ -8,8 +8,10 @@ from backend import data, tf, plots, parsers
 import basic
 
 def tf_analysis(times, df, channels, method,
+                name, # Name of the run
                 normalize=True,
                 baseline=None,
+                overwrite=True, # Override an existing waves file
                 plot_waves=False, hide_result=False, # Hide/show options
                 marks_t=None, marks_m=None, # Marks in time
                 min_freq=None, max_freq=None, # Range of freq
@@ -38,6 +40,12 @@ def tf_analysis(times, df, channels, method,
     powers = []
 
     for ch in channels:
+        if not overwrite:
+            if data.exist_waves(name, ch):
+                power = data.load_waves(name, ch)
+                powers.append(power)
+                continue
+
         # Grab data
         eeg_data = df[ch].as_matrix()
 
@@ -46,6 +54,9 @@ def tf_analysis(times, df, channels, method,
 
         # Save FT
         powers.append(power)
+
+        # Save to file
+        data.save_waves(power, name, ch)
 
     # Plot as contour
     if not hide_result:
@@ -124,6 +135,7 @@ def parse_args():
         parser.add_argument('-r', '--hide_result', action='store_true', help='Don\'t plot result of convolution and stfft')
         parser.add_argument('-w', '--plot_waves', action='store_true', help='Plot alpha, beta, etc waves')
         parser.add_argument('-t', '--test', action='store_true', help='Test with a simulated wave instead of real data')
+        parser.add_argument('-o', '--overwrite', action='store_true', help='Overwrite existing wave data')
 
         # Channels argument
         parsers.add_ch_args(parser)
@@ -205,7 +217,8 @@ if __name__ == "__main__":
 
 
     # Analyze
-    tf_analysis(times, df, channels, args.method,
+    tf_analysis(times, df, channels, args.method, args.fname,
+            overwrite=args.overwrite,
             normalize=args.norm,
             baseline=baseline,
             hide_result=args.hide_result,

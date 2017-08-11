@@ -51,7 +51,12 @@ def plot_tf_contour(power, ch, title, marks_t=None, marks_m=None, min_freq=None,
         # Select frequencies
         arr_freqs = []
         for f in power.columns:
-            if min_freq < f and f < max_freq:
+            try:
+                fr = float(f)
+            except:
+                continue # Discard that frequency
+
+            if min_freq < fr and fr < max_freq:
                 arr_freqs.append(f)
 
         power = power[arr_freqs]

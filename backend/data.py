@@ -1,7 +1,23 @@
 """Module that provides functionality to manage the data"""
 import os
 import pandas as pd
+from enum import Enum
 import basic
+
+class FileType(Enum):
+    raw = 1
+    waves = 2
+    marks = 3
+
+    def __str__(self):
+        if self == FileType.raw:
+            return "raw"
+        elif self == FileType.waves:
+            return "waves"
+        elif self == FileType.marks:
+            return "marks"
+        else:
+            return ""
 
 class DumpFileHandler(basic.FileHandler):
     """Handle the dump file and folder names."""
@@ -13,21 +29,21 @@ class DumpFileHandler(basic.FileHandler):
     """Extension."""
     ext = "csv"
 
-    #### UNUSED METHOD
-    # @classmethod
-    # def get_folder(cls, subfolder):
-    #     """Return the folder."""
-    #     return cls._get_folder(subfolder)
+    @classmethod
+    def get_subfolder(cls, tipo):
+        """Return the folder."""
+        return str(tipo)
 
     @classmethod
-    def get_fname(cls, name, subfolder=None, suffix=None):
+    def get_fname(cls, name, subfolder=None, suffix=None, tipo=FileType.raw):
         """Return the vocabulary full filename."""
-        return cls._get_fname(name, folder=subfolder, suffix=suffix, ext=cls.ext)
+        subfolder_type = cls.get_subfolder(tipo)
+        return cls._get_fname(name, folder=[subfolder_type, subfolder], suffix=suffix, ext=cls.ext)
 
     @classmethod
-    def assure_folder(cls, subfolder):
+    def assure_folder(cls, subfolder, tipo):
         """Assure the existence of a folder."""
-        cls._assure_folder(subfolder)
+        cls._assure_folder(cls.get_subfolder(tipo), subfolder)
 
 def _cmp_chs(real_chs, wanted_chs):
     """Compare the existing channels with the wanted ones, return the intersection and notifies the difference."""
@@ -44,7 +60,7 @@ def _cmp_chs(real_chs, wanted_chs):
 
 def load_eeg(channels, name, subfolder=None, suffix=None):
     """Read the data from csv, assure the channels and return the dataframe"""
-    fname = DumpFileHandler.get_fname(name, subfolder, suffix)
+    fname = DumpFileHandler.get_fname(name, subfolder, suffix, tipo=FileType.raw)
 
     try:
         df = pd.read_csv(fname, index_col=0)
@@ -65,8 +81,8 @@ def load_eeg(channels, name, subfolder=None, suffix=None):
 
 def save_eeg(df, name, subfolder=None, suffix=None):
     """Save a dataframe to a .csv"""
-    DumpFileHandler.assure_folder(subfolder)
-    fname = DumpFileHandler.get_fname(name, subfolder, suffix)
+    DumpFileHandler.assure_folder(subfolder, FileType.raw)
+    fname = DumpFileHandler.get_fname(name, subfolder, suffix, tipo=FileType.raw)
 
     # TODO: revisar que la primera columna sea timestamps
     df.to_csv(fname, float_format='%f')
@@ -74,7 +90,7 @@ def save_eeg(df, name, subfolder=None, suffix=None):
 
 def load_marks(name, subfolder=None):
     """Read a marks file."""
-    fname = DumpFileHandler.get_fname(name, subfolder, "marks") # HACK: marks hardcoded
+    fname = DumpFileHandler.get_fname(name, subfolder, tipo=FileType.marks)
 
     try:
         df = pd.read_csv(fname)
@@ -92,8 +108,8 @@ def save_marks(times, messages, name, subfolder=None):
     if len(times) == 0 or len(messages) == 0: # No marks provided
         return
 
-    DumpFileHandler.assure_folder(subfolder)
-    fname = DumpFileHandler.get_fname(name, subfolder, "marks") #HACK: marks hardcoded
+    DumpFileHandler.assure_folder(subfolder, FileType.marks)
+    fname = DumpFileHandler.get_fname(name, subfolder, tipo=FileType.marks)
 
     df = pd.DataFrame()
     df['times'] = times # HACK
@@ -101,6 +117,31 @@ def save_marks(times, messages, name, subfolder=None):
 
     df.to_csv(fname)
     basic.report("Marks saved to file: {}".format(fname))
+
+def load_waves(name, channel, subfolder=None):
+    """Read a waves file."""
+    fname = DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=FileType.waves)
+
+    try:
+        df = pd.read_csv(fname, index_col=0)
+
+        basic.report("Waves loaded from file: {}".format(fname))
+        return df
+    except FileNotFoundError:
+        basic.perror("Can't find waves file: {}".format(fname))
+
+def save_waves(power, name, channel, subfolder=None):
+    """Save waves to a file."""
+    DumpFileHandler.assure_folder(subfolder, FileType.waves)
+    fname = DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=FileType.waves)
+
+    power.to_csv(fname)
+    basic.report("Waves saved to file: {}".format(fname))
+
+def exist_waves(name, channel, subfolder=None):
+    """Boolean indicating if waves file exists."""
+    return os.path.isfile(DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=FileType.waves))
+
 
 _ch_names = ['TP9', 'AF7', 'AF8', 'TP10', 'Right Aux']
 def ch_names(aux=False):

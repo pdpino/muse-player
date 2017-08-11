@@ -2,7 +2,9 @@
 
 ## Next
 
-* in analyze.py plot all channels in subplots
+* separate data in raw/ and waves/
+* add support to save waves
+
 * add marks in time to app.js
 * add axis labels to app.js
 * add axis label for colour in contourplot
