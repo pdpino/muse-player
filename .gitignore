@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 
+# Data
+data/*
 
 # Folders
 old/
