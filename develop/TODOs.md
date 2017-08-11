@@ -2,23 +2,19 @@
 
 ## Next
 
-* add marks in time to app.js
+* Pre-process (before TF analysis)
+  + Notch filter in 50Hz
+  + high-pass filter at 0.5 or 1Hz ???
+
+
+#### To test with app.js
+* add marks in time to app.js (mark message)
 * add axis labels to app.js
 * add axis label for colour in contourplot
-
-#### Testing
-* Play with waves: See barachant code (P300)
-* Play with parameters in both methods
 
 #### Learn
 * Ver video laplacian (para terminar capitulo)
 * Ver links de mail
-
-#### Pre-process (before TF analysis)
-* Notch filter in 50Hz
-* high-pass filter at 0.5 or 1Hz ???
-
-#### Post-process (after TF analysis)
 
 
 ## Others
