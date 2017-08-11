@@ -24,7 +24,7 @@ def _plot_marks(marks_t, marks_m):
             t = marks_t[i]
             m = marks_m[i]
             plt.axvline(t, color='black', label=m)
-        plt.legend()
+        plt.legend(loc='upper center')
 
 def plot_tf_contour(power, ch, title, marks_t=None, marks_m=None, min_freq=None, max_freq=None):
     """Plot a contour plot with the power.
