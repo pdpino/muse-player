@@ -1,7 +1,8 @@
+"use strict"
+
 /**
  * Receive a stream of data from a muse server and plots it
  */
-
 
 class Graph {
   /**
@@ -62,7 +63,7 @@ class Graph {
 
     if(config.ch_names === undefined){
       config.ch_names = new Array(config.n_channels);
-      for(var i=0;i<config.n_channels;i++){
+      for(let i=0;i<config.n_channels;i++){
         config.ch_names[i] = "ch".concat(i);
       }
     }
@@ -76,9 +77,9 @@ class Graph {
      * source: https://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
      */
     function getRandomColor() {
-      var letters = '0123456789ABCDEF';
-      var color = '#';
-      for (var i = 0; i < 6; i++ ) {
+      let letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++ ) {
           color += letters[Math.floor(Math.random() * 16)];
       }
       return color;
@@ -86,7 +87,7 @@ class Graph {
 
     if(config.colors === undefined){
       config.colors = new Array(config.n_channels);
-      for(var i=0;i<config.n_channels;i++){
+      for(let i=0;i<config.n_channels;i++){
         config.colors[i] = getRandomColor();
       }
     }
@@ -160,8 +161,8 @@ class Graph {
    */
   _set_lines(){
     this.lines = new Array(this.n_channels);
-    for(var i=0;i<this.n_channels;i++){ this.lines[i] = null; } //HACK: iniciar todo como null
-    var graph = this;
+    for(let i=0;i<this.n_channels;i++){ this.lines[i] = null; } //HACK: iniciar todo como null
+    let graph = this;
     this.lines.forEach(function(l, i){
       graph.lines[i] = d3.svg.line()
         .x(function(d) { return graph.x_range(d[0]); })
@@ -180,8 +181,8 @@ class Graph {
     // Create path and bools for each channel
     this.paths = new Array(this.n_channels); // Lines in svg
     this.plot_bools = new Array(this.n_channels); // Bools to show each line
-    var graph = this;
-    for(var i=0;i<this.n_channels;i++){
+    let graph = this;
+    for(let i=0;i<this.n_channels;i++){
       this.plot_bools[i] = true; // Default: show line
       this.paths[i] = null; // HACK
     }
@@ -224,13 +225,13 @@ class Graph {
 
 
     // Add checkbox for each channel
-    var ids_tick = new Array(this.n_channels);
-    var graph = this;
-    for(var i=0;i<this.n_channels;i++){
+    let ids_tick = new Array(this.n_channels);
+    let graph = this;
+    for(let i=0;i<this.n_channels;i++){
       ids_tick[i] = "ch".concat(String(i)).concat("-tick");
-      var input_i = "<input id='".concat(String(ids_tick[i]))
+      let input_i = "<input id='".concat(String(ids_tick[i]))
         .concat("' type='checkbox' checked/>");
-      var channel_name = String(ch_names[i]).concat('<br>');
+      let channel_name = String(ch_names[i]).concat('<br>');
 
       // Add square with color
       $("#legend-form").append(
@@ -258,7 +259,7 @@ class Graph {
 
 
     // Paint colors
-    // for(var i=0;i<this.n_channels;i++){
+    // for(let i=0;i<this.n_channels;i++){
     //   d3.select(ids_rect[i]).style("fill", graph.colors[i]);
     // }
 
@@ -307,7 +308,7 @@ class Graph {
    * Connect the x axis buttons with the corresponding events
    */
   _add_events_x_axis(btn_dec, btn_inc){
-    var graph = this;
+    let graph = this;
     $(btn_dec).click(function(){ graph.zoom_x_axis(false); });
     $(btn_inc).click(function(){ graph.zoom_x_axis(true); });
   }
@@ -316,7 +317,7 @@ class Graph {
    * Connect the y axis buttons with the corresponding events
    */
   _add_events_y_axis(btns_zoom, btns_move, btn_home){
-    var graph = this;
+    let graph = this;
     $(btns_zoom[0]).click(function(){ graph.zoom_y_axis(false); });
     $(btns_zoom[1]).click(function(){ graph.zoom_y_axis(true); });
     $(btns_move[0]).click(function(){ graph.move_y_axis(false); });
@@ -331,8 +332,8 @@ class Graph {
    * @param {bool} out Direction of the zoom
    */
   zoom_y_axis(out){
-    var sign_min;
-    var sign_max;
+    let sign_min;
+    let sign_max;
 
     if(out){
       sign_min = -1; // decrease y_min
@@ -343,8 +344,8 @@ class Graph {
       sign_max = -1; // decrease y_max
     }
 
-    var y_min_new = this.y_min + sign_min*this.dy_zoom;
-    var y_max_new = this.y_max + sign_max*this.dy_zoom;
+    let y_min_new = this.y_min + sign_min*this.dy_zoom;
+    let y_max_new = this.y_max + sign_max*this.dy_zoom;
 
     // Safe to zoom in
     if(!out){
@@ -368,7 +369,7 @@ class Graph {
    * @param {bool} up Direction of the move
    */
   move_y_axis(up){
-    var sign;
+    let sign;
 
     if(up){
       sign = 1;
@@ -377,8 +378,8 @@ class Graph {
       sign = -1;
     }
 
-    var y_min_new = this.y_min + sign*this.dy_move;
-    var y_max_new = this.y_max + sign*this.dy_move;
+    let y_min_new = this.y_min + sign*this.dy_move;
+    let y_max_new = this.y_max + sign*this.dy_move;
 
     this._update_y_axis(y_min_new, y_max_new);
   }
@@ -388,7 +389,7 @@ class Graph {
    * @param {bool} increase increase or decrease the amount of seconds shown
    */
   zoom_x_axis(increase){
-    var sign;
+    let sign;
     if(increase){
       sign = 1;
     }
@@ -402,7 +403,7 @@ class Graph {
    * Update all the lines in the graph
    */
   update_graph(data, shift=true) {
-    for(var i=0;i<this.n_channels;i++){
+    for(let i=0;i<this.n_channels;i++){
       // this._update_graph_line(data, this.paths[i], this.lines[i], this.plot_bools[i]);
       if(this.plot_bools[i]){
         this.paths[i].attr("d", this.lines[i](data))
@@ -414,7 +415,7 @@ class Graph {
     }
 
     // actualizar rango de tiempo
-    var rango = d3.extent(data, function(d) { return d[0]; });
+    let rango = d3.extent(data, function(d) { return d[0]; });
     // if(rango[0] + this.n_secs > rango[1]){ rango[1] = rango[0] + this.n_secs; } // Que el rango minimo sea n_secs
     this.x_range.domain(rango);
 
@@ -429,7 +430,7 @@ class Graph {
 
 }
 
-var StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
+let StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
 class Connection{
   /**
    *
@@ -477,9 +478,9 @@ class Connection{
    * Set a number in the conn object, an icon and a text in the page
    */
   _set_status(status){
-    var text = "";
-    var icon = "";
-    var color = "";
+    let text = "";
+    let icon = "";
+    let color = "";
 
     this.status = status;
 
@@ -553,7 +554,7 @@ class Connection{
       }
     }
 
-    var conn = this;
+    let conn = this;
     this._set_status(StatusEnum.CONNECTING);
     this.stream = new EventSource(this.url);
 
@@ -589,9 +590,9 @@ class Connection{
  * @param {Number} n number of channels
  */
 function init_data(n){
-  var data = new Array(1);
+  let data = new Array(1);
   data[0] = new Array(n+1); // +1 for the time, the rest are channels
-  for(var i=0;i<=n;i++){ data[0][i] = 0; } // init in 0
+  for(let i=0;i<=n;i++){ data[0][i] = 0; } // init in 0
   return data;
 }
 
@@ -603,22 +604,23 @@ $(document).ready( function() {
 
 
 
-  var n_channels = 5;
-  var waves = true; // HACK: select type hardcoded
+  let n_channels = 5;
+  let waves = true; // HACK: select type hardcoded
+  let channel_names, titulo, conn_name;
   if(waves){
-    var channel_names = ["delta", "theta", "alpha", "beta", "gamma"];
-    var titulo = "Waves";
-    var conn_name = "waves data";
+    channel_names = ["delta", "theta", "alpha", "beta", "gamma"];
+    titulo = "Waves";
+    conn_name = "waves data";
   }
   else{
-    var channel_names = ["TP9", "AF7", "AF8", "TP10", "Right Aux"];
-    var titulo = "Electrodes";
-    var conn_name = "eeg data";
+    channel_names = ["TP9", "AF7", "AF8", "TP10", "Right Aux"];
+    titulo = "Electrodes";
+    conn_name = "eeg data";
   }
 
-  var nchs = n_channels;
-  var data = init_data(nchs);
-  var graph = new Graph({
+  let nchs = n_channels;
+  let data = init_data(nchs);
+  let graph = new Graph({
     container: "#graph_container",
     legend_container: '#legend_container',
     data: data,
@@ -650,7 +652,7 @@ $(document).ready( function() {
    * Recibe un mensaje entrante de eeg
    */
   function receive_data(e) {
-    var arr = e.data.split(",").map(parseFloat);
+    let arr = e.data.split(",").map(parseFloat);
 
     if(arr[0] < 0){ // Ignore negative time (wrong streaming from python?)
       return;
@@ -666,7 +668,7 @@ $(document).ready( function() {
   };
 
   // EEG connection
-  var eeg_conn = new Connection({
+  let eeg_conn = new Connection({
     name: conn_name,
     url: "http://localhost:8889/data/muse",
     status_text: "#status-text", //FIXME: que la clase cree estos
