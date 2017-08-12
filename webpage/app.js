@@ -68,9 +68,10 @@ class Graph {
       }
     }
 
-    if(config.title === undefined){
-      config.title = "Graph";
-    }
+    config.title = config.title || "Graph";
+    // if(config.title === undefined){
+    //   config.title = "Graph";
+    // }
 
     /**
      * Get a random color
