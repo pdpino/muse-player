@@ -95,7 +95,15 @@ def load_marks(name, subfolder=None):
     try:
         df = pd.read_csv(fname)
         times = list(df['times']) # HACK: times and messages hardcoded
-        messages = list(df['messages'])
+        messages = []
+
+        for m in list(df['messages']):
+            if m.startswith("stop"): # HACK: stop hardcoded
+                messages.append("stop")
+            else:
+                messages.append(m)
+
+
 
         basic.report("Marks loaded from file: {}".format(fname))
         return times, messages

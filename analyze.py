@@ -73,7 +73,8 @@ def tf_analysis(times, df, channels, method, testing,
 
     # Get and plot waves in intervals
     if marks_waves:
-        mw = tf.get_marks_waves(power[0], )
+        mw = tf.get_marks_waves(powers, marks_t, marks_m)
+        plots.plot_marks_waves(mw, channels)#, choose_waves)
 
 def create_sine_wave(time, srate, freqs, amps, phases):
     """Create a sine wave."""

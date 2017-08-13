@@ -191,3 +191,48 @@ def plot_waves(waves, ch, method, marks_t=None, marks_m=None):
     plt.suptitle("Waves using {}".format(method), fontsize=20)
     _maximize()
     plt.show()
+
+def plot_marks_waves(all_waves, channels):
+    """Plot waves in the marks intervals."""
+
+    n_channels = len(channels)
+    if len(all_waves) != n_channels:
+        basic.perror("plot_marks_waves(), lengths don't match")
+
+    def _plot_5(waves, ch):
+        """Plot the five waves."""
+
+        messages = waves["messages"]
+        messages_index = range(len(messages))
+
+        def _plot_1(w):
+            """Plot one wave."""
+            wave = waves[w].as_matrix()
+
+            # plt.errorbar(messages_index, wave, yerr=0.1, label=w)
+            plt.plot(messages_index, wave, label=w)
+            plt.xticks(messages_index, messages, rotation='vertical')
+
+
+        delta = _plot_1("delta")
+        theta = _plot_1("theta")
+        alpha = _plot_1("alpha")
+        beta = _plot_1("beta")
+        gamma = _plot_1("gamma")
+
+        plt.legend()
+        plt.title(ch)
+        plt.xlabel('Marks')
+        plt.ylabel('Power (dB)')
+
+    if n_channels > 1:
+        for i in range(n_channels):
+            plt.subplot(2, 2, i+1) # HACK: hardcoded for 4 channels
+            _plot_5(all_waves[i], channels[i])
+    else:
+        _plot_5(all_waves[0], channels[0])
+
+    plt.suptitle("Waves in the marks interval", fontsize=20)
+
+    _maximize()
+    plt.show()

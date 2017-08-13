@@ -319,7 +319,7 @@ def get_waves(power):
             """Return the wave (avg) of the values in a range of frequencies."""
             # TODO: merge this method with public one get_wave()
             # Filter freqs
-            filter_freqs = [f for f in freqs if f >= min_freq and f <= max_freq]
+            filter_freqs = [f for f in freqs if float(f) >= min_freq and float(f) <= max_freq] # TASK: functin that does this
             if len(filter_freqs) == 0:
                 basic.perror("get_waves(): no data founded between {} and {} Hz, averaging all frequencies".format(min_freq, max_freq), force_continue=True)
                 filter_freqs = list(freqs)
@@ -345,7 +345,7 @@ def get_waves(power):
 
     return _do_get_wave(power)
 
-def get_marks_waves(powers):
+def get_marks_waves(powers, marks_t, marks_m):
     """Receive a list of power dataframes, return a dataframe with the waves calculated by interval."""
 
     def _get_wave_interval(pw, min_freq, max_freq, min_time, max_time):
@@ -353,7 +353,7 @@ def get_marks_waves(powers):
         freqs = list(pw.columns)
 
         # Filter freqs
-        filter_freqs = [f for f in freqs if f >= min_freq and f <= max_freq]
+        filter_freqs = [f for f in freqs if float(f) >= min_freq and float(f) <= max_freq]
         if len(filter_freqs) == 0:
             return 0
         pw = pw[filter_freqs]
@@ -362,29 +362,50 @@ def get_marks_waves(powers):
         times = np.array(pw.index)
         find_time_index = lambda val: np.searchsorted(times, val, side="left")
         t_init = find_time_index(min_time)
-        t_end = find_time_index(max_time)
+        t_end = find_time_index(max_time) if min_time != max_time else len(times)
+        pw = pw.iloc[t_init:t_end].as_matrix()
 
+        if pw.size == 0:
+            return 0
 
+        # Return mean over both axis
+        return np.mean(pw, axis=(0,1))
 
-        # Return the average frequencies in that range
-        return pw.loc[t_init:t_end].mean()
+    all_waves = []
 
-    for power in powers:
-        pass
+    for p in powers:
+        deltas = []
+        thetas = []
+        alphas = []
+        betas = []
+        gammas = []
+        marks_filtered = []
 
-    # Dataframe to save all waves
-    waves = pd.DataFrame()
-    waves["delta"] = _get_wave(1, 4)
-    waves["theta"] = _get_wave(4, 8)
-    waves["alpha"] = _get_wave(8, 13)
-    waves["beta"] = _get_wave(13, 30)
-    waves["gamma"] = _get_wave(30, 44)
+        n = len(marks_t)
+        for i in range(n):
+            if marks_m[i].startswith("stop"): # HACK: stop hardcoded
+                continue
 
+            t_init = marks_t[i]
+            j = i+1 if i+1 < n else i
+            t_end = marks_t[j]
 
-    if type(power) is list:
-        all_waves = []
-        for p in power:
-            all_waves.append(_do_get_wave(p))
-        return all_waves
+            deltas.append(_get_wave_interval(p, 1, 4, t_init, t_end))
+            thetas.append(_get_wave_interval(p, 4, 8, t_init, t_end))
+            alphas.append(_get_wave_interval(p, 8, 13, t_init, t_end))
+            betas.append(_get_wave_interval(p, 13, 30, t_init, t_end))
+            gammas.append(_get_wave_interval(p, 30, 44, t_init, t_end))
+            marks_filtered.append(marks_m[i])
 
-    return _do_get_wave(power)
+        # Dataframe to save all waves
+        waves = pd.DataFrame()
+        waves["delta"] = deltas
+        waves["theta"] = thetas
+        waves["alpha"] = alphas
+        waves["beta"] = betas
+        waves["gamma"] = gammas
+        waves["messages"] = marks_filtered # HACK: hardcoded
+
+        all_waves.append(waves)
+
+    return all_waves
