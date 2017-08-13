@@ -77,7 +77,7 @@ def tf_analysis(times, df, channels, method, testing,
     # Get and plot waves
     if show_waves:
         waves = tf.get_waves(powers)
-        plots.plot_waves(waves, channels, method_name, marks_t=marks_t, marks_m=marks_m, choose_waves=choose_waves)
+        plots.plot_waves(waves, channels, marks_t=marks_t, marks_m=marks_m, choose_waves=choose_waves)
 
 
     # Get and plot waves in intervals
