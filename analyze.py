@@ -7,7 +7,7 @@ import numpy as np
 from backend import data, tf, plots, parsers
 import basic
 
-def tf_analysis(times, df, channels, method,
+def tf_analysis(times, df, channels, method, testing,
                 name, # Name of the run
                 normalize=True,
                 baseline=None,
@@ -40,7 +40,7 @@ def tf_analysis(times, df, channels, method,
     powers = []
 
     for ch in channels:
-        if not overwrite:
+        if not testing and not overwrite:
             if data.exist_waves(name, ch):
                 power = data.load_waves(name, ch)
                 powers.append(power)
@@ -56,7 +56,8 @@ def tf_analysis(times, df, channels, method,
         powers.append(power)
 
         # Save to file
-        data.save_waves(power, name, ch)
+        if not testing:
+            data.save_waves(power, name, ch)
 
     # Plot as contour
     if not hide_result:
@@ -134,19 +135,19 @@ def parse_args():
         # Hide/show arguments
         parser.add_argument('-r', '--hide_result', action='store_true', help='Don\'t plot result of convolution and stfft')
         parser.add_argument('-w', '--plot_waves', action='store_true', help='Plot alpha, beta, etc waves')
+
+        # Other arguments
         parser.add_argument('-t', '--test', action='store_true', help='Test with a simulated wave instead of real data')
         parser.add_argument('-o', '--overwrite', action='store_true', help='Overwrite existing wave data')
 
         # Channels argument
         parsers.add_ch_args(parser)
 
-
         # Methods arguments
         group_tf = parser.add_argument_group(title="TF general options")
         group_tf.add_argument('--norm', action='store_true', help='If present, normalize the TF')
         group_tf.add_argument('--baseline', nargs=2, help='Range of seconds to normalize the TF')
         group_tf.add_argument('--range_freq', nargs=2, type=float, help='min and max frequency to plot')
-
 
         # Methods arguments
         group_conv = parser.add_argument_group(title="Morlet wavelet convolution")
@@ -165,11 +166,9 @@ def parse_args():
         group_test.add_argument('--time', type=float, default=1, help='Time to simulate')
         group_test.add_argument('--srate', type=int, default=256, help='Sampling rate')
 
-        # HACK: hardcoded default values # DEFAULT
         group_test.add_argument('--freqs', nargs='+', type=float, default=[10], help='Frequencies')
         group_test.add_argument('--amps', nargs='+', type=float, default=[1], help='Amplitudes')
         group_test.add_argument('--phases', nargs='+', type=float, default=[0], help='Phase angles')
-
 
         return parser
 
@@ -188,8 +187,6 @@ def parse_args():
 if __name__ == "__main__":
     # Parse args
     args = parse_args()
-
-    baseline = args.baseline
 
     if args.test: # Use simulated data
         # Simulate sine wave
@@ -213,14 +210,14 @@ if __name__ == "__main__":
 
         # Find baseline
         if args.baseline is None:
-            baseline = find_baseline(marks_time, marks_msg)
+            args.baseline = find_baseline(marks_time, marks_msg)
 
 
     # Analyze
-    tf_analysis(times, df, channels, args.method, args.fname,
+    tf_analysis(times, df, channels, args.method, args.test, args.fname,
             overwrite=args.overwrite,
             normalize=args.norm,
-            baseline=baseline,
+            baseline=args.baseline,
             hide_result=args.hide_result,
             plot_waves=args.plot_waves,
             marks_t=marks_time, marks_m=marks_msg,

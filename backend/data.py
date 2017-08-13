@@ -112,7 +112,7 @@ def save_marks(times, messages, name, subfolder=None):
     fname = DumpFileHandler.get_fname(name, subfolder, tipo=FileType.marks)
 
     df = pd.DataFrame()
-    df['times'] = times # HACK
+    df['times'] = times # HACK: names hardcoded
     df['messages'] = messages
 
     df.to_csv(fname)
