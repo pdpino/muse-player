@@ -106,8 +106,8 @@ def create_sine_wave(time, srate, freqs, amps, phases):
 def find_baseline(times, marks):
     """Find baseline marks."""
     # HACK: names hardcoded
-    start = "started calibrating"
-    stop = "stopped calibrating"
+    start = "calibrating"
+    stop = "stop calibrating"
 
     if start in marks and stop in marks:
         print("found a baseline in the marks")

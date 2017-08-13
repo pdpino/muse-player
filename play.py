@@ -146,11 +146,11 @@ def main():
                     continue
                 elif message == "-s": # start calibrating
                     data_buffer.start_calibrating()
-                    message = "started calibrating" # HACK: hardcoded (as in analyze.py)
+                    message = "calibrating" # HACK: hardcoded (as in analyze.py)
                     print(message)
                 elif message == "-h": # halt calibrating
                     data_buffer.stop_calibrating()
-                    message = "stopped calibrating" # HACK: hardcoded (as in analyze.py)
+                    message = "stop calibrating" # HACK: hardcoded (as in analyze.py)
                     print(message)
                 elif message == "--save": # Toggle save option
                     args.save = not args.save
@@ -159,7 +159,7 @@ def main():
 
                 # Save
                 marks.append(t)
-                messages.append(message)
+                messages.append(message.lower())
         except KeyboardInterrupt: # Ctrl-c
             print("Exiting")
             basic.mute_ctrlc() # So the finishing process isn't interrupted

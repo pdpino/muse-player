@@ -2,6 +2,9 @@
 
 ## Next
 
+* Make function to average between marks
+* Plan long tests
+
 * Pre-process (before TF analysis)
   + Notch filter in 50Hz
   + high-pass filter at 0.5 or 1Hz ???
@@ -38,5 +41,6 @@
 * ver cuando se desconecta cliente web?  https://stackoverflow.com/questions/18511119/stop-processing-flask-route-if-request-aborted
 
 ### Not urgent
+* Change variable names in `app.js` to CamelCase
 * add parse args to README
 * ordenar `develop/info` seccion "headband en estado normal" y "en estado extraño"

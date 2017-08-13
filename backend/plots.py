@@ -20,9 +20,17 @@ def _plot_marks(marks_t, marks_m):
     if len(marks_t) != len(marks_m):
         basic.perror("Marks times and messages do not match", force_continue=True)
     else:
+        # NOTE: to use a scale of colors:
+        # colors = 'winter' #'BuGn'
+        # cm = plt.get_cmap(colors)
+        # n = len(marks_t)
+        # # Then use color=cm(i/n)
+
         for i in range(len(marks_t)):
             t = marks_t[i]
             m = marks_m[i]
+            if m.startswith("stop"): # HACK: 'stop' hardcoded
+                m = None # No label
             plt.axvline(t, color='black', label=m)
         plt.legend(loc='upper center')
 
@@ -66,7 +74,8 @@ def plot_tf_contour(power, ch, title, marks_t=None, marks_m=None, min_freq=None,
         matrix = np.transpose(matrix) # fix axis
 
         # Plot
-        ax = plt.contourf(arr_times, arr_freqs, matrix, 50, cmap=plt.get_cmap('nipy_spectral'))
+        colors = 'bwr'  #'seismic' #'coolwarm' # 'nipy_spectral'
+        ax = plt.contourf(arr_times, arr_freqs, matrix, 50, cmap=plt.get_cmap(colors))
         plt.colorbar(ax)
         plt.xlabel('Time (s)')
         plt.ylabel('Frequency (Hz)')
