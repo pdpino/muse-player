@@ -40,6 +40,14 @@ def tf_analysis(times, df, channels, method, testing,
     # Save all powers
     powers = []
 
+    # Find baseline
+    if baseline is None:
+        baseline = find_baseline(marks_t, marks_m)
+        if not baseline is None:
+            basic.report("Found a baseline in the marks")
+        else:
+            basic.report("No baseline found")
+
     for ch in channels:
         if not testing and not overwrite:
             if data.exist_waves(name, ch):
@@ -113,18 +121,19 @@ def create_sine_wave(time, srate, freqs, amps, phases):
 
 def find_baseline(times, marks):
     """Find baseline marks."""
+    if times is None or marks is None:
+        return None
+        
     # HACK: names hardcoded
     start = "calibrating"
     stop = "stop calibrating"
 
     if start in marks and stop in marks:
-        print("found a baseline in the marks")
         i1 = marks.index(start)
         i2 = marks.index(stop)
 
         return [times[i1], times[i2]]
     else:
-        print("baseline not found in the marks")
         return None
 
 def parse_args():
@@ -220,10 +229,6 @@ if __name__ == "__main__":
 
         # Read marks in time
         marks_time, marks_msg = data.load_marks(args.fname, args.subfolder)
-
-        # Find baseline
-        if args.baseline is None:
-            args.baseline = find_baseline(marks_time, marks_msg)
 
 
     # Analyze
