@@ -12,7 +12,7 @@ def tf_analysis(times, df, channels, method, testing,
                 normalize=True,
                 baseline=None,
                 overwrite=True, # Override an existing waves file
-                plot_waves=False, hide_result=False, marks_waves=False, # Hide/show options
+                show_contour=False, show_waves=False, show_marks_waves=False, # Hide/show options
                 marks_t=None, marks_m=None, # Marks in time
                 min_freq=None, max_freq=None, # Range of freq
                 window=None, step=None, # Parameters to stfft
@@ -60,19 +60,19 @@ def tf_analysis(times, df, channels, method, testing,
             data.save_waves(power, name, ch)
 
     # Plot as contour
-    if not hide_result:
+    if show_contour:
         plots.plot_tf_contour(powers, channels, method_name,
                         marks_t=marks_t, marks_m=marks_m,
                         min_freq=min_freq, max_freq=max_freq)
 
     # Get and plot waves
-    if plot_waves:
+    if show_waves:
         waves = tf.get_waves(powers)
         plots.plot_waves(waves, channels, method_name, marks_t=marks_t, marks_m=marks_m)
 
 
     # Get and plot waves in intervals
-    if marks_waves:
+    if show_marks_waves:
         mw = tf.get_marks_waves(powers, marks_t, marks_m)
         plots.plot_marks_waves(mw, channels)#, choose_waves)
 
@@ -139,8 +139,8 @@ def parse_args():
                         help='Method to perform the TF analysis')
 
         # Hide/show arguments
-        parser.add_argument('-r', '--hide_result', action='store_true', help='Don\'t plot result of convolution and stfft')
-        parser.add_argument('-w', '--plot_waves', action='store_true', help='Plot alpha, beta, etc waves')
+        parser.add_argument('-c', '--contour', action='store_true', help='Plot result of convolution and stfft')
+        parser.add_argument('-w', '--waves', action='store_true', help='Plot alpha, beta, etc waves')
         parser.add_argument('-m', '--marks_waves', action='store_true',
                         help='Plot alpha, beta, etc waves in each mark interval')
 
@@ -227,7 +227,7 @@ if __name__ == "__main__":
             overwrite=args.overwrite,
             normalize=args.norm,
             baseline=args.baseline,
-            hide_result=args.hide_result, plot_waves=args.plot_waves, marks_waves=args.marks_waves,
+            show_contour=args.contour, show_waves=args.waves, show_marks_waves=args.marks_waves,
             marks_t=marks_time, marks_m=marks_msg,
             min_freq=args.min_freq,
             max_freq=args.max_freq,
