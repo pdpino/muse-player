@@ -158,7 +158,7 @@ def plot_raw(t, df, ch_names, marks_t=None, marks_m=None, subplots=False):
     _maximize()
     plt.show()
 
-def plot_waves(waves, ch, method, marks_t=None, marks_m=None, choose_waves=None):
+def plot_waves(waves, ch, marks_t=None, marks_m=None, choose_waves=None):
     """Receive a list of waves or a list of lists of waves (one for each channel)."""
 
     def _do_plot_waves(waves, ch_name, marks_t, marks_m):
@@ -191,7 +191,7 @@ def plot_waves(waves, ch, method, marks_t=None, marks_m=None, choose_waves=None)
     else:
         _do_plot_waves(waves, ch, marks_t, marks_m)
 
-    plt.suptitle("Waves using {}".format(method), fontsize=20)
+    plt.suptitle("Waves", fontsize=20)
     _maximize()
     plt.show()
 

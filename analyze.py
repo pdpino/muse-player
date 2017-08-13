@@ -70,7 +70,7 @@ def tf_analysis(times, df, channels, method, testing,
 
     # Plot as contour
     if show_contour:
-        plots.plot_tf_contour(powers, channels, method_name,
+        plots.plot_tf_contour(powers, channels,
                         marks_t=marks_t, marks_m=marks_m,
                         min_freq=min_freq, max_freq=max_freq)
 
@@ -123,7 +123,7 @@ def find_baseline(times, marks):
     """Find baseline marks."""
     if times is None or marks is None:
         return None
-        
+
     # HACK: names hardcoded
     start = "calibrating"
     stop = "stop calibrating"
