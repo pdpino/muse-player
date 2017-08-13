@@ -13,6 +13,7 @@ def tf_analysis(times, df, channels, method, testing,
                 baseline=None,
                 overwrite=True, # Override an existing waves file
                 show_contour=False, show_waves=False, show_marks_waves=False, # Hide/show options
+                choose_waves=None, # Choose which waves to plot
                 marks_t=None, marks_m=None, # Marks in time
                 min_freq=None, max_freq=None, # Range of freq
                 window=None, step=None, # Parameters to stfft
@@ -68,13 +69,13 @@ def tf_analysis(times, df, channels, method, testing,
     # Get and plot waves
     if show_waves:
         waves = tf.get_waves(powers)
-        plots.plot_waves(waves, channels, method_name, marks_t=marks_t, marks_m=marks_m)
+        plots.plot_waves(waves, channels, method_name, marks_t=marks_t, marks_m=marks_m, choose_waves=choose_waves)
 
 
     # Get and plot waves in intervals
     if show_marks_waves:
         mw = tf.get_marks_waves(powers, marks_t, marks_m)
-        plots.plot_marks_waves(mw, channels)#, choose_waves)
+        plots.plot_marks_waves(mw, channels, choose_waves=choose_waves)
 
 def create_sine_wave(time, srate, freqs, amps, phases):
     """Create a sine wave."""
@@ -139,11 +140,14 @@ def parse_args():
                         help='Method to perform the TF analysis')
 
         # Hide/show arguments
-        parser.add_argument('-c', '--contour', action='store_true', help='Plot result of convolution and stfft')
-        parser.add_argument('-w', '--waves', action='store_true', help='Plot alpha, beta, etc waves')
-        parser.add_argument('-m', '--marks_waves', action='store_true',
+        parser.add_argument('-c', '--show_contour', action='store_true', help='Plot result of convolution and stfft')
+        parser.add_argument('-w', '--show_waves', action='store_true', help='Plot alpha, beta, etc waves')
+        parser.add_argument('-m', '--show_marks_waves', action='store_true',
                         help='Plot alpha, beta, etc waves in each mark interval')
 
+        possible_waves = ['delta', 'theta', 'alpha', 'beta', 'gamma']
+        parser.add_argument('--waves', nargs='+', choices=possible_waves, default=possible_waves,
+                        help='Choose the waves to plot. Only valid for -w and/or -m')
 
         # Other arguments
         parser.add_argument('-t', '--test', action='store_true', help='Test with a simulated wave instead of real data')
@@ -227,7 +231,8 @@ if __name__ == "__main__":
             overwrite=args.overwrite,
             normalize=args.norm,
             baseline=args.baseline,
-            show_contour=args.contour, show_waves=args.waves, show_marks_waves=args.marks_waves,
+            show_contour=args.show_contour, show_waves=args.show_waves, show_marks_waves=args.show_marks_waves,
+            choose_waves=args.waves,
             marks_t=marks_time, marks_m=marks_msg,
             min_freq=args.min_freq,
             max_freq=args.max_freq,

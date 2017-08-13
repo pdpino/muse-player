@@ -158,13 +158,16 @@ def plot_raw(t, df, ch_names, marks_t=None, marks_m=None, subplots=False):
     _maximize()
     plt.show()
 
-def plot_waves(waves, ch, method, marks_t=None, marks_m=None):
+def plot_waves(waves, ch, method, marks_t=None, marks_m=None, choose_waves=None):
     """Receive a list of waves or a list of lists of waves (one for each channel)."""
 
     def _do_plot_waves(waves, ch_name, marks_t, marks_m):
         """Receive a list of waves and plots them. waves is a pd.DataFrame"""
         times = list(waves.index)
         for wave_name in waves.columns:
+            if not choose_waves is None:
+                if not wave_name in choose_waves: # Skip wave
+                    continue
             wave = waves[wave_name].as_matrix()
             plt.plot(times, wave, label=wave_name)
 
@@ -192,7 +195,7 @@ def plot_waves(waves, ch, method, marks_t=None, marks_m=None):
     _maximize()
     plt.show()
 
-def plot_marks_waves(all_waves, channels):
+def plot_marks_waves(all_waves, channels, choose_waves=None):
     """Plot waves in the marks intervals."""
 
     n_channels = len(channels)
@@ -207,6 +210,9 @@ def plot_marks_waves(all_waves, channels):
 
         def _plot_1(w):
             """Plot one wave."""
+            if not choose_waves is None:
+                if not w in choose_waves:
+                    return
             wave = waves[w].as_matrix()
 
             # plt.errorbar(messages_index, wave, yerr=0.1, label=w)
