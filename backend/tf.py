@@ -344,3 +344,47 @@ def get_waves(power):
         return all_waves
 
     return _do_get_wave(power)
+
+def get_marks_waves(powers):
+    """Receive a list of power dataframes, return a dataframe with the waves calculated by interval."""
+
+    def _get_wave_interval(pw, min_freq, max_freq, min_time, max_time):
+        """Return the wave value in an interval of time."""
+        freqs = list(pw.columns)
+
+        # Filter freqs
+        filter_freqs = [f for f in freqs if f >= min_freq and f <= max_freq]
+        if len(filter_freqs) == 0:
+            return 0
+        pw = pw[filter_freqs]
+
+        # Filter time
+        times = np.array(pw.index)
+        find_time_index = lambda val: np.searchsorted(times, val, side="left")
+        t_init = find_time_index(min_time)
+        t_end = find_time_index(max_time)
+
+
+
+        # Return the average frequencies in that range
+        return pw.loc[t_init:t_end].mean()
+
+    for power in powers:
+        pass
+
+    # Dataframe to save all waves
+    waves = pd.DataFrame()
+    waves["delta"] = _get_wave(1, 4)
+    waves["theta"] = _get_wave(4, 8)
+    waves["alpha"] = _get_wave(8, 13)
+    waves["beta"] = _get_wave(13, 30)
+    waves["gamma"] = _get_wave(30, 44)
+
+
+    if type(power) is list:
+        all_waves = []
+        for p in power:
+            all_waves.append(_do_get_wave(p))
+        return all_waves
+
+    return _do_get_wave(power)

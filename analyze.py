@@ -12,7 +12,7 @@ def tf_analysis(times, df, channels, method, testing,
                 normalize=True,
                 baseline=None,
                 overwrite=True, # Override an existing waves file
-                plot_waves=False, hide_result=False, # Hide/show options
+                plot_waves=False, hide_result=False, marks_waves=False, # Hide/show options
                 marks_t=None, marks_m=None, # Marks in time
                 min_freq=None, max_freq=None, # Range of freq
                 window=None, step=None, # Parameters to stfft
@@ -69,6 +69,11 @@ def tf_analysis(times, df, channels, method, testing,
     if plot_waves:
         waves = tf.get_waves(powers)
         plots.plot_waves(waves, channels, method_name, marks_t=marks_t, marks_m=marks_m)
+
+
+    # Get and plot waves in intervals
+    if marks_waves:
+        mw = tf.get_marks_waves(power[0], )
 
 def create_sine_wave(time, srate, freqs, amps, phases):
     """Create a sine wave."""
@@ -129,12 +134,15 @@ def parse_args():
 
         # Choose method
         methods = ['stfft', 'conv'] # First is default # REVIEW: move names to backend?
-        parser.add_argument('-m', '--method', type=str, choices=methods, default=methods[0],
+        parser.add_argument('--method', type=str, choices=methods, default=methods[0],
                         help='Method to perform the TF analysis')
 
         # Hide/show arguments
         parser.add_argument('-r', '--hide_result', action='store_true', help='Don\'t plot result of convolution and stfft')
         parser.add_argument('-w', '--plot_waves', action='store_true', help='Plot alpha, beta, etc waves')
+        parser.add_argument('-m', '--marks_waves', action='store_true',
+                        help='Plot alpha, beta, etc waves in each mark interval')
+
 
         # Other arguments
         parser.add_argument('-t', '--test', action='store_true', help='Test with a simulated wave instead of real data')
@@ -218,8 +226,7 @@ if __name__ == "__main__":
             overwrite=args.overwrite,
             normalize=args.norm,
             baseline=args.baseline,
-            hide_result=args.hide_result,
-            plot_waves=args.plot_waves,
+            hide_result=args.hide_result, plot_waves=args.plot_waves, marks_waves=args.marks_waves,
             marks_t=marks_time, marks_m=marks_msg,
             min_freq=args.min_freq,
             max_freq=args.max_freq,
