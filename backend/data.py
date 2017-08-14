@@ -2,6 +2,7 @@
 import os
 import pandas as pd
 from enum import Enum
+from backend import info
 import basic
 
 class FileType(Enum):
@@ -70,7 +71,7 @@ def load_eeg(channels, name, subfolder=None, suffix=None):
 
     if channels is None:
         # Get all channels
-        channels = ch_names()
+        channels = ch_names(aux=False)
 
     # Assure channels in columns
     channels = _cmp_chs(df.columns, channels)
@@ -94,16 +95,8 @@ def load_marks(name, subfolder=None):
 
     try:
         df = pd.read_csv(fname)
-        times = list(df['times']) # HACK: times and messages hardcoded
-        messages = []
-
-        for m in list(df['messages']):
-            if m.startswith("stop"): # HACK: stop hardcoded
-                messages.append("stop")
-            else:
-                messages.append(m)
-
-
+        times = list(df[info.times_column])
+        messages = df[info.messages_column]
 
         basic.report("Marks loaded from file: {}".format(fname))
         return times, messages
@@ -120,8 +113,8 @@ def save_marks(times, messages, name, subfolder=None):
     fname = DumpFileHandler.get_fname(name, subfolder, tipo=FileType.marks)
 
     df = pd.DataFrame()
-    df['times'] = times # HACK: names hardcoded
-    df['messages'] = messages
+    df[info.times_column] = times
+    df[info.messages_column] = messages
 
     df.to_csv(fname)
     basic.report("Marks saved to file: {}".format(fname))
@@ -152,7 +145,7 @@ def exist_waves(name, channel, subfolder=None):
 
 
 _ch_names = ['TP9', 'AF7', 'AF8', 'TP10', 'Right Aux']
-def ch_names(aux=False):
+def ch_names(aux):
     """Return the channel names. aux indicates if include auxiliary channel"""
     if aux:
         return _ch_names

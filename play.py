@@ -11,7 +11,7 @@ from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
 import basic
-from backend import parsers, data, engine
+from backend import parsers, data, engine, info
 
 def parse_args():
     """Create a parser, get the args, return them preprocessed."""
@@ -146,12 +146,12 @@ def main():
                     continue
                 elif message == "-s": # start calibrating
                     data_buffer.start_calibrating()
-                    message = "calibrating" # HACK: hardcoded (as in analyze.py)
-                    print(message)
+                    message = info.start_calib_mark
+                    print("started calibrating")
                 elif message == "-h": # halt calibrating
                     data_buffer.stop_calibrating()
-                    message = "stop calibrating" # HACK: hardcoded (as in analyze.py)
-                    print(message)
+                    message = info.stop_calib_mark
+                    print("started calibrating")
                 elif message == "--save": # Toggle save option
                     args.save = not args.save
                     print("save status = {}".format(args.save))

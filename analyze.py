@@ -124,9 +124,8 @@ def find_baseline(times, marks):
     if times is None or marks is None:
         return None
 
-    # HACK: names hardcoded
-    start = "calibrating"
-    stop = "stop calibrating"
+    start = info.start_calib_mark
+    stop = info.stop_calib_mark
 
     if start in marks and stop in marks:
         i1 = marks.index(start)

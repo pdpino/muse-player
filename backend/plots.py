@@ -29,7 +29,7 @@ def _plot_marks(marks_t, marks_m):
         for i in range(len(marks_t)):
             t = marks_t[i]
             m = marks_m[i]
-            if m.startswith("stop"): # HACK: 'stop' hardcoded
+            if info.is_stop_mark(m):
                 m = None # No label
             plt.axvline(t, color='black', label=m)
         plt.legend(loc='upper center')
@@ -48,7 +48,7 @@ def plot_tf_contour(power, ch, title, marks_t=None, marks_m=None, min_freq=None,
     if power is a list, ch must be a list of the same len
     """
 
-    def _do_plot(power, channel, marks_t, marks_m, min_freq, max_freq):
+    def _plot_1(power, channel, marks_t, marks_m, min_freq, max_freq):
         """Plot a power contour."""
         # Set DEFAULTs # 4, 50 is decent
         if min_freq is None:
@@ -90,17 +90,12 @@ def plot_tf_contour(power, ch, title, marks_t=None, marks_m=None, min_freq=None,
 
     args = [marks_t, marks_m, min_freq, max_freq]
 
-    if type(power) is list:
-        # NOTE: Assume that ch is also a list
-        if len(power) > 1:
-            for i in range(len(power)):
-                plt.subplot(2, 2, i+1)
-                _do_plot(power[i], ch[i], *args)
+    if len(power) > 1:
+        for i in range(len(power)):
+            plt.subplot(2, 2, i+1)
+            _plot_1(power[i], ch[i], *args)
         else:
-            _do_plot(power[0], ch[0], *args)
-    else:
-        _do_plot(power, ch, *args)
-
+            _plot_1(power[0], ch[0], *args)
 
     # Superior title
     plt.suptitle(title)

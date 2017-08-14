@@ -306,16 +306,11 @@ def get_marks_waves(powers, marks_t, marks_m):
         waves_dict = dict()
         for w in info.get_waves_names():
             waves_dict[w] = list() # new list for each wave
-        # deltas = []
-        # thetas = []
-        # alphas = []
-        # betas = []
-        # gammas = []
         marks_filtered = []
 
         n = len(marks_t)
         for i in range(n):
-            if marks_m[i].startswith("stop"): # HACK: stop hardcoded
+            if info.is_stop_mark(marks_m[i]):
                 continue
 
             t_init = marks_t[i]
@@ -324,23 +319,14 @@ def get_marks_waves(powers, marks_t, marks_m):
 
             for w, min_freq, max_freq in info.iter_waves():
                 waves_dict[w].append(_get_wave_interval(p, min_freq, max_freq, t_init, t_end))
-            # deltas.append()
-            # thetas.append(_get_wave_interval(p, 4, 8, t_init, t_end))
-            # alphas.append(_get_wave_interval(p, 8, 13, t_init, t_end))
-            # betas.append(_get_wave_interval(p, 13, 30, t_init, t_end))
-            # gammas.append(_get_wave_interval(p, 30, 44, t_init, t_end))
+
             marks_filtered.append(marks_m[i])
 
         # Dataframe to save all waves
         waves = pd.DataFrame()
         for w in info.get_waves_names():
             waves[w] = waves_dict[w]
-        # waves["delta"] = deltas
-        # waves["theta"] = thetas
-        # waves["alpha"] = alphas
-        # waves["beta"] = betas
-        # waves["gamma"] = gammas
-        waves["messages"] = marks_filtered # HACK: hardcoded
+        waves[info.messages_column] = marks_filtered
 
         all_waves.append(waves)
 
