@@ -70,7 +70,7 @@ def tf_analysis(times, df, channels, method, testing,
 
     # Plot as contour
     if show_contour:
-        plots.plot_tf_contour(powers, channels,
+        plots.plot_tf_contour(powers, channels, name,
                         marks_t=marks_t, marks_m=marks_m,
                         min_freq=min_freq, max_freq=max_freq)
 

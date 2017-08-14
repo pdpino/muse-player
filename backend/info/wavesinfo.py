@@ -14,9 +14,9 @@ def get_waves_names(choose=None):
     if choose is None:
         return list(_waves)
     else:
-        existing_waves = set(_waves)
-        chosen_waves = set(choose)
-        return list(existing_waves.intersection(chosen_waves)) # Return intersection
+        filtered_waves = [w for w in list(_waves) if w in choose]
+        # NOTE: not using sets because it loses the order from the OrderedDict
+        return filtered_waves
 
 def iter_waves():
     """Iterate over the waves names and limits."""
