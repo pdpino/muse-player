@@ -1,6 +1,7 @@
 """Module that provide functions to plot eeg data."""
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from backend import info
 
 def _maximize():
@@ -87,7 +88,7 @@ def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None
         _plot_1(powers[0], ch[0], *args)
 
     # Superior title
-    plt.suptitle(fname)
+    plt.suptitle("TF analysis from {}".format(fname))
 
     # Show
     _maximize()
@@ -117,18 +118,55 @@ def plot_eeg(t, df, ch_names, fname, marks_t=None, marks_m=None, subplots=False)
     _maximize()
     plt.show()
 
-def plot_waves(waves, ch, fname, marks_t=None, marks_m=None, choose_waves=None):
-    """Receive a list of waves or a list of lists of waves (one for each channel)."""
+def _plot_tsplot(times, arr, n_samples, label=None):
+    """Make a tsplot (see seaborn tsplot).
+
+    Receive an array of a time series, it is reshaped to fit (n_samples, new_time)
+    TODO: explain"""
+
+    # Take lengths
+    n_array = len(arr) # len of the array
+    n_cluster = n_array // n_samples # amount of clusters
+    n_array = n_cluster * n_samples # Parse n_array to a divisible number
+
+    # Slice the array
+    arr = arr[:n_array]
+
+    # Reshape it
+    new_arr = np.reshape(arr, (n_cluster, n_samples))
+    new_arr = new_arr.T
+
+    # Reshape times
+    times = times[:n_array:n_samples]
+
+    sns.tsplot(new_arr, time=times, ci="sd", label=label) #, color="autumn")
+    # NOTE: seaborn.tsplot() is deprecated, will be removed or replaced in a future release
+    
+    # NOTE: a line in seaborn library needs to be changed in order to pass the label like that:
+    # File: "env_muse/lib/python3.5/site-packages/seaborn/timeseries.py", line 351, in tsplot
+    # Code: ax.plot(x, central_data, color=color, label=label, **kwargs)
+    # Remove label=label argument
+    # (because in kwargs there is already a label argument, the one provided here)
+    # (is a hack, could be done better)
+
+
+def plot_waves(waves, ch, fname, marks_t=None, marks_m=None, choose_waves=None, n_samples=None):
+    """Receive a list of waves (pd.DataFrame), one for each channel."""
+
+    if n_samples is None:
+        plot_function = lambda times, wave, wave_name: plt.plot(times, wave, label=wave_name)
+    else:
+        plot_function = lambda times, wave, wave_name: _plot_tsplot(times, wave, n_samples, label=wave_name)
 
     def _do_plot_waves(waves, ch_name, marks_t, marks_m):
-        """Receive a list of waves and plots them. waves is a pd.DataFrame"""
+        """Receive a dataframe of waves and plots them."""
         times = list(waves.index)
         for wave_name in waves.columns:
             if not choose_waves is None:
                 if not wave_name in choose_waves: # Skip wave
                     continue
             wave = waves[wave_name].as_matrix()
-            plt.plot(times, wave, label=wave_name)
+            plot_function(times, wave, wave_name)
 
         _plot_marks(marks_t, marks_m)
 

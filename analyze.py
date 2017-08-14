@@ -14,6 +14,7 @@ def tf_analysis(times, df, channels, method, testing,
                 overwrite=True, # Override an existing waves file
                 show_contour=False, show_waves=False, show_marks_waves=False, # Hide/show options
                 choose_waves=None, # Choose which waves to plot
+                n_samples=None, # Passed to plot_waves
                 marks_t=None, marks_m=None, # Marks in time
                 min_freq=None, max_freq=None, # Range of freq
                 window=None, step=None, # Parameters to stfft
@@ -76,7 +77,8 @@ def tf_analysis(times, df, channels, method, testing,
     # Get and plot waves
     if show_waves:
         waves = tf.get_waves(powers)
-        plots.plot_waves(waves, channels, fname, marks_t=marks_t, marks_m=marks_m, choose_waves=choose_waves)
+        plots.plot_waves(waves, channels, fname, marks_t=marks_t, marks_m=marks_m,
+                        choose_waves=choose_waves, n_samples=n_samples)
 
 
     # Get and plot waves in intervals
@@ -152,16 +154,21 @@ def parse_args():
         parser.add_argument('-m', '--show_marks_waves', action='store_true',
                         help='Plot alpha, beta, etc waves in each mark interval')
 
-        possible_waves = info.get_waves_names()
-        parser.add_argument('--waves', nargs='+', choices=possible_waves, default=possible_waves,
-                        help='Choose the waves to plot. Only valid for -w and/or -m')
-
         # Other arguments
         parser.add_argument('-t', '--test', action='store_true', help='Test with a simulated wave instead of real data')
         parser.add_argument('-o', '--overwrite', action='store_true', help='Overwrite existing wave data')
 
         # Channels argument
         parsers.add_ch_args(parser)
+
+        # Waves arguments
+        group_waves = parser.add_argument_group(title="Waves options")
+        possible_waves = info.get_waves_names()
+        group_waves.add_argument('--waves', nargs='+', choices=possible_waves, default=possible_waves,
+                        help='Choose the waves to plot. Only valid for -w and/or -m')
+        group_waves.add_argument('--n_samples', type=int,
+                        help='In -w option, select a value to plot the waves by groups of n_samples')
+
 
         # Methods arguments
         group_tf = parser.add_argument_group(title="TF general options")
@@ -235,7 +242,7 @@ if __name__ == "__main__":
             normalize=args.norm,
             baseline=args.baseline,
             show_contour=args.show_contour, show_waves=args.show_waves, show_marks_waves=args.show_marks_waves,
-            choose_waves=args.waves,
+            choose_waves=args.waves, n_samples=args.n_samples,
             marks_t=marks_time, marks_m=marks_msg,
             min_freq=args.min_freq,
             max_freq=args.max_freq,
