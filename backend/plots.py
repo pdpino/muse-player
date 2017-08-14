@@ -34,18 +34,17 @@ def _plot_marks(marks_t, marks_m):
             plt.axvline(t, color='black', label=m)
         plt.legend(loc='upper center')
 
-def plot_tf_contour(power, ch, title, marks_t=None, marks_m=None, min_freq=None, max_freq=None):
+def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None, max_freq=None):
     """Plot a contour plot with the power.
 
-    power -- dataframe (or list of), columns are frequencies, index are times
+    powers -- list of dataframes, one per channel; columns are frequencies, index are times
     ch -- name of the channel(s)
-    title -- title to the plot
+    fname -- filename, added to the title
     marks_t -- time marks
     marks_m -- messages of the marks
     min_freq -- minimum frequency to the plot
     max_freq -- maximum frequency to the plot
 
-    if power is a list, ch must be a list of the same len
     """
 
     def _plot_1(power, channel, marks_t, marks_m, min_freq, max_freq):
@@ -75,45 +74,32 @@ def plot_tf_contour(power, ch, title, marks_t=None, marks_m=None, min_freq=None,
         # Add marks in time
         _plot_marks(marks_t, marks_m)
 
-        # Title with channel
         plt.title(channel)
 
 
     args = [marks_t, marks_m, min_freq, max_freq]
 
-    if len(power) > 1:
-        for i in range(len(power)):
-            plt.subplot(2, 2, i+1)
-            _plot_1(power[i], ch[i], *args)
-        else:
-            _plot_1(power[0], ch[0], *args)
+    if len(powers) > 1:
+        for i in range(len(powers)):
+            plt.subplot(2, 2, i+1) # HACK: hardcoded for 4 channels
+            _plot_1(powers[i], ch[i], *args)
+    else:
+        _plot_1(powers[0], ch[0], *args)
 
     # Superior title
-    plt.suptitle(title)
+    plt.suptitle(fname)
 
     # Show
     _maximize()
     plt.show()
 
-def plot_channel(t, arr, title, xlab='Time (s)', ylab='Amplitude'):
-    """Plot a channel."""
-    # REVIEW: move xlab and ylab to a centralize place?
-
-    plt.plot(t, arr)
-    plt.xlabel(xlab) # DEFAULT is time and amplitude
-    plt.ylabel(ylab)
-    plt.suptitle(title, fontsize=20)
-    plt.show()
-
-def plot_raw(t, df, ch_names, marks_t=None, marks_m=None, subplots=False):
+def plot_eeg(t, df, ch_names, fname, marks_t=None, marks_m=None, subplots=False):
     """Plot raw channels."""
-
-    # t = t.as_matrix()
 
     i = 1
     for ch in ch_names:
         if subplots:
-            plt.subplot(3, 2, i) # HACK: hardcoded for 6 subplots
+            plt.subplot(2, 2, i) # HACK: hardcoded for 4 channels
             i += 1
         plt.plot(t, df[ch].as_matrix(), label=ch)
 
@@ -126,12 +112,12 @@ def plot_raw(t, df, ch_names, marks_t=None, marks_m=None, subplots=False):
     if not subplots:
         _plot_marks(marks_t, marks_m)
 
-    plt.suptitle("Raw channels", fontsize=20)
+    plt.suptitle("Raw eeg from {}".format(fname), fontsize=20)
     plt.legend()
     _maximize()
     plt.show()
 
-def plot_waves(waves, ch, marks_t=None, marks_m=None, choose_waves=None):
+def plot_waves(waves, ch, fname, marks_t=None, marks_m=None, choose_waves=None):
     """Receive a list of waves or a list of lists of waves (one for each channel)."""
 
     def _do_plot_waves(waves, ch_name, marks_t, marks_m):
@@ -164,11 +150,11 @@ def plot_waves(waves, ch, marks_t=None, marks_m=None, choose_waves=None):
     else:
         _do_plot_waves(waves, ch, marks_t, marks_m)
 
-    plt.suptitle("Waves", fontsize=20)
+    plt.suptitle("Waves from {}".format(fname), fontsize=20)
     _maximize()
     plt.show()
 
-def plot_marks_waves(all_waves, channels, choose_waves=None):
+def plot_marks_waves(all_waves, channels, fname, choose_waves=None):
     """Plot waves in the marks intervals."""
 
     n_channels = len(channels)
@@ -178,7 +164,7 @@ def plot_marks_waves(all_waves, channels, choose_waves=None):
     def _plot_5(waves, ch):
         """Plot the five waves."""
 
-        messages = waves["messages"]
+        messages = waves[info.messages_column]
         messages_index = range(len(messages))
 
         def _plot_1(w):
@@ -205,7 +191,7 @@ def plot_marks_waves(all_waves, channels, choose_waves=None):
     else:
         _plot_5(all_waves[0], channels[0])
 
-    plt.suptitle("Waves in the marks interval", fontsize=20)
+    plt.suptitle("Waves in the marks interval, from {}".format(fname), fontsize=20)
 
     _maximize()
     plt.show()

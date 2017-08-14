@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from enum import Enum
 import basic
-from backend import data, tf
+from backend import data, tf, info
 
 class WaveCalibStatus(Enum):
     """Status of the calibration of the wave."""
@@ -135,8 +135,8 @@ class EEGBuffer(DataBuffer):
         eeg_data = self._normalize_data()
 
         # Juntar en dataframe
-        res = pd.DataFrame(data=eeg_data, columns=['TP9', 'AF7', 'AF8', 'TP10', 'Right AUX'])
-        res['timestamps'] = timestamps
+        res = pd.DataFrame(data=eeg_data, columns=info.ch_names_muse(aux=True))
+        res[info.timestamps_column] = timestamps
 
         # Guardar a csv
         data.save_eeg(res, fname, subfolder, suffix)

@@ -26,4 +26,4 @@ if __name__ == "__main__":
     marks_time, marks_msg = data.load_marks(args.fname, args.subfolder)
 
     # Plot
-    plots.plot_raw(times, df, channels, marks_t=marks_time, marks_m=marks_msg, subplots=args.subplot)
+    plots.plot_eeg(times, df, channels, marks_t=marks_time, marks_m=marks_msg, subplots=args.subplot)

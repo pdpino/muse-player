@@ -71,11 +71,11 @@ def load_eeg(channels, name, subfolder=None, suffix=None):
 
     if channels is None:
         # Get all channels
-        channels = ch_names(aux=False)
+        channels = info.ch_names_muse(aux=False)
 
     # Assure channels in columns
     channels = _cmp_chs(df.columns, channels)
-    times = df['timestamps']
+    times = df[info.timestamps_column]
     df = df[channels]
 
     return times, df, channels
@@ -142,12 +142,3 @@ def save_waves(power, name, channel, subfolder=None):
 def exist_waves(name, channel, subfolder=None):
     """Boolean indicating if waves file exists."""
     return os.path.isfile(DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=FileType.waves))
-
-
-_ch_names = ['TP9', 'AF7', 'AF8', 'TP10', 'Right Aux']
-def ch_names(aux):
-    """Return the channel names. aux indicates if include auxiliary channel"""
-    if aux:
-        return _ch_names
-    else: # Exclude aux channel
-        return _ch_names[:-1]

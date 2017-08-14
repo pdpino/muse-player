@@ -8,7 +8,7 @@ from backend import data, tf, plots, parsers, info
 import basic
 
 def tf_analysis(times, df, channels, method, testing,
-                name, # Name of the run
+                fname, # Name of the run
                 normalize=True,
                 baseline=None,
                 overwrite=True, # Override an existing waves file
@@ -33,9 +33,8 @@ def tf_analysis(times, df, channels, method, testing,
     method_name = names[method]
     method_function = ft_functions[method]
 
-    # HACK: reorder channels
     if len(channels) == 4: # If they are all of them
-        channels = ['TP9', 'TP10', 'AF7', 'AF8']
+        channels = info.ch_names_plot() # Channel names in the plot order
 
     # Save all powers
     powers = []
@@ -50,8 +49,8 @@ def tf_analysis(times, df, channels, method, testing,
 
     for ch in channels:
         if not testing and not overwrite:
-            if data.exist_waves(name, ch):
-                power = data.load_waves(name, ch)
+            if data.exist_waves(fname, ch):
+                power = data.load_waves(fname, ch)
                 powers.append(power)
                 continue
 
@@ -66,24 +65,24 @@ def tf_analysis(times, df, channels, method, testing,
 
         # Save to file
         if not testing:
-            data.save_waves(power, name, ch)
+            data.save_waves(power, fname, ch)
 
     # Plot as contour
     if show_contour:
-        plots.plot_tf_contour(powers, channels, name,
+        plots.plot_tf_contour(powers, channels, fname,
                         marks_t=marks_t, marks_m=marks_m,
                         min_freq=min_freq, max_freq=max_freq)
 
     # Get and plot waves
     if show_waves:
         waves = tf.get_waves(powers)
-        plots.plot_waves(waves, channels, marks_t=marks_t, marks_m=marks_m, choose_waves=choose_waves)
+        plots.plot_waves(waves, channels, fname, marks_t=marks_t, marks_m=marks_m, choose_waves=choose_waves)
 
 
     # Get and plot waves in intervals
     if show_marks_waves:
         mw = tf.get_marks_waves(powers, marks_t, marks_m)
-        plots.plot_marks_waves(mw, channels, choose_waves=choose_waves)
+        plots.plot_marks_waves(mw, channels, fname, choose_waves=choose_waves)
 
 def create_sine_wave(time, srate, freqs, amps, phases):
     """Create a sine wave."""
