@@ -5,6 +5,7 @@ should return a dataframe, using the _new_tf_df() function."""
 import numpy as np
 import pandas as pd
 import basic
+from backend import info
 
 def normalize_power(power, baseline):
     """Receive a power and a baseline and apply the normalization."""
@@ -260,11 +261,8 @@ def get_waves(power):
 
         # Dataframe to save all waves
         waves = pd.DataFrame()
-        waves["delta"] = _get_wave(1, 4)
-        waves["theta"] = _get_wave(4, 8)
-        waves["alpha"] = _get_wave(8, 13)
-        waves["beta"] = _get_wave(13, 30)
-        waves["gamma"] = _get_wave(30, 44)
+        for w, min_freq, max_freq in info.iter_waves():
+            waves[w] = _get_wave(min_freq, max_freq)
 
         return waves
 
@@ -305,11 +303,14 @@ def get_marks_waves(powers, marks_t, marks_m):
     all_waves = []
 
     for p in powers:
-        deltas = []
-        thetas = []
-        alphas = []
-        betas = []
-        gammas = []
+        waves_dict = dict()
+        for w in info.get_waves_names():
+            waves_dict[w] = list() # new list for each wave
+        # deltas = []
+        # thetas = []
+        # alphas = []
+        # betas = []
+        # gammas = []
         marks_filtered = []
 
         n = len(marks_t)
@@ -321,20 +322,24 @@ def get_marks_waves(powers, marks_t, marks_m):
             j = i+1 if i+1 < n else i
             t_end = marks_t[j]
 
-            deltas.append(_get_wave_interval(p, 1, 4, t_init, t_end))
-            thetas.append(_get_wave_interval(p, 4, 8, t_init, t_end))
-            alphas.append(_get_wave_interval(p, 8, 13, t_init, t_end))
-            betas.append(_get_wave_interval(p, 13, 30, t_init, t_end))
-            gammas.append(_get_wave_interval(p, 30, 44, t_init, t_end))
+            for w, min_freq, max_freq in info.iter_waves():
+                waves_dict[w].append(_get_wave_interval(p, min_freq, max_freq, t_init, t_end))
+            # deltas.append()
+            # thetas.append(_get_wave_interval(p, 4, 8, t_init, t_end))
+            # alphas.append(_get_wave_interval(p, 8, 13, t_init, t_end))
+            # betas.append(_get_wave_interval(p, 13, 30, t_init, t_end))
+            # gammas.append(_get_wave_interval(p, 30, 44, t_init, t_end))
             marks_filtered.append(marks_m[i])
 
         # Dataframe to save all waves
         waves = pd.DataFrame()
-        waves["delta"] = deltas
-        waves["theta"] = thetas
-        waves["alpha"] = alphas
-        waves["beta"] = betas
-        waves["gamma"] = gammas
+        for w in info.get_waves_names():
+            waves[w] = waves_dict[w]
+        # waves["delta"] = deltas
+        # waves["theta"] = thetas
+        # waves["alpha"] = alphas
+        # waves["beta"] = betas
+        # waves["gamma"] = gammas
         waves["messages"] = marks_filtered # HACK: hardcoded
 
         all_waves.append(waves)

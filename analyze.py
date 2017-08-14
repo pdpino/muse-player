@@ -4,7 +4,7 @@
 import argparse
 import pandas as pd
 import numpy as np
-from backend import data, tf, plots, parsers
+from backend import data, tf, plots, parsers, info
 import basic
 
 def tf_analysis(times, df, channels, method, testing,
@@ -154,7 +154,7 @@ def parse_args():
         parser.add_argument('-m', '--show_marks_waves', action='store_true',
                         help='Plot alpha, beta, etc waves in each mark interval')
 
-        possible_waves = ['delta', 'theta', 'alpha', 'beta', 'gamma']
+        possible_waves = info.get_waves_names()
         parser.add_argument('--waves', nargs='+', choices=possible_waves, default=possible_waves,
                         help='Choose the waves to plot. Only valid for -w and/or -m')
 

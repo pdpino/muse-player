@@ -1,7 +1,7 @@
 """Module that provide functions to plot eeg data."""
 import numpy as np
 import matplotlib.pyplot as plt
-# import basic
+from backend import info
 
 def _maximize():
     """Maximize the window."""
@@ -119,7 +119,6 @@ def plot_channel(t, arr, title, xlab='Time (s)', ylab='Amplitude'):
     plt.suptitle(title, fontsize=20)
     plt.show()
 
-
 def plot_raw(t, df, ch_names, marks_t=None, marks_m=None, subplots=False):
     """Plot raw channels."""
 
@@ -198,21 +197,15 @@ def plot_marks_waves(all_waves, channels, choose_waves=None):
 
         def _plot_1(w):
             """Plot one wave."""
-            if not choose_waves is None:
-                if not w in choose_waves:
-                    return
             wave = waves[w].as_matrix()
 
             # plt.errorbar(messages_index, wave, yerr=0.1, label=w)
             plt.plot(messages_index, wave, label=w)
             plt.xticks(messages_index, messages, rotation='vertical')
 
-
-        delta = _plot_1("delta")
-        theta = _plot_1("theta")
-        alpha = _plot_1("alpha")
-        beta = _plot_1("beta")
-        gamma = _plot_1("gamma")
+        # Plot all waves
+        for w in info.get_waves_names(choose_waves):
+            _plot_1(w)
 
         plt.legend()
         plt.title(ch)
