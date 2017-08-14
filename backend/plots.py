@@ -57,16 +57,7 @@ def plot_tf_contour(power, ch, title, marks_t=None, marks_m=None, min_freq=None,
             max_freq = 100
 
         # Select frequencies
-        arr_freqs = []
-        for f in power.columns:
-            try:
-                fr = float(f)
-            except:
-                continue # Discard that frequency
-
-            if min_freq < fr and fr < max_freq:
-                arr_freqs.append(f)
-
+        arr_freqs = info.filter_freqs(power.columns, min_freq, max_freq)
         power = power[arr_freqs]
 
         arr_times = np.array(power.index)

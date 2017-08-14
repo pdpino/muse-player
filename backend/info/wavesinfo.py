@@ -24,3 +24,6 @@ def iter_waves():
         min_freq = _waves[w][0]
         max_freq = _waves[w][1]
         yield w, min_freq, max_freq
+
+def filter_freqs(freqs, min_freq, max_freq):
+    return [f for f in freqs if float(f) >= min_freq and float(f) <= max_freq]

@@ -98,7 +98,9 @@ def apply_fft(eeg_data_win):
 
 def get_arr_freqs(window, srate):
     """Return the array of frequencies for stfft."""
-    n_freqs = _get_n_freqs(window) # resolution of freqs (amount of intervals)
+    n_freqs = _get_n_freqs(window)
+    # NOTE:
+    # n_freqs is the resolution of freqs (amount of intervals)
     # srate/2 is the nyquist frequency, the max freq u can get
     return np.linspace(0, srate/2, n_freqs)
 
@@ -250,14 +252,15 @@ def get_waves(power):
         def _get_wave(min_freq, max_freq):
             """Return the wave (avg) of the values in a range of frequencies."""
             # TODO: merge this method with public one get_wave()
+
             # Filter freqs
-            filter_freqs = [f for f in freqs if float(f) >= min_freq and float(f) <= max_freq] # TASK: functin that does this
-            if len(filter_freqs) == 0:
+            filtered_freqs = info.filter_freqs(freqs, min_freq, max_freq)
+            if len(filtered_freqs) == 0:
                 basic.perror("get_waves(): no data founded between {} and {} Hz, averaging all frequencies".format(min_freq, max_freq), force_continue=True)
-                filter_freqs = list(freqs)
+                filtered_freqs = list(freqs)
 
             # Return the average frequencies in that range
-            return power[filter_freqs].mean(1)
+            return power[filtered_freqs].mean(1)
 
         # Dataframe to save all waves
         waves = pd.DataFrame()
@@ -282,10 +285,10 @@ def get_marks_waves(powers, marks_t, marks_m):
         freqs = list(pw.columns)
 
         # Filter freqs
-        filter_freqs = [f for f in freqs if float(f) >= min_freq and float(f) <= max_freq]
-        if len(filter_freqs) == 0:
+        filtered_freqs = info.filter_freqs(freqs, min_freq, max_freq)
+        if len(filtered_freqs) == 0:
             return 0
-        pw = pw[filter_freqs]
+        pw = pw[filtered_freqs]
 
         # Filter time
         times = np.array(pw.index)
