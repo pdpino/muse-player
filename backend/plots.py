@@ -119,18 +119,6 @@ def plot_channel(t, arr, title, xlab='Time (s)', ylab='Amplitude'):
     plt.suptitle(title, fontsize=20)
     plt.show()
 
-def plot_multiple(t, arrays, title, labels, xlab='Time (s)', ylab='Amplitude'):
-    """Plot multiple channels."""
-    # DEBUG function
-    i = 0
-    for arr in arrays:
-        plt.plot(t, arr, label=labels[i])
-        i += 1
-
-    plt.xlabel(xlab) # DEFAULT is time and amplitude
-    plt.ylabel(ylab)
-    plt.suptitle(title, fontsize=20)
-    plt.show()
 
 def plot_raw(t, df, ch_names, marks_t=None, marks_m=None, subplots=False):
     """Plot raw channels."""

@@ -4,8 +4,6 @@ All the different methods provided (morlet wavelet convolution, stfft, etc)
 should return a dataframe, using the _new_tf_df() function."""
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt # DEBUG
-from backend import plots # DEBUG
 import basic
 
 def normalize_power(power, baseline):
@@ -187,26 +185,15 @@ def convolute(times, eeg_data, baseline=None, norm=True, srate=None, n_cycles=No
         # multiply
         return np.multiply(sine_wave, gaus)
 
-    # DEBUG: Uncomment to see morlet wavelet, looks fine
-    # wave = create_wavelet(6.5, n_cycles)
-    # plots.plot_channel(wavelet_time, np.real(wave), "real morlet wavelet")
-    # plots.plot_channel(wavelet_time, np.imag(wave), "Imag morlet wavelet")
-    # plots.plot_channel(wavelet_time, np.abs(wave), "Abs morlet wavelet")
-
     # Lengths
     n_data = len(eeg_data)
     n_wavelet = len(wavelet_time)
-    n_conv = n_data + n_wavelet - 1
+    n_conv = n_data + n_wavelet - 1 # Len of the convolution, see mikexcohen for details
     half_wavelet = (n_wavelet-1) // 2
     n_freqs = n_data // 2 + 1
 
-
     # Data's fft
-    data_fft = np.fft.fft(eeg_data, n_conv) # / n_data
-    # QUESTION: slice, absolute and multiply by 2 !!! But match the size of the wave_fft
-
-    # DEBUG: testing fft data
-    # plots.plot_channel(range(n_conv), data_fft, "fft data", xlab="freq")
+    data_fft = np.fft.fft(eeg_data, n_conv)
 
     # Array of freqs to calculate for
     arr_freqs = np.linspace(1, srate/2, n_freqs)
@@ -220,68 +207,12 @@ def convolute(times, eeg_data, baseline=None, norm=True, srate=None, n_cycles=No
         # wave and its fft
         wave = create_wavelet(freq, n_cycles)
         wave_fft = np.fft.fft(wave, n_conv)
-
-        # DEBUG: plot the wave and its fft
-        if False: #freq > 25:
-            plt.subplot(121)
-            plt.plot(range(len(wave)), wave)
-            plt.xlabel("time (index)")
-            plt.ylabel("Amplitude")
-            plt.title("Wave")
-
-            plt.subplot(122)
-            plt.plot(range(len(wave_fft)), abs(wave_fft))
-            plt.xlabel("Freq (index)")
-            plt.ylabel("Amplitude")
-            plt.title("Wave fft")
-
-            plt.suptitle("{}Hz".format(freq))
-            plt.show()
-
-        wave_fft /= max(wave_fft)
-
-        # DEBUG: plot ffts obtained
-        # plots.plot_multiple(range(len(data_fft)), [data_fft, wave_fft], "FFTs at {}Hz".format(freq), ["data", "wave"], xlab="freq (index)")
+        wave_fft /= max(wave_fft) # To normalize units (in the final result), wavelet has a peak of 1
 
         # Calculate convolution
-        conv = np.multiply(data_fft, wave_fft)
-
-        # DEBUG: plot data_fft, wave_fft and conv fft
-        if False: #freq > 25:
-            plt.subplot(311)
-            x = 2*abs(data_fft[:n_freqs])
-            plt.plot(arr_freqs, x)
-            plt.xlabel("Freq (index)")
-            plt.ylabel("Amplitude")
-            plt.title("Data fft")
-
-            plt.subplot(312)
-            x = abs(wave_fft[:n_freqs])
-            plt.plot(arr_freqs, x)
-            plt.xlabel("Freq (index)")
-            plt.ylabel("Amplitude")
-            plt.title("Wave fft")
-
-            plt.subplot(313)
-            x = 2*abs(conv[:n_freqs])
-            plt.plot(arr_freqs, x)
-            plt.xlabel("Freq (index)")
-            plt.ylabel("Amplitude")
-            plt.title("Multiplication")
-
-            plt.suptitle("{}Hz".format(freq))
-            plt.show()
-
-
-
-        conv = np.fft.ifft(conv)
+        conv = np.fft.ifft(np.multiply(data_fft, wave_fft))
         conv = conv[half_wavelet:-half_wavelet-1] # trim edges
         conv = abs(conv)**2 # Get power
-
-
-        # DEBUG: plot convolution at each freq
-        if False and freq > 9:
-            plots.plot_channel(range(len(conv)), conv, "Convolution in {} Hz".format(freq))
 
         # Add to matrix
         matrix_power.append(conv)
