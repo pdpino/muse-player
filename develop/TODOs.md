@@ -8,7 +8,7 @@
   + Notch filter in 50Hz
   + high-pass filter at 0.5 or 1Hz ???
 
-* Make function `get_waves` to plot averaging by chunks, example by 10 steps, and also plot the standard deviation.
+* Enable toggle visibility in plots
 
 #### To test with app.js
 * add marks in time to app.js (mark message)

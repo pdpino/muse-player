@@ -6,6 +6,8 @@ _waves = OrderedDict([["delta", (1, 4)],
                      ["theta", (4, 8)],
                      ["alpha", (8, 13)],
                      ["beta", (13, 30)],
+                     ["lbeta", (13, 20)], # low beta
+                     ["hbeta", (20, 30)], # high beta
                      ["gamma", (30, 44)]
                      ])
 

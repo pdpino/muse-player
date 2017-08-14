@@ -140,8 +140,11 @@ def _plot_tsplot(times, arr, n_samples, label=None):
     times = times[:n_array:n_samples]
 
     sns.tsplot(new_arr, time=times, ci="sd", label=label) #, color="autumn")
+    # FIXME: add different colors for each wave (hopefully the same color each time)
+
+    # Notes on seaborn.tsplot
     # NOTE: seaborn.tsplot() is deprecated, will be removed or replaced in a future release
-    
+
     # NOTE: a line in seaborn library needs to be changed in order to pass the label like that:
     # File: "env_muse/lib/python3.5/site-packages/seaborn/timeseries.py", line 351, in tsplot
     # Code: ax.plot(x, central_data, color=color, label=label, **kwargs)
