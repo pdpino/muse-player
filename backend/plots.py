@@ -65,7 +65,7 @@ def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None
         matrix = np.transpose(matrix) # fix axis
 
         # Plot
-        colors = 'nipy_spectral' #'bwr'  #'seismic' #'coolwarm' # 
+        colors = 'nipy_spectral' #'bwr'  #'seismic' #'coolwarm' #
         ax = plt.contourf(arr_times, arr_freqs, matrix, 50, cmap=plt.get_cmap(colors))
         plt.colorbar(ax)
         plt.xlabel('Time (s)')
@@ -118,7 +118,7 @@ def plot_eeg(t, df, ch_names, fname, marks_t=None, marks_m=None, subplots=False)
     _maximize()
     plt.show()
 
-def _plot_tsplot(times, arr, n_samples, label=None):
+def _plot_tsplot(times, arr, n_samples, wave_name):
     """Make a tsplot (see seaborn tsplot).
 
     Receive an array of a time series, it is reshaped to fit (n_samples, new_time)
@@ -139,7 +139,8 @@ def _plot_tsplot(times, arr, n_samples, label=None):
     # Reshape times
     times = times[:n_array:n_samples]
 
-    sns.tsplot(new_arr, time=times, ci="sd", label=label) #, color="autumn")
+    # Make the plot
+    sns.tsplot(new_arr, time=times, ci="sd", label=wave_name, color=info.get_wave_color(wave_name))
     # FIXME: add different colors for each wave (hopefully the same color each time)
 
     # Notes on seaborn.tsplot
@@ -152,14 +153,13 @@ def _plot_tsplot(times, arr, n_samples, label=None):
     # (because in kwargs there is already a label argument, the one provided here)
     # (is a hack, could be done better)
 
-
 def plot_waves(waves, ch, fname, marks_t=None, marks_m=None, choose_waves=None, n_samples=None):
     """Receive a list of waves (pd.DataFrame), one for each channel."""
 
     if n_samples is None:
-        plot_function = lambda times, wave, wave_name: plt.plot(times, wave, label=wave_name)
+        plot_function = lambda times, wave, wave_name: plt.plot(times, wave, color=info.get_wave_color(wave_name), label=wave_name)
     else:
-        plot_function = lambda times, wave, wave_name: _plot_tsplot(times, wave, n_samples, label=wave_name)
+        plot_function = lambda times, wave, wave_name: _plot_tsplot(times, wave, n_samples, wave_name)
 
     def _do_plot_waves(waves, ch_name, marks_t, marks_m):
         """Receive a dataframe of waves and plots them."""
@@ -213,7 +213,7 @@ def plot_marks_waves(all_waves, channels, fname, choose_waves=None):
             wave = waves[w].as_matrix()
 
             # plt.errorbar(messages_index, wave, yerr=0.1, label=w)
-            plt.plot(messages_index, wave, label=w)
+            plt.plot(messages_index, wave, label=w) #, color=info.get_wave_color(w))
             plt.xticks(messages_index, messages, rotation='vertical')
 
         # Plot all waves

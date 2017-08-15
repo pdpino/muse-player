@@ -2,8 +2,6 @@
 
 ## Next
 
-* Separar analyze en `calc` (calculate) y `show`
-
 * Plan long tests
 
 * Pre-process (before TF analysis)

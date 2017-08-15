@@ -2,13 +2,13 @@
 from collections import OrderedDict
 
 # OrderedDict with the _waves min_freq and max_freq
-_waves = OrderedDict([["delta", (1, 4)],
-                     ["theta", (4, 8)],
-                     ["alpha", (8, 13)],
-                     ["beta", (13, 30)],
-                     ["lbeta", (13, 20)], # low beta
-                     ["hbeta", (20, 30)], # high beta
-                     ["gamma", (30, 44)]
+_waves = OrderedDict([["delta", [1, 4, "blue"]],
+                     ["theta", [4, 8, "orange"]],
+                     ["alpha", [8, 13, "red"]],
+                     ["beta", [13, 30, "green"]],
+                     ["lbeta", [13, 20, "purple"]], # low beta
+                     ["hbeta", [20, 30, "brown"]], # high beta
+                     ["gamma", [30, 44, "magenta"]]
                      ])
 
 def get_waves_names(choose=None):
@@ -29,3 +29,11 @@ def iter_waves():
 
 def filter_freqs(freqs, min_freq, max_freq):
     return [f for f in freqs if float(f) >= min_freq and float(f) <= max_freq]
+
+def get_wave_color(wave):
+    """Given a wave_name, get the color."""
+    if wave in _waves:
+        # REVIEW: check if color exist? a wave may not have a color
+        return _waves[wave][2]
+
+    return None
