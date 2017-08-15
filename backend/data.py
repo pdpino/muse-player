@@ -71,7 +71,7 @@ def load_eeg(channels, name, subfolder=None, suffix=None):
 
     if channels is None:
         # Get all channels
-        channels = info.ch_names_muse(aux=False)
+        channels = info.get_chs_muse(aux=False)
 
     # Assure channels in columns
     channels = _cmp_chs(df.columns, channels)

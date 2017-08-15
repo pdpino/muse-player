@@ -135,7 +135,7 @@ class EEGBuffer(DataBuffer):
         eeg_data = self._normalize_data()
 
         # Juntar en dataframe
-        res = pd.DataFrame(data=eeg_data, columns=info.ch_names_muse(aux=True))
+        res = pd.DataFrame(data=eeg_data, columns=info.get_chs_muse(aux=True))
         res[info.timestamps_column] = timestamps
 
         # Guardar a csv

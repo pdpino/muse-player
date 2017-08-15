@@ -12,4 +12,4 @@ def add_file_args(parser):
 
 def add_ch_args(parser, aux=False):
     """Add channel argument."""
-    parser.add_argument('--channels', choices=info.ch_names_muse(aux=aux), default=None, nargs='+', help="Select channels")
+    parser.add_argument('--channels', choices=info.get_chs_muse(aux=aux), default=None, nargs='+', help="Select channels")
