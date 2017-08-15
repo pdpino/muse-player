@@ -39,11 +39,11 @@ class DataBuffer(object):
 
     def start_calibrating(self):
         """Method to start calibrating, override it."""
-        print("No calibrating method is set for {}".format(self.name))
+        print("{} buffer can't stream calibrated data".format(self.name))
 
     def stop_calibrating(self):
         """Method to stop calibrating, override it."""
-        print("No calibrating method is set for {}".format(self.name))
+        print("{} buffer can't stream calibrated data".format(self.name))
 
 
     def incoming_data(self, timestamps, data):

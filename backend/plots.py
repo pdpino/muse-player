@@ -65,7 +65,7 @@ def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None
         matrix = np.transpose(matrix) # fix axis
 
         # Plot
-        colors = 'bwr'  #'seismic' #'coolwarm' # 'nipy_spectral'
+        colors = 'nipy_spectral' #'bwr'  #'seismic' #'coolwarm' # 
         ax = plt.contourf(arr_times, arr_freqs, matrix, 50, cmap=plt.get_cmap(colors))
         plt.colorbar(ax)
         plt.xlabel('Time (s)')

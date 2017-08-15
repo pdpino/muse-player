@@ -96,7 +96,7 @@ def load_marks(name, subfolder=None):
     try:
         df = pd.read_csv(fname)
         times = list(df[info.times_column])
-        messages = df[info.messages_column]
+        messages = list(df[info.messages_column])
 
         basic.report("Marks loaded from file: {}".format(fname))
         return times, messages

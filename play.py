@@ -151,7 +151,7 @@ def main():
                 elif message == "-h": # halt calibrating
                     data_buffer.stop_calibrating()
                     message = info.stop_calib_mark
-                    print("started calibrating")
+                    print("stopped calibrating")
                 elif message == "--save": # Toggle save option
                     args.save = not args.save
                     print("save status = {}".format(args.save))

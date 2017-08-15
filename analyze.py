@@ -123,6 +123,7 @@ def create_sine_wave(time, srate, freqs, amps, phases):
 def find_baseline(times, marks):
     """Find baseline marks."""
     if times is None or marks is None:
+        print("None: times, marks: {}, {}".format(times, marks))
         return None
 
     start = info.start_calib_mark
@@ -134,6 +135,7 @@ def find_baseline(times, marks):
 
         return [times[i1], times[i2]]
     else:
+        print("Not found, times, marks: {}, {}".format(times, marks))
         return None
 
 def parse_args():
