@@ -272,9 +272,8 @@ if __name__ == "__main__":
             # Read dataframe and channels
             times, df, channels = data.load_eeg(args.channels, args.fname, args.subfolder)
 
-            # HACK TODO: copy marks file
-            if not args.fsave is None:
-                pass
+            if not args.fsave is None: # HACK copy marks file
+                data.copy_marks(args.fname, args.fsave)
 
             # Read marks in time
             marks_time, marks_msg = data.load_marks(args.fname, args.subfolder)

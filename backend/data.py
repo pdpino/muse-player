@@ -1,5 +1,6 @@
 """Module that provides functionality to manage the data"""
 import os
+import shutil
 import pandas as pd
 from enum import Enum
 from backend import info
@@ -118,6 +119,16 @@ def save_marks(times, messages, name, subfolder=None):
 
     df.to_csv(fname)
     basic.report("Marks saved to file: {}".format(fname))
+
+def copy_marks(name1, name2):
+    """Copy a marks file."""
+    DumpFileHandler.assure_folder(None, FileType.marks)
+    fname1 = DumpFileHandler.get_fname(name1, None, tipo=FileType.marks)
+    fname2 = DumpFileHandler.get_fname(name2, None, tipo=FileType.marks)
+
+    shutil.copyfile(fname1, fname2)
+
+
 
 def load_waves(name, channel, subfolder=None):
     """Read a waves file."""
