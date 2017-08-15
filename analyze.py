@@ -4,7 +4,7 @@
 import argparse
 import pandas as pd
 import numpy as np
-from backend import data, tf, plots, parsers, info
+from backend import data, tf, plots, parsers, info, signals
 import basic
 
 def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=None, marks_m=None, testing=False, normalize=True, baseline=None, overwrite=True, window=None, step=None, n_cycles=None):
@@ -75,6 +75,10 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
 
         # Grab data
         eeg_data = df[ch].as_matrix()
+
+        # Apply filters
+        eeg_data = signals.filter_notch(eeg_data)
+#        eeg_data = signals.filter_highpass(eeg_data)
 
         # Compute FT
         power = method_function(times, eeg_data, baseline=baseline, norm=normalize, **method_kwargs)
