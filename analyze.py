@@ -7,7 +7,7 @@ import numpy as np
 from backend import data, tf, plots, parsers, info
 import basic
 
-def calc_tf_analysis(times, df, channels, fname, method, marks_t=None, marks_m=None, testing=False, normalize=True, baseline=None, overwrite=True, window=None, step=None, n_cycles=None):
+def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=None, marks_m=None, testing=False, normalize=True, baseline=None, overwrite=True, window=None, step=None, n_cycles=None):
     """Calculate TF analysis and save to file.
 
     times -- seconds array
@@ -44,7 +44,6 @@ def calc_tf_analysis(times, df, channels, fname, method, marks_t=None, marks_m=N
             print("Not found, times, marks: {}, {}".format(marks_times, marks_messages))
             return None
 
-
     # To choose method # REVIEW: move this to backend?
     ft_functions = {'stfft': tf.stfft, 'conv': tf.convolute }
     ft_args = {
@@ -66,9 +65,12 @@ def calc_tf_analysis(times, df, channels, fname, method, marks_t=None, marks_m=N
         else:
             basic.report("No baseline found")
 
+    # Name to save
+    fsave = fsave or fname
+
     for ch in channels:
         if not testing and not overwrite:
-            if data.exist_waves(fname, ch):
+            if data.exist_waves(fsave, ch):
                 continue
 
         # Grab data
@@ -78,7 +80,7 @@ def calc_tf_analysis(times, df, channels, fname, method, marks_t=None, marks_m=N
         power = method_function(times, eeg_data, baseline=baseline, norm=normalize, **method_kwargs)
 
         # Save to file
-        data.save_waves(power, fname, ch)
+        data.save_waves(power, fsave, ch)
 
 def show_tf_analysis(channels, fname, marks_t=None, marks_m=None, show_contour=False, show_waves=False, show_marks_waves=False, choose_waves=None, n_samples=None, min_freq=None, max_freq=None):
     """Show TF analysis loaded from file.
@@ -182,7 +184,7 @@ def parse_args():
 
         # Standard arguments
         parsers.add_ch_args(parser_calc)
-        parsers.add_file_args(parser_calc)
+        parsers.add_file_args(parser_calc, fsave=True)
 
         # TF arguments
         group_tf = parser_calc.add_argument_group(title="TF general options")
@@ -270,11 +272,16 @@ if __name__ == "__main__":
             # Read dataframe and channels
             times, df, channels = data.load_eeg(args.channels, args.fname, args.subfolder)
 
+            # HACK TODO: copy marks file
+            if not args.fsave is None:
+                pass
+
             # Read marks in time
             marks_time, marks_msg = data.load_marks(args.fname, args.subfolder)
 
         # Analyze
         calc_tf_analysis(times, df, channels, args.fname, args.method,
+                fsave=args.fsave,
                 marks_t=marks_time, marks_m=marks_msg,
                 testing=args.test,
                 overwrite=args.overwrite,
