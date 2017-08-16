@@ -7,7 +7,7 @@ import numpy as np
 from backend import data, tf, plots, parsers, info, signals
 import basic
 
-def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=None, marks_m=None, testing=False, normalize=True, baseline=None, overwrite=True, window=None, step=None, n_cycles=None):
+def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=None, marks_m=None, testing=False, filtering=False, normalize=True, baseline=None, overwrite=True, window=None, step=None, n_cycles=None):
     """Calculate TF analysis and save to file.
 
     times -- seconds array
@@ -18,6 +18,7 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
     marks_t -- list of times of the marks
     marks_m -- list of messages of the marks
     testing -- boolean indicating if testing
+    filtering -- boolean
     normalize -- boolean indicating if TF normalization with baseline should be done
     baseline -- list or tuple of two elements, indicating the starting and ending seconds to select as baseline. If None, it will be searched in the marks. If no baseline found in the marks, no baseline normalization can be performed
     overwrite -- boolean indicating if the saved file must be overwritten
@@ -77,8 +78,9 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
         eeg_data = df[ch].as_matrix()
 
         # Apply filters
-        eeg_data = signals.filter_notch(eeg_data)
-#        eeg_data = signals.filter_highpass(eeg_data)
+        if filtering:
+            eeg_data = signals.filter_notch(eeg_data)
+            # eeg_data = signals.filter_highpass(eeg_data) # FIXME
 
         # Compute FT
         power = method_function(times, eeg_data, baseline=baseline, norm=normalize, **method_kwargs)
@@ -185,6 +187,8 @@ def parse_args():
         parser_calc.add_argument('-t', '--test', action='store_true',
                         help='Test with a simulated wave instead of real data (see testing group)')
         parser_calc.add_argument('-o', '--overwrite', action='store_true', help='Overwrite existing wave data')
+        parser_calc.add_argument('--filtering', action='store_true',
+                        help='Use a notch filter (50hz) and a high-pass filter (1hz)')
 
         # Standard arguments
         parsers.add_ch_args(parser_calc)
@@ -287,6 +291,7 @@ if __name__ == "__main__":
                 fsave=args.fsave,
                 marks_t=marks_time, marks_m=marks_msg,
                 testing=args.test,
+                filtering=args.filtering,
                 overwrite=args.overwrite,
                 normalize=args.norm,
                 baseline=args.baseline,
