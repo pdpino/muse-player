@@ -232,7 +232,7 @@ def convolute(times, eeg_data, baseline=None, norm=True, srate=None, n_cycles=No
 
 ### Waves
 def get_wave(power, freqs, min_freq, max_freq):
-    """Return the wave (avg) of the values in a range of frequencies.
+    """Return the wave (avg) of the values in a range of frequencies. Function used in real-time.
 
     power and freqs must be type np.array"""
 
@@ -242,7 +242,7 @@ def get_wave(power, freqs, min_freq, max_freq):
     return np.mean(power[:, filter_freqs], axis=1)
 
 def get_waves(power):
-    """Receive a power matrix or a list of powers and get the waves."""
+    """Receive a power matrix or a list of powers and get the waves. Function used offline"""
 
     def _do_get_wave(power):
         """Receive a TF dataframe (time, freq, power) and return the alpha, beta, etc waves."""
@@ -260,7 +260,7 @@ def get_waves(power):
                 filtered_freqs = list(freqs)
 
             # Return the average frequencies in that range
-            return power[filtered_freqs].mean(1)
+            return np.mean(power[filtered_freqs], axis=1)
 
         # Dataframe to save all waves
         waves = pd.DataFrame()

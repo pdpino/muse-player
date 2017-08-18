@@ -115,6 +115,9 @@ def show_tf_analysis(channels, fname, marks_t=None, marks_m=None, testing=False,
         power = data.load_waves(fname, ch)
         powers.append(power)
 
+    if len(powers) == 0:
+        basic.perror("No wave to show")
+
     # Plot as contour
     if show_contour:
         plots.plot_tf_contour(powers, channels, fname,

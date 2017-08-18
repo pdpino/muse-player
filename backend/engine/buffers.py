@@ -16,7 +16,6 @@ class WaveCalibStatus(Enum):
     Stop = 3 # A stop_calibrating() signal has been received
     Yes = 4 # The baseline is already saved and the data is being normalized
 
-
 class DataBuffer(object):
     """Receives incoming data and provides a generator to yield it."""
 

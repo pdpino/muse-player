@@ -239,3 +239,19 @@ def plot_marks_waves(all_waves, channels, fname, choose_waves=None):
 
     _maximize()
     plt.show()
+
+
+def plot_histogram(wave, dist_fn=None, dist_args=None, title=None):
+    """Plot an histogram of the data, plus an adjusted distribution if provided."""
+
+    plt.hist(wave, normed=True)
+
+    if not dist_fn is None and not dist_args is None:
+        # X axis for the distribution
+        t = np.linspace(*plt.xlim(), 100)
+        d = dist_fn(t, *dist_args)
+        plt.plot(t, d)
+
+    plt.title(title)
+    _maximize()
+    plt.show()
