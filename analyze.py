@@ -29,7 +29,6 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
     def find_baseline(marks_times, marks_messages):
         """Find baseline marks."""
         if marks_times is None or marks_messages is None:
-            print("None: times, marks: {}, {}".format(marks_times, marks_messages))
             return None
 
         # Name of the marks of calibration
@@ -42,7 +41,6 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
 
             return [marks_times[i1], marks_times[i2]]
         else:
-            print("Not found, times, marks: {}, {}".format(marks_times, marks_messages))
             return None
 
     # To choose method # REVIEW: move this to backend?
@@ -88,7 +86,7 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
         # Save to file
         data.save_waves(power, fsave, ch)
 
-def show_tf_analysis(channels, fname, marks_t=None, marks_m=None, show_contour=False, show_waves=False, show_marks_waves=False, choose_waves=None, n_samples=None, min_freq=None, max_freq=None):
+def show_tf_analysis(channels, fname, marks_t=None, marks_m=None, testing=False, show_contour=False, show_waves=False, show_marks_waves=False, choose_waves=None, n_samples=None, min_freq=None, max_freq=None):
     """Show TF analysis loaded from file.
 
     channels -- name of the chosen channels. Each must have a column in the dataframe
@@ -104,7 +102,8 @@ def show_tf_analysis(channels, fname, marks_t=None, marks_m=None, show_contour=F
     max_freq -- maximum frequency to plot in the contour plot"""
 
     # Order channels in plot order
-    channels = info.get_chs_plot(channels)
+    if not testing:
+        channels = info.get_chs_plot(channels)
 
     # Save all powers
     powers = []
@@ -224,6 +223,9 @@ def parse_args():
         #### Show parser
         parser_show = subparser.add_parser('show')
 
+        parser_show.add_argument('-t', '--test', action='store_true',
+                        help='Test with a simulated wave instead of real data (see testing group)')
+
         # Hide/show arguments
         parser_show.add_argument('-c', '--show_contour', action='store_true', help='Plot result of convolution and stfft')
         parser_show.add_argument('-w', '--show_waves', action='store_true', help='Plot alpha, beta, etc waves')
@@ -254,6 +256,9 @@ def parse_args():
             args.max_freq = None
         else:
             args.min_freq, args.max_freq = args.range_freq
+
+        if args.test:
+            args.channels = ['sinewave'] # HACK: hardcoded
 
     return args
 
@@ -306,6 +311,7 @@ if __name__ == "__main__":
         # Plot
         show_tf_analysis(args.channels, args.fname,
                 marks_t=marks_time, marks_m=marks_msg,
+                testing=args.test,
                 show_contour=args.show_contour, show_waves=args.show_waves, show_marks_waves=args.show_marks_waves,
                 choose_waves=args.waves, n_samples=args.n_samples,
                 min_freq=args.min_freq,

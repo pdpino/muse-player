@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from backend import info
+import basic
 
 def _maximize():
     """Maximize the window."""
@@ -80,7 +81,9 @@ def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None
 
     args = [marks_t, marks_m, min_freq, max_freq]
 
-    if len(powers) > 1:
+    if len(powers) == 0:
+        basic.perror("There is no data to plot in plot_tf_contour")
+    elif len(powers) > 1:
         for i in range(len(powers)):
             plt.subplot(2, 2, i+1) # HACK: hardcoded for 4 channels
             _plot_1(powers[i], ch[i], *args)
