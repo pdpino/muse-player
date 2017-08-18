@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Stream random data to client, used for debugging"""
+"""Stream random simulated eeg data to client, used for debugging"""
 
 from time import sleep, time
 from collections import deque
