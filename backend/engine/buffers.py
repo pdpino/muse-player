@@ -308,3 +308,16 @@ class WaveBuffer(EEGBuffer):
                 gammas[channel])
 
             # HACK: use yielders? There could be an option of what to yield (alphas from all, waves from one channel or everything)
+
+class DummyBuffer(object):
+    """Yield dummy data. Used for testing"""
+
+    def __init__(self, name=""):
+        """Initialize."""
+        self.name = name
+
+    def data_generator(self, n_data=None):
+        """Generator to stream the data."""
+
+        while True:
+            yield "data: 0\n\n"
