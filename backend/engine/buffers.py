@@ -44,7 +44,6 @@ class DataBuffer(object):
         """Method to stop calibrating, override it."""
         print("{} buffer can't stream calibrated data".format(self.name))
 
-
     def incoming_data(self, timestamps, data):
         """Process the incoming data."""
         # Add to full lists
@@ -202,7 +201,6 @@ class WaveBuffer(EEGBuffer):
                 n_useful = self._end - self._start # Useful data
 
                 if n_useful + n_data <= self._size_buffer: # All data (old + new) fits
-                    # print("moving to the beginning") # DEBUG
                     # Copy the old useful data to the beginning
                     self._buffer[:, :n_useful] = self._buffer[:, self._start:self._end]
 
@@ -211,7 +209,6 @@ class WaveBuffer(EEGBuffer):
                     self._end = n_useful
                     new_end = self._end + n_data
                 else: # All the data doesn't fit
-                    # print("erasing") # DEBUG
                     # Solution: erase useful data, start over # Bad solution?
                     self._start = 0
                     self._end = 0
@@ -240,8 +237,9 @@ class WaveBuffer(EEGBuffer):
                 continue
 
             # Copy data to a new array
-            t = self._buffer[0, self._end - 1] # Get last timestamp
-            d = np.copy(self._buffer[1:, self._start:self._start + self.window]) # Copy the rest of the channels
+            end = self._start + self.window # End of the useful data
+            t = self._buffer[0, end - 1] # Get last timestamp
+            d = np.copy(self._buffer[1:, self._start:end]) # Copy the rest of the channels
 
             # Move start
             self._start += self.step

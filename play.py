@@ -106,7 +106,7 @@ def main():
         stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
         stream.daemon = True
 
-        # Set args
+        # Set args for the generator
         if args.stream_waves:
             gen_args = [] # No arguments
         else:
@@ -114,7 +114,7 @@ def main():
 
         # Connect data to send
         @app.route(args.url)
-        def stream_eeg():
+        def stream_data():
             """Stream the eeg data."""
             return Response(data_buffer.data_generator(*gen_args), mimetype="text/event-stream")
 
