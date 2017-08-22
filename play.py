@@ -144,6 +144,16 @@ def main():
                 return None
             print("stopped calibrating")
             return info.stop_calib_mark
+        def start_collect():
+            if not data_buffer.start_collecting(): # Indicate if success
+                return None
+            print("started collecting")
+            return info.start_collect_mark
+        def stop_collect():
+            if not data_buffer.stop_collecting():
+                return None
+            print("stopped collecting")
+            return info.stop_collect_mark
         def toggle_save_opt():
             args.save = not args.save
             print("save status = {}".format(args.save))
@@ -151,8 +161,10 @@ def main():
 
         commands = {
             "-c": ask_config, # DEBUG: you can input this to see what comes in config in muse
-            "-s": start_calib,
-            "-h": stop_calib,
+            "-1": start_calib,
+            "-2": stop_calib,
+            "-3": start_collect,
+            "-4": stop_collect,
             "--save": toggle_save_opt
             }
 
@@ -180,9 +192,12 @@ def main():
         basic.report("for (aprox) {} seconds", args.time, level=1)
         sleep(args.time) # HACK: its aprox time
 
+    print("Stopping muse") # DEBUG
     muse.stop()
+    print("Disconnecting muse") # DEBUG
     muse.disconnect()
     basic.report("Stopped receiving muse data", level=0)
+    print("muse out") # DEBUG
 
     # # DEBUG: save a file with the handles
     # df = pd.DataFrame(muse.lista)

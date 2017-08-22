@@ -94,9 +94,9 @@ class EEGYielder(object):
 class WaveYielder(object):
     """Yield the waves to the client."""
 
-    def __init__(self, window, srate, channel=0):
+    def __init__(self, arr_freqs, channel=0):
         # Array of frequencies to order the fft
-        self.arr_freqs = tf.get_arr_freqs(window, srate)
+        self.arr_freqs = arr_freqs
 
         # Select channel to yield
         self.channel = channel
@@ -107,7 +107,7 @@ class WaveYielder(object):
         # String to yield
         self.str_format = "data: {}" # One more for the time
         self.n_waves = len(self.waves_names)
-        for i in range(n_waves):
+        for i in range(self.n_waves):
             self.str_format += ", {}"
         self.str_format += "\n\n"
 

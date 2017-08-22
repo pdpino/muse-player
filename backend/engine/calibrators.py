@@ -2,6 +2,8 @@
 import threading
 from enum import Enum
 import numpy as np
+from scipy.stats import norm
+from backend import info, tf
 
 class WaveCalibStatus(Enum):
     """Status of the calibration of the wave."""
@@ -109,9 +111,83 @@ class WaveDivider(WaveCalibrator):
         return power
 
     def _yes(self, power):
+        """Return the data once the calibrating time has passed."""
         # Use baseline data to normalize
-        # power = tf.normalize_power(power, calib_arr)
         return 10*np.log10(power/self.calib_arr)
 
     def _no(self, power):
         return power
+
+class FeelCalculator(WaveCalibrator):
+    """."""
+
+    def __init__(self, arr_freqs):
+        super().__init__()
+        # Calibrate objects # start empty
+        self.collect_data = None
+        self.data_counter = 0
+
+        # Alias for the function
+        self.feel = self.calibrate
+
+        # List of frequencies
+        self.arr_freqs = arr_freqs
+
+    def _return_empty_feel(self):
+        return None
+
+    def _start(self, power):
+        # Signal has been received, start variables
+        self.collect_data = []
+        self.data_counter = 0
+
+        # Change status to start calibrating in the next iteration
+        self._set_status(WaveCalibStatus.Calibrating)
+
+        return self._return_empty_feel()
+
+    def _calibrating(self, power):
+        # Add data to the array
+        self.collect_data.append(power)
+        self.data_counter += 1
+
+        return self._return_empty_feel()
+
+    def _stop(self, power):
+        # Average the collected data
+        if self.data_counter > 0:
+            all_data = np.array(self.collect_data) # data as array # shape: (time, n_chs, n_freqs)
+
+            # Flattened data for alpha in one channel # HACK: channel and wave hardcoded
+            flat_data = all_data[:, 0, info.get_freqs_filter(self.arr_freqs, 8, 13)].flatten()
+
+            # Fit gaussian
+            self.mu, self.sd = norm.fit(flat_data)
+
+            # get effective divisor
+            self.sd /= np.sqrt(len(flat_data))
+
+            # New queue to accumulate data
+            self.accumulated = []
+
+            self._set_status(WaveCalibStatus.Yes)
+        else:
+            self._set_status(WaveCalibStatus.No)
+
+        return self._return_empty_feel()
+
+    def _yes(self, power):
+        """Return the data once the calibrating time has passed."""
+        alpha = tf.get_wave(power, self.arr_freqs, 8, 13) # HACK: alpha wave hardcoded
+        statistic = (alpha - self.mu)/self.sd
+        self.accumulated.append(statistic)
+        if len(self.accumulated) > 10: # HACK: value to accumulate hardcoded
+            avg = np.median(self.accumulated)
+            self.accumulated = [] # Empty list
+            return avg
+        else:
+            return self._return_empty_feel()
+
+    def _no(self, power):
+        """Return the raw data."""
+        return self._return_empty_feel()

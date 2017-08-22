@@ -1,5 +1,6 @@
 """Info about the _waves."""
 from collections import OrderedDict
+import numpy as np
 
 # OrderedDict with
 # key: wave_name -- value: [min_freq, max_freq, color]
@@ -34,7 +35,13 @@ def iter_waves(waves=None):
         yield w, min_freq, max_freq
 
 def filter_freqs(freqs, min_freq, max_freq):
+    """Return filtered freqs given two borders."""
     return [f for f in freqs if float(f) >= min_freq and float(f) <= max_freq]
+
+def get_freqs_filter(freqs, min_freq, max_freq):
+    """Return a filter over a numpy array."""
+    filter_freqs, = np.where((freqs >= min_freq) & (freqs <= max_freq))
+    return filter_freqs
 
 def get_wave_color(wave):
     """Given a wave_name, get the color."""

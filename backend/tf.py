@@ -236,10 +236,9 @@ def get_wave(power, freqs, min_freq, max_freq):
 
     power and freqs must be type np.array"""
 
-    filter_freqs, = np.where((freqs >= min_freq) & (freqs <= max_freq))
-
     # Return the average all frequencies in that range
-    return np.mean(power[:, filter_freqs], axis=1)
+    return np.mean(power[:, info.get_freqs_filter(freqs, min_freq, max_freq)], axis=1)
+    # OPTIMIZE: get_freqs_filter is being called on the same data over and over (the filters are the same for the waves)
 
 def get_waves(power):
     """Receive a power matrix or a list of powers and get the waves. Function used offline"""

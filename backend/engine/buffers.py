@@ -38,6 +38,15 @@ class DataBuffer(object):
         # print("{} buffer can't stream calibrated data".format(self.name))
         return False
 
+    def start_collecting(self):
+        """Start collecting baseline data to detect emotions."""
+        return False
+
+    def stop_collecting(self):
+        """Stop collecting data to detect emotions."""
+        return False
+
+
     def incoming_data(self, timestamps, data):
         """Process the incoming data."""
         # Add to full lists
@@ -162,8 +171,14 @@ class WaveBuffer(EEGBuffer):
         self.calibrator = crs.WaveDivider()
         # REVIEW: move calibrator to base class DataBuffer?
 
+        # Array of frequencies
+        arr_freqs = tf.get_arr_freqs(window, srate)
+
         # Yielder # REVIEW: here yielder is an object, in the other buffers is a function
-        self._yielder = yielders.WaveYielder(window, srate)
+        self._yielder = yielders.WaveYielder(np.array(arr_freqs))
+
+        # Feel indicator
+        self.feeler = crs.FeelCalculator(np.array(arr_freqs)) # copy
 
     def start_calibrating(self):
         """Set the status to start recording calibrating data."""
@@ -172,6 +187,14 @@ class WaveBuffer(EEGBuffer):
     def stop_calibrating(self):
         """Set the status to stop recording calibrating data."""
         return self.calibrator.stop_calibrating()
+
+    def start_collecting(self):
+        """Start collecting baseline data to detect emotions."""
+        return self.feeler.start_calibrating()
+
+    def stop_collecting(self):
+        """Stop collecting data to detect emotions."""
+        return self.feeler.stop_calibrating()
 
     def incoming_data(self, timestamps, data):
         """Override the method for incoming data."""
@@ -242,7 +265,12 @@ class WaveBuffer(EEGBuffer):
             # Calibrate, if any
             power = self.calibrator.calibrate(power)
 
+            # # Detect emotion
+            # feeling = self.feeler.feel(power)
+            #
+            # # DEBUG: print, not yield
+            # if not feeling is None:
+            #     print(feeling)
+
             # Get waves
             yield from self._yielder.yield_function(t, power)
-
-            # HACK: use yielders? There could be an option of what to yield (alphas from all, waves from one channel or everything)
