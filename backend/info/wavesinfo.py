@@ -26,9 +26,9 @@ def get_waves_names(choose=None):
         # NOTE: not using sets because it loses the order from the OrderedDict
         return [w for w in list(_waves) if w in choose]
 
-def iter_waves():
+def iter_waves(waves=None):
     """Iterate over the waves names and limits."""
-    for w in list(_waves):
+    for w in list(waves or _waves):
         min_freq = _waves[w][0]
         max_freq = _waves[w][1]
         yield w, min_freq, max_freq
