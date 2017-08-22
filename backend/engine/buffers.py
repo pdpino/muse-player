@@ -265,12 +265,12 @@ class WaveBuffer(EEGBuffer):
             # Calibrate, if any
             power = self.calibrator.calibrate(power)
 
-            # # Detect emotion
-            # feeling = self.feeler.feel(power)
-            #
-            # # DEBUG: print, not yield
-            # if not feeling is None:
-            #     print(feeling)
+            # Detect emotion
+            feeling = self.feeler.feel(power)
 
-            # Get waves
-            yield from self._yielder.yield_function(t, power)
+            # DEBUG: print, not yield
+            if not feeling is None:
+                print(feeling)
+
+            # # Get waves
+            # yield from self._yielder.yield_function(t, power)
