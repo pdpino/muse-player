@@ -84,8 +84,6 @@ def main():
         data_buffer = engine.EEGBuffer(name="eeg",
                             yield_function=engine.EEGYielder.get_yielder(args.stream_mode))
 
-
-
     # Conectar muse
     muse = Muse(address=args.address,
                 callback=data_buffer.incoming_data,
@@ -139,17 +137,19 @@ def main():
                 message = input("\tcmd: ")
                 t = data_buffer.get_last_timestamp()
 
-                # DEBUG: you can input this to see what comes in config in muse
                 if message == "-c": # config
+                    # DEBUG: you can input this to see what comes in config in muse
                     muse.ask_config()# only works if push_info was enabled
                     sleep(0.5) # let it print
                     continue
                 elif message == "-s": # start calibrating
-                    data_buffer.start_calibrating()
+                    if not data_buffer.start_calibrating(): # Indicate if success
+                        continue
                     message = info.start_calib_mark
                     print("started calibrating")
                 elif message == "-h": # halt calibrating
-                    data_buffer.stop_calibrating()
+                    if not data_buffer.stop_calibrating():
+                        continue
                     message = info.stop_calib_mark
                     print("stopped calibrating")
                 elif message == "--save": # Toggle save option
@@ -179,11 +179,8 @@ def main():
     # df[col0] = df[col0] - df[col0][0] # Normalizar tiempo
     # df.to_csv("debug/debug2.csv", index=False, header=False) # Guardar a archivo
 
-
-
     # Print running time
     basic.report("Received data for {}", data_buffer.get_running_time(), level=1)
-
 
     if args.save:
         data_buffer.save_csv(args.fname, subfolder=args.subfolder)

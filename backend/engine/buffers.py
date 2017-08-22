@@ -4,17 +4,9 @@ from collections import deque
 import threading
 import numpy as np
 import pandas as pd
-from enum import Enum
 import basic
 from backend import data, tf, info
-
-class WaveCalibStatus(Enum):
-    """Status of the calibration of the wave."""
-    No = 0 # There is no calibration
-    Start = 1 # A start_calibrating() signal has been received
-    Calibrating = 2 # Currently saving baseline
-    Stop = 3 # A stop_calibrating() signal has been received
-    Yes = 4 # The baseline is already saved and the data is being normalized
+from . import calibrators as crs
 
 class DataBuffer(object):
     """Receives incoming data and provides a generator to yield it."""
@@ -168,21 +160,16 @@ class WaveBuffer(EEGBuffer):
         self.arr_freqs = tf.get_arr_freqs(window, srate)
 
         # Status of the wave (about calibration)
-        self._lock_s = threading.Lock() # Lock the status
-        self.status = WaveCalibStatus.No
-        self._is_calibrated = False
-        # self.calib_callback = calib_callback # DEBUG: to use a notify callback
+        self.calibrator = crs.WaveDivider()
+        # REVIEW: move calibrator to base class?
 
     def start_calibrating(self):
         """Set the status to start recording calibrating data."""
-        with self._lock_s:
-            self.status = WaveCalibStatus.Start
+        return self.calibrator.start_calibrating()
 
     def stop_calibrating(self):
         """Set the status to stop recording calibrating data."""
-        with self._lock_s:
-            if self.status == WaveCalibStatus.Calibrating:
-                self.status = WaveCalibStatus.Stop
+        return self.calibrator.stop_calibrating()
 
     def incoming_data(self, timestamps, data):
         """Override the method for incoming data."""
@@ -223,11 +210,10 @@ class WaveBuffer(EEGBuffer):
     def data_generator(self):
         """Generator to stream the data."""
 
-        # Drop old data in buffer
+        # Mark the time
         with self._lock_b:
             self._start = self._end
             t_init = time() # Set an initial time as marker
-
 
         # Start transmitting
         while True:
@@ -251,41 +237,8 @@ class WaveBuffer(EEGBuffer):
             # Calculate TF
             power = tf.apply_fft(d) # shape: (n_chs, n_freqs)
 
-            # Check status of calibration
-            with self._lock_s: # Get status
-                status = self.status
-
-            if status == WaveCalibStatus.Start:
-                # Signal has been received, start variables
-                calib_arr = np.zeros(power.shape)
-                calib_counter = 0
-
-                # Change status to start calibrating in the next iteration
-                with self._lock_s:
-                    self.status = WaveCalibStatus.Calibrating
-
-            elif status == WaveCalibStatus.Calibrating:
-                # Add data to the array
-                calib_arr += power
-                calib_counter += 1
-
-            elif status == WaveCalibStatus.Stop:
-                # Average the collected data
-                if calib_counter > 0:
-                    calib_arr /= calib_counter
-                    self._is_calibrated = True
-                    with self._lock_s: # Set status to yes
-                        self.status = WaveCalibStatus.Yes
-
-
-            elif status == WaveCalibStatus.Yes:
-                # Use baseline data to normalize
-                # power = tf.normalize_power(power, calib_arr)
-                power = 10*np.log10(power/calib_arr)
-
-
-            # NOTE: if status is No, just send non-calibrated waves to client
-
+            # Calibrate, if any
+            power = self.calibrator.calibrate(power)
 
             # Get waves
             deltas = tf.get_wave(power, self.arr_freqs, 1, 4)
