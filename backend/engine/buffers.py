@@ -30,11 +30,13 @@ class DataBuffer(object):
 
     def start_calibrating(self):
         """Method to start calibrating, override it."""
-        print("{} buffer can't stream calibrated data".format(self.name))
+        # print("{} buffer can't stream calibrated data".format(self.name))
+        return False
 
     def stop_calibrating(self):
         """Method to stop calibrating, override it."""
-        print("{} buffer can't stream calibrated data".format(self.name))
+        # print("{} buffer can't stream calibrated data".format(self.name))
+        return False
 
     def incoming_data(self, timestamps, data):
         """Process the incoming data."""
@@ -161,7 +163,27 @@ class WaveBuffer(EEGBuffer):
 
         # Status of the wave (about calibration)
         self.calibrator = crs.WaveDivider()
-        # REVIEW: move calibrator to base class?
+        # REVIEW: move calibrator to base class DataBuffer?
+
+        # Yielder
+        def yielder(t, power): # HACK: move this to yielders?
+            deltas = tf.get_wave(power, self.arr_freqs, 1, 4)
+            thetas = tf.get_wave(power, self.arr_freqs, 4, 8)
+            alphas = tf.get_wave(power, self.arr_freqs, 8, 13)
+            betas = tf.get_wave(power, self.arr_freqs, 13, 30)
+            gammas = tf.get_wave(power, self.arr_freqs, 30, 44)
+
+            channel = 0 # DEBUG
+
+            # Yield
+            yield "data: {}, {}, {}, {}, {}, {}\n\n".format(t,
+                deltas[channel],
+                thetas[channel],
+                alphas[channel],
+                betas[channel],
+                gammas[channel])
+
+        self._yielder = yielder
 
     def start_calibrating(self):
         """Set the status to start recording calibrating data."""
@@ -241,20 +263,6 @@ class WaveBuffer(EEGBuffer):
             power = self.calibrator.calibrate(power)
 
             # Get waves
-            deltas = tf.get_wave(power, self.arr_freqs, 1, 4)
-            thetas = tf.get_wave(power, self.arr_freqs, 4, 8)
-            alphas = tf.get_wave(power, self.arr_freqs, 8, 13)
-            betas = tf.get_wave(power, self.arr_freqs, 13, 30)
-            gammas = tf.get_wave(power, self.arr_freqs, 30, 44)
-
-            channel = 0 # DEBUG
-
-            # Yield
-            yield "data: {}, {}, {}, {}, {}, {}\n\n".format(t,
-                deltas[channel],
-                thetas[channel],
-                alphas[channel],
-                betas[channel],
-                gammas[channel])
+            yield from self._yielder(t, power)
 
             # HACK: use yielders? There could be an option of what to yield (alphas from all, waves from one channel or everything)
