@@ -130,6 +130,32 @@ def main():
         # Wait for a buffer zone
         sleep(1)
 
+        def ask_config():
+            muse.ask_config() # only works if push_info was enabled
+            sleep(0.5) # let it print
+            return None
+        def start_calib():
+            if not data_buffer.start_calibrating(): # Indicate if success
+                return None
+            print("started calibrating")
+            return info.start_calib_mark
+        def stop_calib():
+            if not data_buffer.stop_calibrating():
+                return None
+            print("stopped calibrating")
+            return info.stop_calib_mark
+        def toggle_save_opt():
+            args.save = not args.save
+            print("save status = {}".format(args.save))
+            return None
+
+        commands = {
+            "-c": ask_config, # DEBUG: you can input this to see what comes in config in muse
+            "-s": start_calib,
+            "-h": stop_calib,
+            "--save": toggle_save_opt
+            }
+
         try:
             basic.report("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):", level=0)
             while True:
@@ -137,25 +163,11 @@ def main():
                 message = input("\tcmd: ")
                 t = data_buffer.get_last_timestamp()
 
-                if message == "-c": # config
-                    # DEBUG: you can input this to see what comes in config in muse
-                    muse.ask_config()# only works if push_info was enabled
-                    sleep(0.5) # let it print
-                    continue
-                elif message == "-s": # start calibrating
-                    if not data_buffer.start_calibrating(): # Indicate if success
+                # Special commands
+                if message in commands:
+                    message = commands[message]()
+                    if message is None:
                         continue
-                    message = info.start_calib_mark
-                    print("started calibrating")
-                elif message == "-h": # halt calibrating
-                    if not data_buffer.stop_calibrating():
-                        continue
-                    message = info.stop_calib_mark
-                    print("stopped calibrating")
-                elif message == "--save": # Toggle save option
-                    args.save = not args.save
-                    print("save status = {}".format(args.save))
-                    continue
 
                 # Save
                 marks.append(t)
