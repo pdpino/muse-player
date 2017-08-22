@@ -15,6 +15,9 @@ _waves = OrderedDict([["delta", [1, 4, "blue"]],
 
 # NOTE: for the matplotlib colors see https://matplotlib.org/examples/color/named_colors.html
 
+def get_amount_waves():
+    return len(_waves)
+
 def get_waves_names(choose=None):
     """Return a list with the waves names. If choose is given, only those in choose will be returned"""
     if choose is None:

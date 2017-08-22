@@ -1,4 +1,5 @@
 """Module that provides classes to handle the connections."""
+from backend import tf, info
 import basic
 
 class DataYielder(object):
@@ -89,3 +90,30 @@ class EEGYielder(object):
             yielder = EEGYielder._get_data_n # Default
 
         return yielder
+
+class WaveYielder(object):
+    """."""
+
+    def __init__(self, window, srate, channel=0):
+        # Array of frequencies to order the fft
+        self.arr_freqs = tf.get_arr_freqs(window, srate)
+
+        # Select channel to yield
+        self.channel = channel
+
+        # String to yield
+        self.str_format = "data: {}" # One more for the time
+        n_waves = info.get_amount_waves()
+        for i in range(n_waves):
+            self.str_format += ", {}"
+        self.str_format += "\n\n"
+
+    def yield_function(self, t, power):
+        all_waves = []
+
+        for w, min_freq, max_freq in info.iter_waves():
+            wave = tf.get_wave(power, self.arr_freqs, min_freq, max_freq)[self.channel]
+            all_waves.append(wave)
+
+        # Yield
+        yield self.str_format.format(t, *all_waves)

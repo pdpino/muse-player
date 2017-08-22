@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import basic
 from backend import data, tf, info
-from . import calibrators as crs
+from . import calibrators as crs, yielders
 
 class DataBuffer(object):
     """Receives incoming data and provides a generator to yield it."""
@@ -158,32 +158,12 @@ class WaveBuffer(EEGBuffer):
         self.window = window
         self.step = step
 
-        # Array of frequencies to order the fft
-        self.arr_freqs = tf.get_arr_freqs(window, srate)
-
         # Status of the wave (about calibration)
         self.calibrator = crs.WaveDivider()
         # REVIEW: move calibrator to base class DataBuffer?
 
-        # Yielder
-        def yielder(t, power): # HACK: move this to yielders?
-            deltas = tf.get_wave(power, self.arr_freqs, 1, 4)
-            thetas = tf.get_wave(power, self.arr_freqs, 4, 8)
-            alphas = tf.get_wave(power, self.arr_freqs, 8, 13)
-            betas = tf.get_wave(power, self.arr_freqs, 13, 30)
-            gammas = tf.get_wave(power, self.arr_freqs, 30, 44)
-
-            channel = 0 # DEBUG
-
-            # Yield
-            yield "data: {}, {}, {}, {}, {}, {}\n\n".format(t,
-                deltas[channel],
-                thetas[channel],
-                alphas[channel],
-                betas[channel],
-                gammas[channel])
-
-        self._yielder = yielder
+        # Yielder # REVIEW: here yielder is an object, in the other buffers is a function
+        self._yielder = yielders.WaveYielder(window, srate)
 
     def start_calibrating(self):
         """Set the status to start recording calibrating data."""
@@ -263,6 +243,6 @@ class WaveBuffer(EEGBuffer):
             power = self.calibrator.calibrate(power)
 
             # Get waves
-            yield from self._yielder(t, power)
+            yield from self._yielder.yield_function(t, power)
 
             # HACK: use yielders? There could be an option of what to yield (alphas from all, waves from one channel or everything)
