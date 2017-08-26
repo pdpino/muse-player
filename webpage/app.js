@@ -48,11 +48,11 @@ class Graph {
       return false;
     }
 
-    if(config.ch_names === undefined){
-      config.ch_names = new Array(config.nChannels);
+    if(config.channelNames === undefined){
+      config.channelNames = new Array(config.nChannels);
 
       for(let i = 0; i < config.nChannels; i++){
-        config.ch_names[i] = "ch".concat(i);
+        config.channelNames[i] = "ch".concat(i);
       }
     }
 
@@ -173,7 +173,7 @@ class Graph {
 
     this.nChannels = Number(config.nChannels); // HACK: copy by value
     this._initChannels(config.data, config.colors);
-    this._setLegend(config.ch_names);
+    this._setLegend(config.channelNames);
     this._initLines();
     this._setTitle(config.title);
     this.type = config.type;
@@ -229,7 +229,7 @@ class Graph {
   /**
    * Set the tickboxes and names for the legend, given the channel names
    */
-  _setLegend(ch_names){
+  _setLegend(channelNames){
     let graph = this; // NOTE: this is needed because there are calls to nested functions
 
     // Add checkbox for each channel
@@ -251,7 +251,7 @@ class Graph {
       );
 
       // Add input
-      $("#legend-form").append(' ', inputTag, ' ', ch_names[i], '<br>');
+      $("#legend-form").append(' ', inputTag, ' ', channelNames[i], '<br>');
 
       ticksID[i] = "#".concat(ticksID[i]); // Generate id-like tag
     }
@@ -410,8 +410,8 @@ class Connection{
   /**
    * Constructor, receives an object with the following attributes
    * @param {String} url url to connect to
-   * @param {String} status_text HTML id of the text of the connection message
-   * @param {String} status_icon HTML id of the icon of the connection message
+   * @param {String} statusText HTML id of the text of the connection message
+   * @param {String} statusIcon HTML id of the icon of the connection message
    * @param {function} recvMsg Function to connect to the 'message' event
    * @param {function} recvConfig Function to connect to the 'config' event
    */
@@ -419,8 +419,8 @@ class Connection{
     this.url = config.url;
     this.stream = null;
 
-    this.status_text = config.status_text;
-    this.status_icon = config.status_icon;
+    this.statusText = config.statusText;
+    this.statusIcon = config.statusIcon;
     this._setStatus(StatusEnum.OFF);
 
     this.recvMsg = config.recvMsg;
@@ -471,9 +471,9 @@ class Connection{
         return;
     }
 
-    $(this.status_text).text(text);
-    $(this.status_text).css("color", color);
-    $(this.status_icon).attr("class", "glyphicon glyphicon-".concat(icon));
+    $(this.statusText).text(text);
+    $(this.statusText).css("color", color);
+    $(this.statusIcon).attr("class", "glyphicon glyphicon-".concat(icon));
   }
 
   /**
@@ -553,7 +553,7 @@ $(document).ready( function() {
   const eegGraphConfig = {
     data: data,
     nChannels: 5,
-    ch_names: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
+    channelNames: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
     colors: ["black", "red", "blue", "green", "cyan"],
     title: 'EEG electrodes',
     type: "eeg",
@@ -562,7 +562,7 @@ $(document).ready( function() {
   const wavesGraphConfig = {
     data: data,
     nChannels: 5,
-    ch_names: ["delta", "theta", "alpha", "beta", "gamma"],
+    channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
     colors: ["black", "red", "blue", "green", "cyan"],
     title: 'Waves',
     type: "waves",
@@ -628,8 +628,8 @@ $(document).ready( function() {
 
   let stream = new Connection({
     url: "http://localhost:8889/data/muse",
-    status_text: "#status-text",
-    status_icon: "#status-icon",
+    statusText: "#status-text",
+    statusIcon: "#status-icon",
     recvMsg: recvMsg,
     recvConfig
     });
