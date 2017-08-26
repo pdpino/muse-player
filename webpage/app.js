@@ -1,22 +1,14 @@
 "use strict"
 
-/**
- * Receive a stream of data from a muse server and plots it
- */
-
 class Graph {
   /**
-   * Intialize
+   * Constructor
    */
   constructor(config) {
     // Assure that the config object is correct
-    if(this._fillDefaultValues(config) !== 0){
-      // missing arguments
-      return;
-    }
+    if(!this._validateDefaultValues(config)) return;
 
-    // Save variables // HACK
-    this.n_channels = Number(config.n_channels);
+    this.n_channels = Number(config.n_channels); // HACK: copy by value
     this.secs_indicator = String(config.sec_x);
     this._updateXAxis(config.n_secs);
     this.y_min = Number(config.y_min);
@@ -24,22 +16,12 @@ class Graph {
     this.y_min_home = Number(config.y_min);
     this.y_max_home = Number(config.y_max);
 
-    // Create graph
-    this._createEmptyGraph(config.container, config.width, config.height, config.title, config.x_ticks, config.y_ticks);
+    this._initEmptyGraph(config.container, config.width, config.height, config.title, config.xTicks, config.yTicks);
 
-    // Set the line functions
     this._initLines();
-
-    // Init paths, bools and color for each channel
     this._initChannels(config.data, config.colors);
-
-    // Set parameters to update the axis
     this._initAxisParams(config.dx_zoom, config.dy_zoom, config.dy_move);
-
-    // Set the legend, and the proper events
     this._initLegend(config.legend_container, config.ch_names);
-
-    // Buttons to update axis
     this._addEventsXAxis(config.x_zoom_btn[0], config.x_zoom_btn[1]);
     this._addEventsYAxis(config.y_zoom_btn, config.y_move_btn, config.y_home_btn);
   }
@@ -47,105 +29,79 @@ class Graph {
   /**
    * Receive a configuration object, if a value is missing fill it with default
    */
-  _fillDefaultValues(config){
+  _validateDefaultValues(config){
     if(config.container === undefined){
       console.log("ERROR: Missing graph container");
-      return 1;
+      return false;
     }
-    // TODO: handle when there is no legend container
 
     if(config.n_channels === undefined){
       console.log("ERROR: Declaring a graph without the number of channels");
-      return 1;
+      return false;
     }
-
-
 
     if(config.ch_names === undefined){
       config.ch_names = new Array(config.n_channels);
-      for(let i=0;i<config.n_channels;i++){
+
+      for(let i = 0; i < config.n_channels; i++){
         config.ch_names[i] = "ch".concat(i);
       }
     }
 
     config.title = config.title || "Graph";
-    // if(config.title === undefined){
-    //   config.title = "Graph";
-    // }
-
-    /**
-     * Get a random color
-     * source: https://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
-     */
-    function getRandomColor() {
-      let letters = '0123456789ABCDEF';
-      let color = '#';
-      for (let i = 0; i < 6; i++ ) {
-          color += letters[Math.floor(Math.random() * 16)];
-      }
-      return color;
-    }
 
     if(config.colors === undefined){
       config.colors = new Array(config.n_channels);
-      for(let i=0;i<config.n_channels;i++){
-        config.colors[i] = getRandomColor();
+
+      for(let i = 0; i < config.n_channels; i++){
+        config.colors[i] = generateRandomColor();
       }
     }
 
-    return 0;
+    return true;
   }
 
   /**
    * Create an empty graph
    * @param {String} container HTML ID to locate the graph
-   * @param {Number} w width
-   * @param {Number} h height
+   * @param {Number} width width of the graph in (pixels???)
+   * @param {Number} height height of the graph in (pixels???)
    * @param {String} title
-   * @param {Number} y_min initial minimum for y axis
-   * @param {Number} y_max initial maximum for y axis
-   * @param {Number} x_ticks
-   * @param {Number} y_ticks
-   * @param {Number} n_secs Amount of seconds to plot in the x axis
+   * @param {Number} xTicks
+   * @param {Number} yTicks
    */
-  _createEmptyGraph(container, w, h, title, x_ticks, y_ticks){
-    // Margin
+  _initEmptyGraph(containerID, width, height, title, xTicks, yTicks){
     this.margin = {top: 40, right: 10, bottom: 30, left: 60};
-    this.width = w - this.margin.left - this.margin.right;
-    this.height = h - this.margin.top - this.margin.bottom;
+    this.width = width - this.margin.left - this.margin.right;
+    this.height = height - this.margin.top - this.margin.bottom;
 
-    // Svg
-    this.svg = d3.select(container).append("svg")
+    this.svg = d3.select(containerID).append("svg")
         .attr("width", this.width + this.margin.left + this.margin.right)
         .attr("height", this.height + this.margin.top + this.margin.bottom)
       .append("g")
         .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
-    // Clip para tomar lo que sale por la izquierda
+    // Clip to grab the data that comes off the left side
     this.svg.append("defs").append("clipPath")
         .attr("id", "clip")
       .append("rect")
         .attr("width", this.width)
         .attr("height", this.height);
 
-    // Rangos de ejes
     this.x_range = d3.scale.linear().domain([0, this.n_secs]).range([0, this.width]);
     this.y_range = d3.scale.linear().domain([this.y_min, this.y_max]).range([this.height, 0]);
 
-    // Eje del tiempo
-    this.x_axis = d3.svg.axis().scale(this.x_range).orient("bottom").ticks(x_ticks);
+    this.x_axis = d3.svg.axis().scale(this.x_range).orient("bottom").ticks(xTicks);
     this.svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + this.height + ")")
         .call(this.x_axis);
 
-    // Y axis
-    this.y_axis = d3.svg.axis().scale(this.y_range).orient("left").ticks(y_ticks);
+    this.y_axis = d3.svg.axis().scale(this.y_range).orient("left").ticks(yTicks);
     this.svg.append("g")
         .attr("class", "y axis")
         .call(this.y_axis);
 
-    // Titulo
     this.svg.append("text")
         .attr("id", "graph_title")
         .attr("x", (this.width / 2))
@@ -155,15 +111,16 @@ class Graph {
   }
 
   /**
-   * Create an array of functions that returns the channels in the data
-   * The data always come in the following format:
-   * Array of Arrays, each of the inner arrays is a moment in time, which is formed by:
-   * [t, ch1, ch2, ch3, ..., chN], where 't' is the time, and the rest are the n channels
+   * Initialize the d3 functions that return the channels in the data
    */
   _initLines(){
     this.lines = new Array(this.n_channels);
-    for(let i=0;i<this.n_channels;i++){ this.lines[i] = null; } //HACK: start as null so actual assign wont throw error
-    let graph = this;
+
+    for(let i=0;i<this.n_channels;i++){
+      this.lines[i] = null; //HACK: start as null so actual assign below wont throw error
+    }
+
+    let graph = this; // NOTE: using arrow functions to call graphs won't work, because of nested functions
     this.lines.forEach((l, i) => {
       this.lines[i] = d3.svg.line()
         .x(function(d){ return graph.x_range(d[0]); })
@@ -175,23 +132,26 @@ class Graph {
 
   /**
    * Init the paths in the graph and an array of bools to show the lines
+   * @param {Array} data
+   * @param {Array} colors
    */
-  _initChannels(data, colors){
-    this.colors = colors; // REVIEW: copy?
+  _initChannels(data, colorNames){
+    this.colorNames = colorNames; // REVIEW: copy?
 
-    // Create path and bools for each channel
     this.paths = new Array(this.n_channels); // Lines in svg
     this.plot_bools = new Array(this.n_channels); // Bools to show each line
-    for(let i=0;i<this.n_channels;i++){
-      this.plot_bools[i] = true; // By default show line
+
+    for(let i = 0; i < this.n_channels; i++){
+      this.plot_bools[i] = true; // DEFAULT: By default show line
       this.paths[i] = null;
     }
+
     this.paths.forEach((p, i) => {
       this.paths[i] = this.svg.append("g")
         .attr("clip-path", "url(#clip)")
         .append("path")
         .attr("class", "line")
-        .style("stroke", colors[i])
+        .style("stroke", colorNames[i])
         .attr("d", this.lines[i](data));
     });
 
@@ -240,7 +200,7 @@ class Graph {
           .append(
             $('<rect>')
               .attr('class','legend-rect')
-              .css("fill", graph.colors[i]) // Pintar del color
+              .css("fill", graph.colorNames[i]) // Pintar del color
             )
       );
 
@@ -261,7 +221,7 @@ class Graph {
 
     // Paint colors
     // for(let i=0;i<this.n_channels;i++){
-    //   d3.select(ids_rect[i]).style("fill", graph.colors[i]);
+    //   d3.select(ids_rect[i]).style("fill", graph.colorNames[i]);
     // }
 
     // Show/hide events
@@ -323,8 +283,6 @@ class Graph {
     $(btns_move[1]).click(() => { this.moveYAxis(true); });
     $(btn_home).click(() => { this.homeYAxis(); });
   }
-
-
 
   /**
    * Zoom the y axis
@@ -432,49 +390,34 @@ class Graph {
 const StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
 class Connection{
   /**
-   * Constructor
+   * Constructor, receives an object with the following attributes
    * @param {String} url url to connect to
    * @param {String} status_text HTML id of the text of the connection message
    * @param {String} status_icon HTML id of the icon of the connection message
-   * @param {function} recv_msg Function to connect to the onmessage event
+   * @param {function} recv_msg Function to connect to the 'onmessage' event
    */
   constructor(config){
-    // Name
     this.name = config.name;
-
-    // URL
     this.url = config.url;
+    this.stream = null;
 
-    // Status
     this.status_text = config.status_text;
     this.status_icon = config.status_icon;
     this._setStatus(StatusEnum.OFF);
 
-    // Stream
-    this.stream = null;
-
-    // Receive message function
     this.recv_msg = config.recv_msg;
   }
 
-  /**
-   * Return a bool
-   */
   _isConnecting(){
     return this.status === StatusEnum.CONNECTING;
   }
 
-  /**
-   * Return a bool
-   */
   _isDisconnected(){
     return this.status === StatusEnum.OFF || this.status === StatusEnum.DISCONNECTED;
   }
 
-
   /**
-   * Set the status of the connection.
-   * Set a number in the conn object, an icon and a text in the page
+   * Set the status of the connection. Updates the screen with an icon and a text
    */
   _setStatus(status){
     let text = "";
@@ -491,17 +434,17 @@ class Connection{
         break;
       case StatusEnum.CONNECTING:
         text = "Connecting";
-        icon = "hourglass"; //Reloj de arena
+        icon = "hourglass"; // Sand clock
         color = "orange";
         break;
       case StatusEnum.CONNECTED:
         text = "Connected";
-        icon = "ok"; // Ticket
+        icon = "ok"; // OK ticket
         color = "green";
         break;
       case StatusEnum.DISCONNECTED:
         text = "Disconnected";
-        icon = "remove"; // Equis
+        icon = "remove"; // X
         color = "red";
         break;
       default:
@@ -584,9 +527,10 @@ class Connection{
 }
 
 /**
- * Main process
+ * Receive a stream of data from a muse server and plots it
  */
 $(document).ready( function() {
+  // Parameters
   let n_channels = 5;
   let waves = true; // HACK: select type hardcoded
   let channel_names, titulo, conn_name;
@@ -601,6 +545,7 @@ $(document).ready( function() {
     conn_name = "eeg data";
   }
 
+  // Start
   let nchs = n_channels;
   let data = initEmptyData(nchs);
   let graph = new Graph({
@@ -623,8 +568,8 @@ $(document).ready( function() {
     height: 400,
     y_min: -100,
     y_max: 100,
-    x_ticks: 5,
-    y_ticks: 5,
+    xTicks: 5,
+    yTicks: 5,
     n_secs: 5,
     dx_zoom: 1, // FIXME: que clase calcule esto y vaya cambiando
     dy_zoom: 10,
@@ -671,15 +616,32 @@ $(document).ready( function() {
 
 /**
  * Initialize an empty array that will hold data
- * The data is an array of shape (n_points, n_channels), where each point is a sample in time
+ * @param {Number} n_channels Amount of channels
+ * @return {Array} shape (n_points, n_channels + 1); starts with 1 0-filled item
  */
 function initEmptyData(n_channels){
-  let data = new Array(1); // Starts with one item
-  data[0] = new Array(n_channels + 1); // +1 for the time, the rest are channels
+  let emptyData = new Array(1);
+  emptyData[0] = new Array(n_channels + 1);
 
   for(let i = 0; i <= n_channels; i++){
-    data[0][i] = 0; // init in 0
+    emptyData[0][i] = 0;
   }
 
-  return data;
+  return emptyData;
+}
+
+
+/**
+ * Return a random color
+ * source: https://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
+ */
+function generateRandomColor(){
+  let letters = '0123456789ABCDEF';
+  let color = '#';
+
+  for (let i = 0; i < 6; i++){
+      color += letters[Math.floor(Math.random() * 16)];
+  }
+
+  return color;
 }
