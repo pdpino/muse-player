@@ -2,13 +2,14 @@
 
 class Graph {
   /**
-   * Constructor
+   * Create an empty graph
    */
   constructor(config) {
     // Assure that the config object is correct
-    if(!this._validateDefaultValues(config)) return;
+    if(!this._validateConstructorParams(config)) return;
 
-    this.n_channels = Number(config.n_channels); // HACK: copy by value
+    this.type = null;
+    this.legend_container = String(config.legend_container); // HACK: copy by value
     this.secs_indicator = String(config.sec_x);
     this._updateXAxis(config.n_secs);
     this.y_min = Number(config.y_min);
@@ -16,47 +17,47 @@ class Graph {
     this.y_min_home = Number(config.y_min);
     this.y_max_home = Number(config.y_max);
 
-    this._initEmptyGraph(config.container, config.width, config.height, config.title, config.xTicks, config.yTicks);
-
-    this._initLines();
-    this._initChannels(config.data, config.colors);
+    this._initEmptyGraph(config.container, config.width, config.height, config.xTicks, config.yTicks);
     this._initAxisParams(config.dx_zoom, config.dy_zoom, config.dy_move);
-    this._initLegend(config.legend_container, config.ch_names);
     this._addEventsXAxis(config.x_zoom_btn[0], config.x_zoom_btn[1]);
     this._addEventsYAxis(config.y_zoom_btn, config.y_move_btn, config.y_home_btn);
+    this._initLegend();
   }
 
   /**
    * Receive a configuration object, if a value is missing fill it with default
    */
-  _validateDefaultValues(config){
+  _validateConstructorParams(config){
     if(config.container === undefined){
       console.log("ERROR: Missing graph container");
       return false;
     }
+    if(config.legend_container === undefined){
+      console.log("ERROR: Missing legend container")
+      return false;
+    }
+    return true;
+  }
 
-    if(config.n_channels === undefined){
+  /**
+   * Validate a config object given to the selectType method
+   */
+  _validateSelectParams(config){
+    if(config.nChannels === undefined){
       console.log("ERROR: Declaring a graph without the number of channels");
       return false;
     }
 
     if(config.ch_names === undefined){
-      config.ch_names = new Array(config.n_channels);
+      config.ch_names = new Array(config.nChannels);
 
-      for(let i = 0; i < config.n_channels; i++){
+      for(let i = 0; i < config.nChannels; i++){
         config.ch_names[i] = "ch".concat(i);
       }
     }
 
     config.title = config.title || "Graph";
-
-    if(config.colors === undefined){
-      config.colors = new Array(config.n_channels);
-
-      for(let i = 0; i < config.n_channels; i++){
-        config.colors[i] = generateRandomColor();
-      }
-    }
+    config.colors = config.colors || generateRandomColors(config.nChannels);
 
     return true;
   }
@@ -66,11 +67,10 @@ class Graph {
    * @param {String} container HTML ID to locate the graph
    * @param {Number} width width of the graph in (pixels???)
    * @param {Number} height height of the graph in (pixels???)
-   * @param {String} title
    * @param {Number} xTicks
    * @param {Number} yTicks
    */
-  _initEmptyGraph(containerID, width, height, title, xTicks, yTicks){
+  _initEmptyGraph(containerID, width, height, xTicks, yTicks){
     this.margin = {top: 40, right: 10, bottom: 30, left: 60};
     this.width = width - this.margin.left - this.margin.right;
     this.height = height - this.margin.top - this.margin.bottom;
@@ -101,68 +101,23 @@ class Graph {
     this.svg.append("g")
         .attr("class", "y axis")
         .call(this.y_axis);
-
-    this.svg.append("text")
-        .attr("id", "graph_title")
-        .attr("x", (this.width / 2))
-        .attr("y", 0 - (this.margin.top / 2))
-        .attr("text-anchor", "middle")
-        .text(title);
   }
 
   /**
-   * Initialize the d3 functions that return the channels in the data
+   * Set amounts to update the axis
    */
-  _initLines(){
-    this.lines = new Array(this.n_channels);
-
-    for(let i=0;i<this.n_channels;i++){
-      this.lines[i] = null; //HACK: start as null so actual assign below wont throw error
-    }
-
-    let graph = this; // NOTE: using arrow functions to call graphs won't work, because of nested functions
-    this.lines.forEach((l, i) => {
-      this.lines[i] = d3.svg.line()
-        .x(function(d){ return graph.x_range(d[0]); })
-        .y(function(d){ return graph.y_range(d[i + 1]); });
-    });
-
-
+  _initAxisParams(dx_zoom, dy_zoom, dy_move){
+    this.dx_zoom = Number(dx_zoom); // HACK: copy by value
+    this.dy_zoom = Number(dy_zoom);
+    this.dy_move = Number(dy_move);
   }
 
   /**
-   * Init the paths in the graph and an array of bools to show the lines
-   * @param {Array} data
-   * @param {Array} colors
+   * Init an empty legend container
    */
-  _initChannels(data, colorNames){
-    this.colorNames = colorNames; // REVIEW: copy?
-
-    this.paths = new Array(this.n_channels); // Lines in svg
-    this.plot_bools = new Array(this.n_channels); // Bools to show each line
-
-    for(let i = 0; i < this.n_channels; i++){
-      this.plot_bools[i] = true; // DEFAULT: By default show line
-      this.paths[i] = null;
-    }
-
-    this.paths.forEach((p, i) => {
-      this.paths[i] = this.svg.append("g")
-        .attr("clip-path", "url(#clip)")
-        .append("path")
-        .attr("class", "line")
-        .style("stroke", colorNames[i])
-        .attr("d", this.lines[i](data));
-    });
-
-  }
-
-  /**
-   * Paint the squares in the legend
-   */
-  _initLegend(legend_container, ch_names){
-    // Crear panel para leyenda
-    $(legend_container).append(
+  _initLegend(){
+    // Create panel for the legend
+    $(this.legend_container).append(
       $('<div>', {
         'id':'legend-panel',
         'class':'panel panel-primary',
@@ -170,7 +125,7 @@ class Graph {
       })
     );
 
-    // Agregar header y body a panel
+    // Add body and legend
     $("#legend-panel").append(
       $('<div>', {
         'class': 'panel-heading text-center',
@@ -182,87 +137,6 @@ class Graph {
       })
     );
 
-
-
-    // Add checkbox for each channel
-    let ids_tick = new Array(this.n_channels);
-    let graph = this;
-    for(let i=0;i<this.n_channels;i++){
-      ids_tick[i] = "ch".concat(String(i)).concat("-tick");
-      let input_i = "<input id='".concat(String(ids_tick[i]))
-        .concat("' type='checkbox' checked/>");
-      let channel_name = String(ch_names[i]).concat('<br>');
-
-      // Add square with color
-      $("#legend-form").append(
-        $('<svg>')
-          .attr('class', 'legend-rect-container')
-          .append(
-            $('<rect>')
-              .attr('class','legend-rect')
-              .css("fill", graph.colorNames[i]) // Pintar del color
-            )
-      );
-
-      // Add input
-      $("#legend-form").append(
-        ' ', // space
-        input_i, // input
-        ' ', // space
-        channel_name,
-      );
-
-      ids_tick[i] = "#".concat(ids_tick[i]); // Generate id-like tag
-    }
-
-    // HACK: Refresh svg
-    $("#legend-form").html($("#legend-form").html());
-
-
-    // Paint colors
-    // for(let i=0;i<this.n_channels;i++){
-    //   d3.select(ids_rect[i]).style("fill", graph.colorNames[i]);
-    // }
-
-    // Show/hide events
-    ids_tick.forEach(function(t, i){
-      $(t).click( function(){
-        graph.plot_bools[i] = this.checked;
-        graph.paths[i].style("opacity", this.checked ? 1 : 0);
-      });
-    });
-
-  }
-
-  /**
-   * Set amounts to update the axiss
-   */
-  _initAxisParams(dx_zoom, dy_zoom, dy_move){
-    this.dx_zoom = Number(dx_zoom); // HACK: copy by value
-    this.dy_zoom = Number(dy_zoom);
-    this.dy_move = Number(dy_move);
-  }
-
-  /**
-   * Update the y axis
-   */
-  _updateYAxis(y1, y2){
-    if(y1 < y2){
-      this.y_min = Number(y1); // copy by value // HACK
-      this.y_max = Number(y2);
-      this.y_range.domain([y1, y2]);
-      this.svg.select(".y.axis").call(this.y_axis); // update svg
-    }
-  }
-
-  /**
-   *
-   */
-  _updateXAxis(segundos){
-    if(segundos > 1){
-      this.n_secs = Number(segundos); // HACK
-      $(this.secs_indicator).text(this.n_secs.toFixed(0))
-    }
   }
 
   /**
@@ -282,6 +156,150 @@ class Graph {
     $(btns_move[0]).click(() => { this.moveYAxis(false); });
     $(btns_move[1]).click(() => { this.moveYAxis(true); });
     $(btn_home).click(() => { this.homeYAxis(); });
+  }
+
+  /**
+   * Select the type of the graph
+   */
+  selectType(config){
+    if(!this._validateSelectParams(config)) return;
+
+    if(this.type === config.type) return;
+
+    if(this.type !== null){
+      // FIXME: make possible to configurate it with eeg data, and then with waves without reloading the page
+      return;
+    }
+
+    this.nChannels = Number(config.nChannels); // HACK: copy by value
+    this._initChannels(config.data, config.colors);
+    this._setLegend(config.ch_names);
+    this._initLines();
+    this._setTitle(config.title);
+    this.type = config.type;
+  }
+
+  /**
+   * Initialize the d3 functions that return the channels in the data
+   */
+  _initLines(){
+    this.lines = new Array(this.nChannels);
+
+    for(let i=0;i<this.nChannels;i++){
+      this.lines[i] = null; //HACK: start as null so actual assign below wont throw error
+    }
+
+    let graph = this; // NOTE: using arrow functions to call graphs won't work, because of nested functions
+    this.lines.forEach((l, i) => {
+      this.lines[i] = d3.svg.line()
+        .x(function(d){ return graph.x_range(d[0]); })
+        .y(function(d){ return graph.y_range(d[i + 1]); });
+    });
+
+
+  }
+
+  /**
+   * Init the paths in the graph and an array of bools to show the lines
+   * @param {Array} data
+   * @param {Array} colorNames
+   */
+  _initChannels(data, colorNames){
+    this.colorNames = colorNames.slice(); // copy by value
+
+    this.paths = new Array(this.nChannels); // Lines in svg
+    this.plot_bools = new Array(this.nChannels); // Bools to show each line
+
+    for(let i = 0; i < this.nChannels; i++){
+      this.plot_bools[i] = true; // DEFAULT: By default show line
+      this.paths[i] = null;
+    }
+
+    this.paths.forEach((p, i) => {
+      this.paths[i] = this.svg.append("g")
+        .attr("clip-path", "url(#clip)")
+        .append("path")
+        .attr("class", "line")
+        .style("stroke", colorNames[i]);
+        // .attr("d", this.lines[i](data));
+    });
+
+  }
+
+  /**
+   * Set the tickboxes and names for the legend, given the channel names
+   */
+  _setLegend(ch_names){
+    let graph = this; // NOTE: this is needed because there are calls to nested functions
+
+    // Add checkbox for each channel
+    let ticksID = new Array(this.nChannels);
+    for(let i = 0; i < this.nChannels; i++){
+      ticksID[i] = "ch".concat(String(i)).concat("-tick");
+      const inputTag = "<input id='".concat(String(ticksID[i]))
+        .concat("' type='checkbox' checked/>");
+
+      // Add square with color
+      $("#legend-form").append(
+        $('<svg>')
+          .attr('class', 'legend-rect-container')
+          .append(
+            $('<rect>')
+              .attr('class','legend-rect')
+              .css("fill", graph.colorNames[i])
+            )
+      );
+
+      // Add input
+      $("#legend-form").append(' ', inputTag, ' ', ch_names[i], '<br>');
+
+      ticksID[i] = "#".concat(ticksID[i]); // Generate id-like tag
+    }
+
+    // HACK: Refresh svg
+    $("#legend-form").html($("#legend-form").html());
+
+    // Show/hide events
+    ticksID.forEach(function(t, i){
+      $(t).click( function(){
+        graph.plot_bools[i] = this.checked;
+        graph.paths[i].style("opacity", this.checked ? 1 : 0);
+      });
+    });
+  }
+
+  /**
+   * Set the title for the graph
+   */
+  _setTitle(title){
+    this.svg.append("text")
+        .attr("id", "graph_title")
+        .attr("x", (this.width / 2))
+        .attr("y", 0 - (this.margin.top / 2))
+        .attr("text-anchor", "middle")
+        .text(title);
+  }
+
+  /**
+   * Update the y axis
+   */
+  _updateYAxis(y1, y2){
+    if(y1 < y2){
+      this.y_min = Number(y1); // copy by value // HACK
+      this.y_max = Number(y2);
+      this.y_range.domain([y1, y2]);
+      this.svg.select(".y.axis").call(this.y_axis); // update svg
+    }
+  }
+
+  /**
+   *
+   */
+  _updateXAxis(seconds){
+    if(seconds > 1){
+      this.n_secs = Number(seconds); // HACK: copy by value
+      $(this.secs_indicator).text(this.n_secs.toFixed(0));
+    }
   }
 
   /**
@@ -360,7 +378,7 @@ class Graph {
    * Update all the lines in the graph
    */
   update(data, shift=true) {
-    for(let i=0;i<this.n_channels;i++){
+    for(let i=0;i<this.nChannels;i++){
       // this._update_line(data, this.paths[i], this.lines[i], this.plot_bools[i]);
       if(this.plot_bools[i]){
         this.paths[i].attr("d", this.lines[i](data))
@@ -394,10 +412,10 @@ class Connection{
    * @param {String} url url to connect to
    * @param {String} status_text HTML id of the text of the connection message
    * @param {String} status_icon HTML id of the icon of the connection message
-   * @param {function} recv_msg Function to connect to the 'onmessage' event
+   * @param {function} recvMsg Function to connect to the 'message' event
+   * @param {function} recvConfig Function to connect to the 'config' event
    */
   constructor(config){
-    this.name = config.name;
     this.url = config.url;
     this.stream = null;
 
@@ -405,7 +423,8 @@ class Connection{
     this.status_icon = config.status_icon;
     this._setStatus(StatusEnum.OFF);
 
-    this.recv_msg = config.recv_msg;
+    this.recvMsg = config.recvMsg;
+    this.recvConfig = config.recvConfig;
   }
 
   _isConnecting(){
@@ -457,7 +476,6 @@ class Connection{
     $(this.status_icon).attr("class", "glyphicon glyphicon-".concat(icon));
   }
 
-
   /**
   * Close the connection
   */
@@ -477,7 +495,7 @@ class Connection{
     // Change in screen
     this._setStatus(StatusEnum.DISCONNECTED);
 
-    console.log("Connection closed with", this.name);
+    console.log("Connection closed with the server");
   }
 
   /**
@@ -499,28 +517,26 @@ class Connection{
     this._setStatus(StatusEnum.CONNECTING);
     this.stream = new EventSource(this.url);
 
-    // Events
-    this.stream.onopen = (e) => {
+    this.stream.addEventListener('open', (e) => {
       this._setStatus(StatusEnum.CONNECTED);
-      console.log("Connected:", this.name);
-      // console.log("Opened");
-    };
-    // REVIEW: use a different event for start? redundant?
-    // this.stream.addEventListener('start', (e) => {
-    //   this._setStatus(StatusEnum.CONNECTED);
-    //   console.log("Connected:", this.name);
-    // }, false);
-    this.stream.onmessage = this.recv_msg;
-    this.stream.onerror = (e) => {
-      if(this._isConnecting()){
-        console.log("Can't connect to:", this.name);
-        // TODO: send alert to the client
-      }
-      else{
-        console.log("Error in the connection", this.name);
-      }
+      console.log("Connected to the server");
+    }, false);
+
+    this.stream.addEventListener('config', (e) => {
+      this.recvConfig(e);
+    }, false);
+
+    this.stream.addEventListener('message', (e) => {
+      this.recvMsg(e);
+    }, false);
+
+    this.stream.addEventListener('error', (e) => {
+      // TODO: send alert to the user
+      if(this._isConnecting()) console.log("Can't connect to the server");
+      else console.log("Error in the connection with the server");
+
       this.close();
-    };
+    }, false);
 
   }
 
@@ -530,32 +546,31 @@ class Connection{
  * Receive a stream of data from a muse server and plots it
  */
 $(document).ready( function() {
-  // Parameters
-  let n_channels = 5;
-  let waves = true; // HACK: select type hardcoded
-  let channel_names, titulo, conn_name;
-  if(waves){
-    channel_names = ["delta", "theta", "alpha", "beta", "gamma"];
-    titulo = "Waves";
-    conn_name = "waves data";
-  }
-  else{
-    channel_names = ["TP9", "AF7", "AF8", "TP10", "Right Aux"];
-    titulo = "Electrodes";
-    conn_name = "eeg data";
+  let graphConfig = null;
+  let data = null;
+  let isGraphSet = false;
+
+  const eegGraphConfig = {
+    data: data,
+    nChannels: 5,
+    ch_names: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
+    colors: ["black", "red", "blue", "green", "cyan"],
+    title: 'EEG electrodes',
+    type: "eeg",
   }
 
-  // Start
-  let nchs = n_channels;
-  let data = initEmptyData(nchs);
+  const wavesGraphConfig = {
+    data: data,
+    nChannels: 5,
+    ch_names: ["delta", "theta", "alpha", "beta", "gamma"],
+    colors: ["black", "red", "blue", "green", "cyan"],
+    title: 'Waves',
+    type: "waves",
+  }
+
   let graph = new Graph({
     container: "#graph_container",
     legend_container: '#legend_container',
-    data: data,
-    n_channels: nchs,
-    title: titulo,
-    ch_names: channel_names,
-    colors: ["black", "red", "blue", "green", "cyan"],
 
     // FIXME: que clase cree estos
     x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
@@ -576,72 +591,101 @@ $(document).ready( function() {
     dy_move: 50
     });
 
-  /**
-   * Recibe un mensaje entrante de eeg
-   */
-  function receive_data(e) {
+  let recvMsg = function(e){
+    if(!isGraphSet) return;
+
     let arr = e.data.split(",").map(parseFloat);
 
-    if(arr[0] < 0){ // Ignore negative time (wrong streaming from python?)
-      return;
-    }
+    if(arr[0] < 0) return; // Ignore negative time
 
     // REVIEW: check arr.length == n channels
-    while(arr.length < nchs + 1){ // Fill with 0s if received less channels
+    while(arr.length < graphConfig.nChannels + 1){ // Fill with 0s if received less channels
       arr.push(0.0);
     }
 
-    data.push(arr); // Push new data
-    graph.update(data); // Update graph
+    data.push(arr);
+    graph.update(data);
   };
 
-  // EEG connection
-  let eeg_conn = new Connection({
-    name: conn_name,
+  let recvConfig = function(e){
+    switch(e.data) {
+      case "eeg":
+        graphConfig = eegGraphConfig;
+        break;
+
+      case "waves":
+        graphConfig = wavesGraphConfig;
+        break;
+
+      default:
+        console.log("Wrong type of graph received from server: ", e.data);
+        return;
+    }
+    data = initEmptyData(graphConfig.nChannels);
+    graph.selectType(graphConfig);
+    isGraphSet = true;
+  }
+
+  let stream = new Connection({
     url: "http://localhost:8889/data/muse",
-    status_text: "#status-text", //FIXME: que la clase cree estos
+    status_text: "#status-text",
     status_icon: "#status-icon",
-    recv_msg: receive_data
+    recvMsg: recvMsg,
+    recvConfig
     });
 
-  // Botones iniciar/cerrar conexion
-  $("#btn-start-conn").click(function(){ data = initEmptyData(nchs); eeg_conn.start() });
-  $("#btn-close-conn").click(function(){ eeg_conn.close(); data = initEmptyData(nchs); });
+  $("#btn-start-conn").click( function(){
+    if(!isGraphSet) return;
+    data = initEmptyData(graphConfig.nChannels);
+    stream.start();
+  });
+  $("#btn-close-conn").click( function(){
+    if(!isGraphSet) return;
+    stream.close();
+    data = initEmptyData(graphConfig.nChannels);
+  });
 
-
-  eeg_conn.start();
+  stream.start();
 
   console.log("All set");
 });
 
 /**
  * Initialize an empty array that will hold data
- * @param {Number} n_channels Amount of channels
- * @return {Array} shape (n_points, n_channels + 1); starts with 1 0-filled item
+ * @param {Number} nChannels Amount of channels
+ * @return {Array} shape (n_points, nChannels + 1); starts with 1 0-filled item
  */
-function initEmptyData(n_channels){
+function initEmptyData(nChannels){
   let emptyData = new Array(1);
-  emptyData[0] = new Array(n_channels + 1);
+  emptyData[0] = new Array(nChannels + 1);
 
-  for(let i = 0; i <= n_channels; i++){
+  for(let i = 0; i <= nChannels; i++){
     emptyData[0][i] = 0;
   }
 
   return emptyData;
 }
 
-
 /**
- * Return a random color
+ * Return an array of randomly generated colors
  * source: https://stackoverflow.com/questions/1484506/random-color-generator-in-javascript
  */
-function generateRandomColor(){
-  let letters = '0123456789ABCDEF';
-  let color = '#';
+function generateRandomColors(nColors){
+  function genRandColor(){
+    let letters = '0123456789ABCDEF';
+    let color = '#';
 
-  for (let i = 0; i < 6; i++){
+    for (let i = 0; i < 6; i++){
       color += letters[Math.floor(Math.random() * 16)];
+    }
+
+    return color;
+  }
+  let colorArr = new Array(nColors);
+
+  for(let i = 0; i < nColors; i++){
+    colorArr[i] = genRandColor();
   }
 
-  return color;
+  return colorArr;
 }

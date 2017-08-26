@@ -2,15 +2,16 @@
 
 ## Next
 
-### Connection between python and client
-* Use a first message from server defining the type of data that will be sent (EEG or Waves). Then the client js changes the Graph accordingly
-* Catch when web client gets disconnected? https://stackoverflow.com/questions/18511119/stop-processing-flask-route-if-request-aborted
-
 ## Client: Webpage
+* Fix: be able to change type of graph without reloading the page (flush legend, flush previous lines, etc)
+
 * Change variable names in `app.js` to CamelCase
+* `Connection` class should create html elements for the conn status
+* `Graph` class should create html elements for the axis buttons
+* `Graph` class should listen to scrolling to change zoom in graph
 * Prettier header and footer
-* add marks in time to `app.js` (mark message)
-* add axis labels to `app.js`
+* add marks in time (mark message)
+* add axis labels
 
 ## Server: Python
 * Separate tf in submodules (convolution, sttft and common)
@@ -39,6 +40,9 @@
   + In the battery data, compare the value from one of the handles subscribed to the returned by muse when asked for the status (see INFO, bluetooth packets, key="bp")
 
 ## Others
+
+### Connection between python and client
+* Catch when web client gets disconnected? https://stackoverflow.com/questions/18511119/stop-processing-flask-route-if-request-aborted
 
 ### Learn
 * Watch laplacian video (to end chapter)

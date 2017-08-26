@@ -23,6 +23,8 @@ def main():
         str_stream = "data: {}" + ", {}" * n_data + "\n\n"
 
         def data_generator():
+            yield "event: config\ndata: waves\n\n"
+
             seconds = 0
             while True:
                 data = np.random.sample(n_data) * max_num

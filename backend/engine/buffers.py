@@ -46,7 +46,6 @@ class DataBuffer(object):
         """Stop collecting data to detect emotions."""
         return False
 
-
     def incoming_data(self, timestamps, data):
         """Process the incoming data."""
         # Add to full lists
@@ -67,16 +66,14 @@ class DataBuffer(object):
 
         if self._yielder is None:
             basic.perror("Can't stream the data without a yielder")
-            return # NOTREACHED
+
+        yield "event: config\ndata: eeg\n\n" # Start message
 
         with self.lock_q:
             # Drop old data in queue
             self._q_time.clear()
             self._q_data.clear()
             t_init = time() # Set an initial time as marker
-
-        # yield "event: start\ndata: 0\n\n" # Start message
-        yield "data: 0\n\n" # Start message # REVIEW: send other type of message?
 
         while True:
             self.lock_q.acquire()
@@ -234,6 +231,8 @@ class WaveBuffer(EEGBuffer):
 
     def data_generator(self):
         """Generator to stream the data."""
+
+        yield "event: config\ndata: waves\n\n"
 
         # Mark the time
         with self._lock_b:
