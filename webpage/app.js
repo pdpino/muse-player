@@ -162,12 +162,12 @@ class Graph {
    */
   _set_lines(){
     this.lines = new Array(this.n_channels);
-    for(let i=0;i<this.n_channels;i++){ this.lines[i] = null; } //HACK: iniciar todo como null
+    for(let i=0;i<this.n_channels;i++){ this.lines[i] = null; } //HACK: start as null so actual assign wont throw error
     let graph = this;
-    this.lines.forEach(function(l, i){
-      graph.lines[i] = d3.svg.line()
-        .x(function(d) { return graph.x_range(d[0]); })
-        .y(function(d) { return graph.y_range(d[i + 1]); });
+    this.lines.forEach((l, i) => {
+      this.lines[i] = d3.svg.line()
+        .x(function(d){ return graph.x_range(d[0]); })
+        .y(function(d){ return graph.y_range(d[i + 1]); });
     });
 
 
@@ -182,18 +182,17 @@ class Graph {
     // Create path and bools for each channel
     this.paths = new Array(this.n_channels); // Lines in svg
     this.plot_bools = new Array(this.n_channels); // Bools to show each line
-    let graph = this;
     for(let i=0;i<this.n_channels;i++){
-      this.plot_bools[i] = true; // Default: show line
-      this.paths[i] = null; // HACK
+      this.plot_bools[i] = true; // By default show line
+      this.paths[i] = null;
     }
-    this.paths.forEach(function(p, i){
-      graph.paths[i] = graph.svg.append("g")
+    this.paths.forEach((p, i) => {
+      this.paths[i] = this.svg.append("g")
         .attr("clip-path", "url(#clip)")
         .append("path")
         .attr("class", "line")
         .style("stroke", colors[i])
-        .attr("d", graph.lines[i](data));
+        .attr("d", this.lines[i](data));
     });
 
   }
@@ -256,7 +255,8 @@ class Graph {
       ids_tick[i] = "#".concat(ids_tick[i]); // Generate id-like tag
     }
 
-    $("#legend-form").html($("#legend-form").html()); // HACK: Refresh svg
+    // HACK: Refresh svg
+    $("#legend-form").html($("#legend-form").html());
 
 
     // Paint colors
@@ -309,21 +309,19 @@ class Graph {
    * Connect the x axis buttons with the corresponding events
    */
   _add_events_x_axis(btn_dec, btn_inc){
-    let graph = this;
-    $(btn_dec).click(function(){ graph.zoom_x_axis(false); });
-    $(btn_inc).click(function(){ graph.zoom_x_axis(true); });
+    $(btn_dec).click(() => { this.zoom_x_axis(false); });
+    $(btn_inc).click(() => { this.zoom_x_axis(true); });
   }
 
   /**
    * Connect the y axis buttons with the corresponding events
    */
   _add_events_y_axis(btns_zoom, btns_move, btn_home){
-    let graph = this;
-    $(btns_zoom[0]).click(function(){ graph.zoom_y_axis(false); });
-    $(btns_zoom[1]).click(function(){ graph.zoom_y_axis(true); });
-    $(btns_move[0]).click(function(){ graph.move_y_axis(false); });
-    $(btns_move[1]).click(function(){ graph.move_y_axis(true); });
-    $(btn_home).click(function(){ graph.home_y_axis(); });
+    $(btns_zoom[0]).click(() => { this.zoom_y_axis(false); });
+    $(btns_zoom[1]).click(() => { this.zoom_y_axis(true); });
+    $(btns_move[0]).click(() => { this.move_y_axis(false); });
+    $(btns_move[1]).click(() => { this.move_y_axis(true); });
+    $(btn_home).click(() => { this.home_y_axis(); });
   }
 
 
@@ -555,31 +553,30 @@ class Connection{
       }
     }
 
-    let conn = this;
     this._set_status(StatusEnum.CONNECTING);
     this.stream = new EventSource(this.url);
 
     // Events
-    this.stream.onopen = function (e) {
-      conn._set_status(StatusEnum.CONNECTED);
-      console.log("Connected:", conn.name);
+    this.stream.onopen = (e) => {
+      this._set_status(StatusEnum.CONNECTED);
+      console.log("Connected:", this.name);
       // console.log("Opened");
     };
     // REVIEW: use a different event for start? redundant?
-    // this.stream.addEventListener('start', function(e) {
-    //   conn._set_status(StatusEnum.CONNECTED);
-    //   console.log("Connected:", conn.name);
+    // this.stream.addEventListener('start', (e) => {
+    //   this._set_status(StatusEnum.CONNECTED);
+    //   console.log("Connected:", this.name);
     // }, false);
     this.stream.onmessage = this.recv_msg;
-    this.stream.onerror = function (e) {
-      if(conn._is_connecting()){
-        console.log("Can't connect to:", conn.name);
+    this.stream.onerror = (e) => {
+      if(this._is_connecting()){
+        console.log("Can't connect to:", this.name);
         // TODO: send alert to the client
       }
       else{
-        console.log("Error in the connection", conn.name);
+        console.log("Error in the connection", this.name);
       }
-      conn.close_conn();
+      this.close_conn();
     };
 
   }
