@@ -22,6 +22,7 @@ class Graph {
     this._addEventsXAxis(config.x_zoom_btn[0], config.x_zoom_btn[1]);
     this._addEventsYAxis(config.y_zoom_btn, config.y_move_btn, config.y_home_btn);
     this._initLegend();
+    this._initTitle();
   }
 
   /**
@@ -140,6 +141,18 @@ class Graph {
   }
 
   /**
+   * Init an empty title
+   */
+  _initTitle(){
+    this.title = this.svg.append("text")
+        .attr("id", "graph_title")
+        .attr("x", (this.width / 2))
+        .attr("y", 0 - (this.margin.top / 2))
+        .attr("text-anchor", "middle");
+  }
+
+
+  /**
    * Connect the x axis buttons with the corresponding events
    */
   _addEventsXAxis(btn_dec, btn_inc){
@@ -162,19 +175,10 @@ class Graph {
    * Select the type of the graph
    */
   selectType(config){
-    if(!this._validateSelectParams(config)) return;
-
-    if(this.type === config.type) return;
-
-    if(this.type !== null){
-      // FIXME: make possible to configurate it with eeg data, and then with waves without reloading the page
-      return;
-    }
-
     this.nChannels = Number(config.nChannels); // HACK: copy by value
     this._initChannels(config.data, config.colors);
     this._setLegend(config.channelNames);
-    this._initLines();
+    this._setLineFunctions();
     this._setTitle(config.title);
     this.type = config.type;
   }
@@ -182,10 +186,10 @@ class Graph {
   /**
    * Initialize the d3 functions that return the channels in the data
    */
-  _initLines(){
+  _setLineFunctions(){
     this.lines = new Array(this.nChannels);
 
-    for(let i=0;i<this.nChannels;i++){
+    for(let i = 0; i < this.nChannels; i++){
       this.lines[i] = null; //HACK: start as null so actual assign below wont throw error
     }
 
@@ -215,6 +219,7 @@ class Graph {
       this.paths[i] = null;
     }
 
+    d3.selectAll("path.line").remove(); // flush previous
     this.paths.forEach((p, i) => {
       this.paths[i] = this.svg.append("g")
         .attr("clip-path", "url(#clip)")
@@ -231,6 +236,8 @@ class Graph {
    */
   _setLegend(channelNames){
     let graph = this; // NOTE: this is needed because there are calls to nested functions
+
+    $("#legend-form").empty(); // NOTE: drop old controllers
 
     // Add checkbox for each channel
     let ticksID = new Array(this.nChannels);
@@ -272,34 +279,29 @@ class Graph {
    * Set the title for the graph
    */
   _setTitle(title){
-    this.svg.append("text")
-        .attr("id", "graph_title")
-        .attr("x", (this.width / 2))
-        .attr("y", 0 - (this.margin.top / 2))
-        .attr("text-anchor", "middle")
-        .text(title);
+    this.title.text(title);
   }
 
   /**
    * Update the y axis
    */
   _updateYAxis(y1, y2){
-    if(y1 < y2){
-      this.y_min = Number(y1); // copy by value // HACK
-      this.y_max = Number(y2);
-      this.y_range.domain([y1, y2]);
-      this.svg.select(".y.axis").call(this.y_axis); // update svg
-    }
+    if(y1 >= y2) return;
+
+    this.y_min = Number(y1); // HACK: copy by value
+    this.y_max = Number(y2);
+    this.y_range.domain([y1, y2]);
+    this.svg.select(".y.axis").call(this.y_axis); // update svg
   }
 
   /**
    *
    */
   _updateXAxis(seconds){
-    if(seconds > 1){
-      this.n_secs = Number(seconds); // HACK: copy by value
-      $(this.secs_indicator).text(this.n_secs.toFixed(0));
-    }
+    if(seconds <= 1) return;
+
+    this.n_secs = Number(seconds); // HACK: copy by value
+    $(this.secs_indicator).text(this.n_secs.toFixed(0));
   }
 
   /**
@@ -344,14 +346,7 @@ class Graph {
    * @param {bool} up Direction of the move
    */
   moveYAxis(up){
-    let sign;
-
-    if(up){
-      sign = 1;
-    }
-    else{
-      sign = -1;
-    }
+    const sign = up ? 1 : -1;
 
     let y_min_new = this.y_min + sign*this.dy_move;
     let y_max_new = this.y_max + sign*this.dy_move;
@@ -364,39 +359,32 @@ class Graph {
    * @param {bool} increase increase or decrease the amount of seconds shown
    */
   zoomXAxis(increase){
-    let sign;
-    if(increase){
-      sign = 1;
-    }
-    else{
-      sign = -1;
-    }
+    const sign = increase ? 1 : -1;
     this._updateXAxis(this.n_secs + sign*this.dx_zoom);
   }
 
   /**
    * Update all the lines in the graph
+   * @param {Boolean} shift
    */
   update(data, shift=true) {
-    for(let i=0;i<this.nChannels;i++){
-      // this._update_line(data, this.paths[i], this.lines[i], this.plot_bools[i]);
-      if(this.plot_bools[i]){
-        this.paths[i].attr("d", this.lines[i](data))
-            .attr("transform", null)
-          .transition()
-            .duration(1000)
-            .ease("linear");
-      }
+    for(let i = 0; i < this.nChannels; i++){
+      if(!this.plot_bools[i]) continue;
+
+      this.paths[i].attr("d", this.lines[i](data))
+        .attr("transform", null)
+        .transition()
+        .duration(1000)
+        .ease("linear");
     }
 
-    // actualizar rango de tiempo
-    let rango = d3.extent(data, function(d) { return d[0]; });
-    // if(rango[0] + this.n_secs > rango[1]){ rango[1] = rango[0] + this.n_secs; } // Que el rango minimo sea n_secs
-    this.x_range.domain(rango);
+    let range = d3.extent(data, function(d) { return d[0]; });
+    // if(range[0] + this.n_secs > range[1]){ range[1] = range[0] + this.n_secs; } // Que el range minimo sea n_secs
+    this.x_range.domain(range);
 
-    this.svg.select(".x.axis").call(this.x_axis); // change the x axis
+    this.svg.select(".x.axis").call(this.x_axis);
 
-    if(shift){ // shift the data to fit in n_secs
+    if(shift){
       while(data[data.length-1][0] - data[0][0] > this.n_secs){
         data.shift();
       }
@@ -556,7 +544,6 @@ $(document).ready( function() {
     channelNames: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
     colors: ["black", "red", "blue", "green", "cyan"],
     title: 'EEG electrodes',
-    type: "eeg",
   }
 
   const wavesGraphConfig = {
@@ -565,7 +552,6 @@ $(document).ready( function() {
     channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
     colors: ["black", "red", "blue", "green", "cyan"],
     title: 'Waves',
-    type: "waves",
   }
 
   let graph = new Graph({

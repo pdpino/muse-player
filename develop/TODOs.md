@@ -3,8 +3,6 @@
 ## Next
 
 ## Client: Webpage
-* Fix: be able to change type of graph without reloading the page (flush legend, flush previous lines, etc)
-
 * Change variable names in `app.js` to CamelCase
 * `Connection` class should create html elements for the conn status
 * `Graph` class should create html elements for the axis buttons
