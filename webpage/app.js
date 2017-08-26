@@ -10,7 +10,7 @@ class Graph {
    */
   constructor(config) {
     // Assure that the config object is correct
-    if(this._fill_default_values(config) !== 0){
+    if(this._fillDefaultValues(config) !== 0){
       // missing arguments
       return;
     }
@@ -18,36 +18,36 @@ class Graph {
     // Save variables // HACK
     this.n_channels = Number(config.n_channels);
     this.secs_indicator = String(config.sec_x);
-    this._update_x_axis(config.n_secs);
+    this._updateXAxis(config.n_secs);
     this.y_min = Number(config.y_min);
     this.y_max = Number(config.y_max);
     this.y_min_home = Number(config.y_min);
     this.y_max_home = Number(config.y_max);
 
     // Create graph
-    this._create_empty_graph(config.container, config.width, config.height, config.title, config.x_ticks, config.y_ticks);
+    this._createEmptyGraph(config.container, config.width, config.height, config.title, config.x_ticks, config.y_ticks);
 
     // Set the line functions
-    this._set_lines();
+    this._initLines();
 
     // Init paths, bools and color for each channel
-    this._init_channels(config.data, config.colors);
+    this._initChannels(config.data, config.colors);
 
     // Set parameters to update the axis
-    this._set_axis_params(config.dx_zoom, config.dy_zoom, config.dy_move);
+    this._initAxisParams(config.dx_zoom, config.dy_zoom, config.dy_move);
 
     // Set the legend, and the proper events
-    this._set_legend(config.legend_container, config.ch_names);
+    this._initLegend(config.legend_container, config.ch_names);
 
     // Buttons to update axis
-    this._add_events_x_axis(config.x_zoom_btn[0], config.x_zoom_btn[1]);
-    this._add_events_y_axis(config.y_zoom_btn, config.y_move_btn, config.y_home_btn);
+    this._addEventsXAxis(config.x_zoom_btn[0], config.x_zoom_btn[1]);
+    this._addEventsYAxis(config.y_zoom_btn, config.y_move_btn, config.y_home_btn);
   }
 
   /**
    * Receive a configuration object, if a value is missing fill it with default
    */
-  _fill_default_values(config){
+  _fillDefaultValues(config){
     if(config.container === undefined){
       console.log("ERROR: Missing graph container");
       return 1;
@@ -108,7 +108,7 @@ class Graph {
    * @param {Number} y_ticks
    * @param {Number} n_secs Amount of seconds to plot in the x axis
    */
-  _create_empty_graph(container, w, h, title, x_ticks, y_ticks){
+  _createEmptyGraph(container, w, h, title, x_ticks, y_ticks){
     // Margin
     this.margin = {top: 40, right: 10, bottom: 30, left: 60};
     this.width = w - this.margin.left - this.margin.right;
@@ -160,7 +160,7 @@ class Graph {
    * Array of Arrays, each of the inner arrays is a moment in time, which is formed by:
    * [t, ch1, ch2, ch3, ..., chN], where 't' is the time, and the rest are the n channels
    */
-  _set_lines(){
+  _initLines(){
     this.lines = new Array(this.n_channels);
     for(let i=0;i<this.n_channels;i++){ this.lines[i] = null; } //HACK: start as null so actual assign wont throw error
     let graph = this;
@@ -176,7 +176,7 @@ class Graph {
   /**
    * Init the paths in the graph and an array of bools to show the lines
    */
-  _init_channels(data, colors){
+  _initChannels(data, colors){
     this.colors = colors; // REVIEW: copy?
 
     // Create path and bools for each channel
@@ -200,7 +200,7 @@ class Graph {
   /**
    * Paint the squares in the legend
    */
-  _set_legend(legend_container, ch_names){
+  _initLegend(legend_container, ch_names){
     // Crear panel para leyenda
     $(legend_container).append(
       $('<div>', {
@@ -277,7 +277,7 @@ class Graph {
   /**
    * Set amounts to update the axiss
    */
-  _set_axis_params(dx_zoom, dy_zoom, dy_move){
+  _initAxisParams(dx_zoom, dy_zoom, dy_move){
     this.dx_zoom = Number(dx_zoom); // HACK: copy by value
     this.dy_zoom = Number(dy_zoom);
     this.dy_move = Number(dy_move);
@@ -286,7 +286,7 @@ class Graph {
   /**
    * Update the y axis
    */
-  _update_y_axis(y1, y2){
+  _updateYAxis(y1, y2){
     if(y1 < y2){
       this.y_min = Number(y1); // copy by value // HACK
       this.y_max = Number(y2);
@@ -298,7 +298,7 @@ class Graph {
   /**
    *
    */
-  _update_x_axis(segundos){
+  _updateXAxis(segundos){
     if(segundos > 1){
       this.n_secs = Number(segundos); // HACK
       $(this.secs_indicator).text(this.n_secs.toFixed(0))
@@ -308,20 +308,20 @@ class Graph {
   /**
    * Connect the x axis buttons with the corresponding events
    */
-  _add_events_x_axis(btn_dec, btn_inc){
-    $(btn_dec).click(() => { this.zoom_x_axis(false); });
-    $(btn_inc).click(() => { this.zoom_x_axis(true); });
+  _addEventsXAxis(btn_dec, btn_inc){
+    $(btn_dec).click(() => { this.zoomXAxis(false); });
+    $(btn_inc).click(() => { this.zoomXAxis(true); });
   }
 
   /**
    * Connect the y axis buttons with the corresponding events
    */
-  _add_events_y_axis(btns_zoom, btns_move, btn_home){
-    $(btns_zoom[0]).click(() => { this.zoom_y_axis(false); });
-    $(btns_zoom[1]).click(() => { this.zoom_y_axis(true); });
-    $(btns_move[0]).click(() => { this.move_y_axis(false); });
-    $(btns_move[1]).click(() => { this.move_y_axis(true); });
-    $(btn_home).click(() => { this.home_y_axis(); });
+  _addEventsYAxis(btns_zoom, btns_move, btn_home){
+    $(btns_zoom[0]).click(() => { this.zoomYAxis(false); });
+    $(btns_zoom[1]).click(() => { this.zoomYAxis(true); });
+    $(btns_move[0]).click(() => { this.moveYAxis(false); });
+    $(btns_move[1]).click(() => { this.moveYAxis(true); });
+    $(btn_home).click(() => { this.homeYAxis(); });
   }
 
 
@@ -330,7 +330,7 @@ class Graph {
    * Zoom the y axis
    * @param {bool} out Direction of the zoom
    */
-  zoom_y_axis(out){
+  zoomYAxis(out){
     let sign_min;
     let sign_max;
 
@@ -353,21 +353,21 @@ class Graph {
       }
     }
 
-    this._update_y_axis(y_min_new, y_max_new);
+    this._updateYAxis(y_min_new, y_max_new);
   };
 
   /**
    * Set the y axis to the original values
    */
-  home_y_axis(){
-    this._update_y_axis(this.y_min_home, this.y_max_home);
+  homeYAxis(){
+    this._updateYAxis(this.y_min_home, this.y_max_home);
   }
 
   /**
    * Move the y axis range
    * @param {bool} up Direction of the move
    */
-  move_y_axis(up){
+  moveYAxis(up){
     let sign;
 
     if(up){
@@ -380,14 +380,14 @@ class Graph {
     let y_min_new = this.y_min + sign*this.dy_move;
     let y_max_new = this.y_max + sign*this.dy_move;
 
-    this._update_y_axis(y_min_new, y_max_new);
+    this._updateYAxis(y_min_new, y_max_new);
   }
 
   /**
    *
    * @param {bool} increase increase or decrease the amount of seconds shown
    */
-  zoom_x_axis(increase){
+  zoomXAxis(increase){
     let sign;
     if(increase){
       sign = 1;
@@ -395,15 +395,15 @@ class Graph {
     else{
       sign = -1;
     }
-    this._update_x_axis(this.n_secs + sign*this.dx_zoom);
+    this._updateXAxis(this.n_secs + sign*this.dx_zoom);
   }
 
   /**
    * Update all the lines in the graph
    */
-  update_graph(data, shift=true) {
+  update(data, shift=true) {
     for(let i=0;i<this.n_channels;i++){
-      // this._update_graph_line(data, this.paths[i], this.lines[i], this.plot_bools[i]);
+      // this._update_line(data, this.paths[i], this.lines[i], this.plot_bools[i]);
       if(this.plot_bools[i]){
         this.paths[i].attr("d", this.lines[i](data))
             .attr("transform", null)
@@ -429,10 +429,10 @@ class Graph {
 
 }
 
-let StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
+const StatusEnum = {OFF: 0, CONNECTING: 1, CONNECTED: 2, DISCONNECTED: 3};
 class Connection{
   /**
-   *
+   * Constructor
    * @param {String} url url to connect to
    * @param {String} status_text HTML id of the text of the connection message
    * @param {String} status_icon HTML id of the icon of the connection message
@@ -448,7 +448,7 @@ class Connection{
     // Status
     this.status_text = config.status_text;
     this.status_icon = config.status_icon;
-    this._set_status(StatusEnum.OFF);
+    this._setStatus(StatusEnum.OFF);
 
     // Stream
     this.stream = null;
@@ -460,14 +460,14 @@ class Connection{
   /**
    * Return a bool
    */
-  _is_connecting(){
+  _isConnecting(){
     return this.status === StatusEnum.CONNECTING;
   }
 
   /**
    * Return a bool
    */
-  _is_disconnected(){
+  _isDisconnected(){
     return this.status === StatusEnum.OFF || this.status === StatusEnum.DISCONNECTED;
   }
 
@@ -476,7 +476,7 @@ class Connection{
    * Set the status of the connection.
    * Set a number in the conn object, an icon and a text in the page
    */
-  _set_status(status){
+  _setStatus(status){
     let text = "";
     let icon = "";
     let color = "";
@@ -518,8 +518,8 @@ class Connection{
   /**
   * Close the connection
   */
-  close_conn(){
-    if(this._is_disconnected()){ // Ya esta desconectado
+  close(){
+    if(this._isDisconnected()){ // Ya esta desconectado
       return;
     }
 
@@ -532,7 +532,7 @@ class Connection{
     }
 
     // Change in screen
-    this._set_status(StatusEnum.DISCONNECTED);
+    this._setStatus(StatusEnum.DISCONNECTED);
 
     console.log("Connection closed with", this.name);
   }
@@ -540,43 +540,43 @@ class Connection{
   /**
    * Start a connection
    */
-  start_conn(){
-    if(!this._is_disconnected()){ // Is connecting or connected
+  start(){
+    if(!this._isDisconnected()){ // Is connecting or connected
       return;
     }
 
     if(this.stream !== null){
       if(this.stream.readyState === 1){ // Is already connected (but enum not updated)
         //States. 0: connecting, 1: ready, 2: closed
-        this._set_status(StatusEnum.CONNECTED);
+        this._setStatus(StatusEnum.CONNECTED);
         return;
       }
     }
 
-    this._set_status(StatusEnum.CONNECTING);
+    this._setStatus(StatusEnum.CONNECTING);
     this.stream = new EventSource(this.url);
 
     // Events
     this.stream.onopen = (e) => {
-      this._set_status(StatusEnum.CONNECTED);
+      this._setStatus(StatusEnum.CONNECTED);
       console.log("Connected:", this.name);
       // console.log("Opened");
     };
     // REVIEW: use a different event for start? redundant?
     // this.stream.addEventListener('start', (e) => {
-    //   this._set_status(StatusEnum.CONNECTED);
+    //   this._setStatus(StatusEnum.CONNECTED);
     //   console.log("Connected:", this.name);
     // }, false);
     this.stream.onmessage = this.recv_msg;
     this.stream.onerror = (e) => {
-      if(this._is_connecting()){
+      if(this._isConnecting()){
         console.log("Can't connect to:", this.name);
         // TODO: send alert to the client
       }
       else{
         console.log("Error in the connection", this.name);
       }
-      this.close_conn();
+      this.close();
     };
 
   }
@@ -584,24 +584,9 @@ class Connection{
 }
 
 /**
- * Initialize an empty array that holds data
- * @param {Number} n number of channels
- */
-function init_data(n){
-  let data = new Array(1);
-  data[0] = new Array(n+1); // +1 for the time, the rest are channels
-  for(let i=0;i<=n;i++){ data[0][i] = 0; } // init in 0
-  return data;
-}
-
-/**
  * Main process
  */
 $(document).ready( function() {
-  // TODO: buscar header y footer bootstrap
-
-
-
   let n_channels = 5;
   let waves = true; // HACK: select type hardcoded
   let channel_names, titulo, conn_name;
@@ -617,7 +602,7 @@ $(document).ready( function() {
   }
 
   let nchs = n_channels;
-  let data = init_data(nchs);
+  let data = initEmptyData(nchs);
   let graph = new Graph({
     container: "#graph_container",
     legend_container: '#legend_container',
@@ -662,7 +647,7 @@ $(document).ready( function() {
     }
 
     data.push(arr); // Push new data
-    graph.update_graph(data); // Update graph
+    graph.update(data); // Update graph
   };
 
   // EEG connection
@@ -675,11 +660,26 @@ $(document).ready( function() {
     });
 
   // Botones iniciar/cerrar conexion
-  $("#btn-start-conn").click(function(){ data = init_data(nchs); eeg_conn.start_conn() });
-  $("#btn-close-conn").click(function(){ eeg_conn.close_conn(); data = init_data(nchs); });
+  $("#btn-start-conn").click(function(){ data = initEmptyData(nchs); eeg_conn.start() });
+  $("#btn-close-conn").click(function(){ eeg_conn.close(); data = initEmptyData(nchs); });
 
 
-  eeg_conn.start_conn();
+  eeg_conn.start();
 
   console.log("All set");
 });
+
+/**
+ * Initialize an empty array that will hold data
+ * The data is an array of shape (n_points, n_channels), where each point is a sample in time
+ */
+function initEmptyData(n_channels){
+  let data = new Array(1); // Starts with one item
+  data[0] = new Array(n_channels + 1); // +1 for the time, the rest are channels
+
+  for(let i = 0; i <= n_channels; i++){
+    data[0][i] = 0; // init in 0
+  }
+
+  return data;
+}
