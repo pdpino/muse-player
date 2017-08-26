@@ -9,6 +9,8 @@ class Graph {
     if(!this._validateConstructorParams(config)) return;
 
     this.data = null;
+    this.isSet = false;
+
     this.legend_container = String(config.legend_container); // HACK: copy by value
     this.secs_indicator = String(config.sec_x);
     this._updateXAxis(config.n_secs);
@@ -171,24 +173,13 @@ class Graph {
   }
 
   /**
-   * Select the type of the graph
-   */
-  selectType(config){
-    this.nChannels = Number(config.nChannels); // HACK: copy by value
-    this._initChannels(config.colors);
-    this._setLegend(config.channelNames);
-    this._setLineFunctions();
-    this._setTitle(config.title);
-  }
-
-  /**
    * Initialize the d3 functions that return the channels in the data
    */
   _setLineFunctions(){
     this.lines = new Array(this.nChannels);
 
     for(let i = 0; i < this.nChannels; i++){
-      this.lines[i] = null; //HACK: start as null so actual assign below wont throw error
+      this.lines[i] = null; // HACK: start as null so actual assign below wont throw error
     }
 
     let graph = this; // NOTE: using arrow functions to call graphs won't work, because of nested functions
@@ -217,16 +208,15 @@ class Graph {
       this.paths[i] = null;
     }
 
-    d3.selectAll("path.line").remove(); // flush previous
+    d3.selectAll("path.line").remove();
+
     this.paths.forEach((p, i) => {
       this.paths[i] = this.svg.append("g")
         .attr("clip-path", "url(#clip)")
         .append("path")
         .attr("class", "line")
         .style("stroke", colorNames[i]);
-        // .attr("d", this.lines[i](data));
     });
-
   }
 
   /**
@@ -300,6 +290,19 @@ class Graph {
 
     this.n_secs = Number(seconds); // HACK: copy by value
     $(this.secs_indicator).text(this.n_secs.toFixed(0));
+  }
+
+  /**
+   * Select the type of the graph
+   */
+  selectType(config){
+    this.nChannels = Number(config.nChannels); // HACK: copy by value
+    this._initChannels(config.colors);
+    this._setLegend(config.channelNames);
+    this._setLineFunctions();
+    this._setTitle(config.title);
+
+    this.isSet = true;
   }
 
   /**
@@ -546,7 +549,6 @@ class Connection{
  */
 $(document).ready( function() {
   let graphConfig = null;
-  let isGraphSet = false;
 
   const eegGraphConfig = {
     nChannels: 5,
@@ -558,11 +560,11 @@ $(document).ready( function() {
   const wavesGraphConfig = {
     nChannels: 5,
     channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
-    colors: ["black", "red", "blue", "green", "cyan"],
+    colors: ["blue", "orange", "red", "green", "magenta"],
     title: 'Waves',
   }
 
-  let graph = new Graph({
+  const graph = new Graph({
     container: "#graph_container",
     legend_container: '#legend_container',
 
@@ -585,55 +587,51 @@ $(document).ready( function() {
     dy_move: 50
     });
 
-  let recvMsg = function(e){
-    if(!isGraphSet) return;
+  const stream = new Connection({
+      url: "http://localhost:8889/data/muse",
+      statusText: "#status-text",
+      statusIcon: "#status-icon",
+      recvMsg: function(e){
+                if(!graph.isSet) return;
 
-    let arr = e.data.split(",").map(parseFloat);
+                let arr = e.data.split(",").map(parseFloat);
 
-    if(arr[0] < 0) return; // Ignore negative time
+                if(arr[0] < 0) return; // Ignore negative time
 
-    // REVIEW: check arr.length == n channels
-    while(arr.length < graphConfig.nChannels + 1){ // Fill with 0s if received less channels
-      arr.push(0.0);
-    }
+                // REVIEW: check arr.length == n channels
+                while(arr.length < graphConfig.nChannels + 1){ // Fill with 0s if received less channels
+                  arr.push(0.0);
+                }
 
-    graph.update(arr);
-  };
+                graph.update(arr);
+              },
+      recvConfig: function(e){
+                    switch(e.data) {
+                      case "eeg":
+                        graphConfig = eegGraphConfig;
+                        break;
 
-  let recvConfig = function(e){
-    switch(e.data) {
-      case "eeg":
-        graphConfig = eegGraphConfig;
-        break;
+                      case "waves":
+                        graphConfig = wavesGraphConfig;
+                        break;
 
-      case "waves":
-        graphConfig = wavesGraphConfig;
-        break;
-
-      default:
-        console.log("Wrong type of graph received from server: ", e.data);
-        return;
-    }
-    graph.selectType(graphConfig);
-    graph.initEmptyData();
-    isGraphSet = true;
-  }
-
-  let stream = new Connection({
-    url: "http://localhost:8889/data/muse",
-    statusText: "#status-text",
-    statusIcon: "#status-icon",
-    recvMsg: recvMsg,
-    recvConfig
+                      default:
+                        console.log("Wrong type of graph received from server: ", e.data);
+                        return;
+                    }
+                    graph.selectType(graphConfig);
+                    graph.initEmptyData();
+                  },
     });
 
   $("#btn-start-conn").click( function(){
-    if(!isGraphSet) return;
+    if(!graph.isSet) return;
     graph.initEmptyData();
     stream.start();
   });
+
   $("#btn-close-conn").click( function(){
-    if(!isGraphSet) return;
+    if(!graph.isSet) return;
     stream.close();
     graph.initEmptyData();
   });

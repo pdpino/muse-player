@@ -3,13 +3,13 @@
 ## Next
 
 ## Client: Webpage
+* add axis labels
+* add marks in time (mark message)
 * Change variable names in `app.js` to CamelCase
 * `Connection` class should create html elements for the conn status
 * `Graph` class should create html elements for the axis buttons
 * `Graph` class should listen to scrolling to change zoom in graph
 * Prettier header and footer
-* add marks in time (mark message)
-* add axis labels
 
 ## Server: Python
 * Separate tf in submodules (convolution, sttft and common)
