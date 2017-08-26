@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"""Stream random simulated eeg data to client, used for debugging"""
+"""Stream random simulated eeg data to client, used for debugging.
+
+DEPRECATED: use stream_test.py instead"""
 
 from time import sleep, time
 from collections import deque
@@ -12,7 +14,7 @@ from flask_cors import CORS
 
 
 def create_parser():
-    """ Create the console arguments parser"""
+    """Create the console arguments parser."""
     parser = argparse.ArgumentParser(description='Send random data to client',
                         usage='%(prog)s [options]', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
