@@ -8,7 +8,7 @@ class Graph {
     // Assure that the config object is correct
     if(!this._validateConstructorParams(config)) return;
 
-    this.type = null;
+    this.data = null;
     this.legend_container = String(config.legend_container); // HACK: copy by value
     this.secs_indicator = String(config.sec_x);
     this._updateXAxis(config.n_secs);
@@ -151,7 +151,6 @@ class Graph {
         .attr("text-anchor", "middle");
   }
 
-
   /**
    * Connect the x axis buttons with the corresponding events
    */
@@ -176,11 +175,10 @@ class Graph {
    */
   selectType(config){
     this.nChannels = Number(config.nChannels); // HACK: copy by value
-    this._initChannels(config.data, config.colors);
+    this._initChannels(config.colors);
     this._setLegend(config.channelNames);
     this._setLineFunctions();
     this._setTitle(config.title);
-    this.type = config.type;
   }
 
   /**
@@ -208,7 +206,7 @@ class Graph {
    * @param {Array} data
    * @param {Array} colorNames
    */
-  _initChannels(data, colorNames){
+  _initChannels(colorNames){
     this.colorNames = colorNames.slice(); // copy by value
 
     this.paths = new Array(this.nChannels); // Lines in svg
@@ -305,6 +303,18 @@ class Graph {
   }
 
   /**
+   * Initialize the data as an empty array. shape: (n_points, nChannels + 1)
+   */
+  initEmptyData(nChannels){
+    this.data = new Array(1);
+    this.data[0] = new Array(this.nChannels + 1);
+
+    for(let i = 0; i <= this.nChannels; i++){
+      this.data[0][i] = 0;
+    }
+  }
+
+  /**
    * Zoom the y axis
    * @param {bool} out Direction of the zoom
    */
@@ -367,26 +377,27 @@ class Graph {
    * Update all the lines in the graph
    * @param {Boolean} shift
    */
-  update(data, shift=true) {
+  update(new_data, shift=true) {
+    this.data.push(new_data);
     for(let i = 0; i < this.nChannels; i++){
       if(!this.plot_bools[i]) continue;
 
-      this.paths[i].attr("d", this.lines[i](data))
+      this.paths[i].attr("d", this.lines[i](this.data))
         .attr("transform", null)
         .transition()
         .duration(1000)
         .ease("linear");
     }
 
-    let range = d3.extent(data, function(d) { return d[0]; });
+    let range = d3.extent(this.data, function(d) { return d[0]; });
     // if(range[0] + this.n_secs > range[1]){ range[1] = range[0] + this.n_secs; } // Que el range minimo sea n_secs
     this.x_range.domain(range);
 
     this.svg.select(".x.axis").call(this.x_axis);
 
     if(shift){
-      while(data[data.length-1][0] - data[0][0] > this.n_secs){
-        data.shift();
+      while(this.data[this.data.length-1][0] - this.data[0][0] > this.n_secs){
+        this.data.shift();
       }
     }
   }
@@ -535,11 +546,9 @@ class Connection{
  */
 $(document).ready( function() {
   let graphConfig = null;
-  let data = null;
   let isGraphSet = false;
 
   const eegGraphConfig = {
-    data: data,
     nChannels: 5,
     channelNames: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
     colors: ["black", "red", "blue", "green", "cyan"],
@@ -547,7 +556,6 @@ $(document).ready( function() {
   }
 
   const wavesGraphConfig = {
-    data: data,
     nChannels: 5,
     channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
     colors: ["black", "red", "blue", "green", "cyan"],
@@ -589,8 +597,7 @@ $(document).ready( function() {
       arr.push(0.0);
     }
 
-    data.push(arr);
-    graph.update(data);
+    graph.update(arr);
   };
 
   let recvConfig = function(e){
@@ -607,8 +614,8 @@ $(document).ready( function() {
         console.log("Wrong type of graph received from server: ", e.data);
         return;
     }
-    data = initEmptyData(graphConfig.nChannels);
     graph.selectType(graphConfig);
+    graph.initEmptyData();
     isGraphSet = true;
   }
 
@@ -622,35 +629,19 @@ $(document).ready( function() {
 
   $("#btn-start-conn").click( function(){
     if(!isGraphSet) return;
-    data = initEmptyData(graphConfig.nChannels);
+    graph.initEmptyData();
     stream.start();
   });
   $("#btn-close-conn").click( function(){
     if(!isGraphSet) return;
     stream.close();
-    data = initEmptyData(graphConfig.nChannels);
+    graph.initEmptyData();
   });
 
   stream.start();
 
   console.log("All set");
 });
-
-/**
- * Initialize an empty array that will hold data
- * @param {Number} nChannels Amount of channels
- * @return {Array} shape (n_points, nChannels + 1); starts with 1 0-filled item
- */
-function initEmptyData(nChannels){
-  let emptyData = new Array(1);
-  emptyData[0] = new Array(nChannels + 1);
-
-  for(let i = 0; i <= nChannels; i++){
-    emptyData[0][i] = 0;
-  }
-
-  return emptyData;
-}
 
 /**
  * Return an array of randomly generated colors
