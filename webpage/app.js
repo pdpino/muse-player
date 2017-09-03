@@ -11,13 +11,13 @@ class Graph {
     this.data = null;
     this.isSet = false;
 
-    this.legend_container = String(config.legend_container); // HACK: copy by value
-    this.secs_indicator = String(config.sec_x);
+    this.legend_container = config.legend_container;
+    this.secs_indicator = config.sec_x;
     this._updateXAxis(config.n_secs);
-    this.y_min = Number(config.y_min);
-    this.y_max = Number(config.y_max);
-    this.y_min_home = Number(config.y_min);
-    this.y_max_home = Number(config.y_max);
+    this.y_min = config.y_min;
+    this.y_max = config.y_max;
+    this.y_min_home = config.y_min;
+    this.y_max_home = config.y_max;
 
     this._initEmptyGraph(config.container, config.width, config.height, config.xTicks, config.yTicks);
     this._initAxisParams(config.dx_zoom, config.dy_zoom, config.dy_move);
@@ -110,9 +110,9 @@ class Graph {
    * Set amounts to update the axis
    */
   _initAxisParams(dx_zoom, dy_zoom, dy_move){
-    this.dx_zoom = Number(dx_zoom); // HACK: copy by value
-    this.dy_zoom = Number(dy_zoom);
-    this.dy_move = Number(dy_move);
+    this.dx_zoom = dx_zoom;
+    this.dy_zoom = dy_zoom;
+    this.dy_move = dy_move;
   }
 
   /**
@@ -231,8 +231,7 @@ class Graph {
     let ticksID = new Array(this.nChannels);
     for(let i = 0; i < this.nChannels; i++){
       ticksID[i] = "ch".concat(String(i)).concat("-tick");
-      const inputTag = "<input id='".concat(String(ticksID[i]))
-        .concat("' type='checkbox' checked/>");
+      const inputTag = "<input id='".concat(ticksID[i]).concat("' type='checkbox' checked/>");
 
       // Add square with color
       $("#legend-form").append(
@@ -276,8 +275,8 @@ class Graph {
   _updateYAxis(y1, y2){
     if(y1 >= y2) return;
 
-    this.y_min = Number(y1); // HACK: copy by value
-    this.y_max = Number(y2);
+    this.y_min = y1;
+    this.y_max = y2;
     this.y_range.domain([y1, y2]);
     this.svg.select(".y.axis").call(this.y_axis); // update svg
   }
@@ -288,7 +287,7 @@ class Graph {
   _updateXAxis(seconds){
     if(seconds <= 1) return;
 
-    this.n_secs = Number(seconds); // HACK: copy by value
+    this.n_secs = seconds;
     $(this.secs_indicator).text(this.n_secs.toFixed(0));
   }
 
@@ -296,7 +295,7 @@ class Graph {
    * Select the type of the graph
    */
   selectType(config){
-    this.nChannels = Number(config.nChannels); // HACK: copy by value
+    this.nChannels = config.nChannels;
     this._initChannels(config.colors);
     this._setLegend(config.channelNames);
     this._setLineFunctions();
