@@ -133,7 +133,7 @@ def main():
     marks = []
     messages = []
 
-    basic.report("Started receiving data", level=0)
+    print("Started receiving data")
     if args.time is None:
         # Wait for a buffer zone
         sleep(1)
@@ -177,7 +177,7 @@ def main():
             }
 
         try:
-            basic.report("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):", level=0)
+            print("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):")
             while True:
                 # Mark time
                 message = input("\tcmd: ")
@@ -197,15 +197,15 @@ def main():
             basic.mute_ctrlc() # So the finishing process isn't interrupted
     else:
         basic.mute_ctrlc()
-        basic.report("for (aprox) {} seconds", args.time, level=1)
+        print("\tfor (aprox) {} seconds".format(args.time))
         sleep(args.time) # HACK: its aprox time
 
-    print("Stopping muse") # DEBUG
     muse.stop()
-    print("Disconnecting muse") # DEBUG
-    muse.disconnect()
-    basic.report("Stopped receiving muse data", level=0)
-    print("muse out") # DEBUG
+    print("Muse stopped") # DEBUG
+    muse.disconnect() # FIXME: sometimes a thread gets stuck here
+    print("Muse disconnected") # DEBUG
+    
+    print("Stopped receiving muse data")
 
     # # DEBUG: save a file with the handles (debugging muse bluetooth)
     # df = pd.DataFrame(muse.lista)
@@ -218,9 +218,18 @@ def main():
     basic.report("Received data for {}", data_buffer.get_running_time(), level=1)
 
     if args.save:
-        data_buffer.save_csv(args.fname, subfolder=args.subfolder)
+        # Save eeg data
+        eeg = data_buffer.get_eeg()
+        data.save_eeg(eeg, args.fname, args.subfolder)
+
+        # Save marks
         marks = data_buffer.normalize_marks(marks)
         data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
+
+        # Save feelings, if any
+        if type(data_buffer) is engine.WaveBuffer:
+            feelings = data_buffer.get_feelings()
+            data.save_feelings(feelings, args.fname, args.subfolder)
 
     return 0
 

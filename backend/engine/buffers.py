@@ -5,7 +5,7 @@ import threading
 import numpy as np
 import pandas as pd
 import basic
-from backend import data, tf, info
+from backend import tf, info
 from . import calibrators as crs, yielders
 
 class DataBuffer(object):
@@ -46,17 +46,17 @@ class DataBuffer(object):
         """Stop collecting data to detect emotions."""
         return False
 
-    def incoming_data(self, timestamps, data):
+    def incoming_data(self, timestamps, new_data):
         """Process the incoming data."""
         # Add to full lists
         with self.lock_l:
             self._full_time.append(timestamps)
-            self._full_data.append(data)
+            self._full_data.append(new_data)
 
         # Add to queue
         with self.lock_q:
             self._q_time.append(timestamps)
-            self._q_data.append(data)
+            self._q_data.append(new_data)
 
     def data_generator(self, n_data=None):
         """Generator to stream the data.
@@ -110,34 +110,29 @@ class EEGBuffer(DataBuffer):
         """Receive a marks list (timestamps), normalize the time."""
         return np.array(marks) - self._full_time[0][0]
 
-    def _normalize_time(self):
+    def _normalize_time(self, times=None):
         """Concatenate and return its timestamps."""
-
-        # Concat y normalizar timestamps
-        timestamps = np.concatenate(self._full_time)
+        timestamps = np.concatenate(times or self._full_time)
         return timestamps - timestamps[0]
 
     def _normalize_data(self):
         """Return the data concatenated"""
         return np.concatenate(self._full_data, 1).T
 
-    def save_csv(self, fname, subfolder=None, suffix=None):
-        """Preprocess the data and save it to a csv.
+    def get_eeg(self):
+        """Preprocess the eeg data and return it as a pd.DataFrame.
 
         It doesn't affect the saved data, creates copies"""
         if len(self._full_time) == 0 or len(self._full_data) == 0:
-            return
+            return None
 
-        # Concatenar data
         timestamps = self._normalize_time()
         eeg_data = self._normalize_data()
 
-        # Juntar en dataframe
-        res = pd.DataFrame(data=eeg_data, columns=info.get_chs_muse(aux=True))
-        res[info.timestamps_column] = timestamps
+        eeg_df = pd.DataFrame(data=eeg_data, columns=info.get_chs_muse(aux=True))
+        eeg_df[info.colname_timestamps] = timestamps
 
-        # Guardar a csv
-        data.save_eeg(res, fname, subfolder, suffix)
+        return eeg_df
 
 class WaveBuffer(EEGBuffer):
     """Buffer to stream waves data (alpha, beta, etc)."""
@@ -181,6 +176,10 @@ class WaveBuffer(EEGBuffer):
                     test_population=test_population,
                     limit_population=waves_freq*feeling_interval)
 
+        self.levels_times = []
+        self.levels_relaxation = []
+        self.levels_concentration = []
+
     def start_calibrating(self):
         """Set the status to start recording calibrating data."""
         if not self.is_stream_connected:
@@ -208,14 +207,14 @@ class WaveBuffer(EEGBuffer):
             print("You must calibrate the data before collecting") # REFACTOR: error msg
             return False
 
-    def incoming_data(self, timestamps, data):
+    def incoming_data(self, timestamps, new_data):
         """Override the method for incoming data."""
         # Add eeg to full lists
         with self.lock_l:
             self._full_time.append(timestamps)
-            self._full_data.append(data)
+            self._full_data.append(new_data)
 
-        n_chs, n_data = data.shape
+        n_chs, n_data = new_data.shape
 
         # Add data to buffer array
         with self._lock_b:
@@ -241,7 +240,7 @@ class WaveBuffer(EEGBuffer):
 
             # Copy the new data to buffer
             self._buffer[0, self._end:new_end] = timestamps # Copy time
-            self._buffer[1:, self._end:new_end] = data # Copy data
+            self._buffer[1:, self._end:new_end] = new_data # Copy data
             self._end = new_end # Move end
 
     def data_generator(self):
@@ -273,7 +272,7 @@ class WaveBuffer(EEGBuffer):
             self._lock_b.release()
 
             # Normalize time
-            t -= t_init
+            t_normalized = t - t_init
 
             # Calculate TF
             power = tf.apply_fft(d) # shape: (n_chs, n_freqs)
@@ -284,9 +283,25 @@ class WaveBuffer(EEGBuffer):
             # Detect emotion
             feeling = self.feeler.feel(power)
 
-            # DEBUG: print, not yield
             if not feeling is None:
-                print(feeling)
+                # print(feeling) # DEBUG
+                self.levels_times.append(t)
+                self.levels_relaxation.append(feeling[0])
+                self.levels_concentration.append(feeling[1])
 
-            # # Get waves
-            yield from self._yielder.yield_function(t, power)
+            # Yield waves
+            yield from self._yielder.yield_function(t_normalized, power)
+
+    def get_feelings(self):
+        """Return a pd.DataFrame with the feelings. Not thread safe"""
+        if len(self.levels_times) == 0:
+            basic.perror("get_feelings(), No feelings found")
+
+        timestamps = np.array(self.levels_times) - self._full_time[0][0]
+
+        feelings_df = pd.DataFrame()
+        feelings_df[info.colname_timestamps] = timestamps
+        feelings_df[info.colname_relaxation] = self.levels_relaxation
+        feelings_df[info.colname_concentration] = self.levels_concentration
+
+        return feelings_df

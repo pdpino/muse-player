@@ -10,6 +10,7 @@ class FileType(Enum):
     raw = 1
     waves = 2
     marks = 3
+    feelings = 4
 
     def __str__(self):
         if self == FileType.raw:
@@ -18,6 +19,8 @@ class FileType(Enum):
             return "waves"
         elif self == FileType.marks:
             return "marks"
+        elif self == FileType.feelings:
+            return "feelings"
         else:
             return ""
 
@@ -33,18 +36,15 @@ class DumpFileHandler(basic.FileHandler):
 
     @classmethod
     def get_subfolder(cls, tipo):
-        """Return the folder."""
         return str(tipo)
 
     @classmethod
     def get_fname(cls, name, subfolder=None, suffix=None, tipo=FileType.raw):
-        """Return the vocabulary full filename."""
         subfolder_type = cls.get_subfolder(tipo)
         return cls._get_fname(name, folder=[subfolder_type, subfolder], suffix=suffix, ext=cls.ext)
 
     @classmethod
     def assure_folder(cls, subfolder, tipo):
-        """Assure the existence of a folder."""
         cls._assure_folder(cls.get_subfolder(tipo), subfolder)
 
 def _cmp_chs(real_chs, wanted_chs):
@@ -76,7 +76,7 @@ def load_eeg(channels, name, subfolder=None, suffix=None):
 
     # Assure channels in columns
     channels = _cmp_chs(df.columns, channels)
-    times = df[info.timestamps_column]
+    times = df[info.colname_timestamps]
     df = df[channels]
 
     return times, df, channels
@@ -128,8 +128,6 @@ def copy_marks(name1, name2):
 
     shutil.copyfile(fname1, fname2)
 
-
-
 def load_waves(name, channel, subfolder=None):
     """Read a waves file."""
     fname = DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=FileType.waves)
@@ -153,3 +151,32 @@ def save_waves(power, name, channel, subfolder=None):
 def exist_waves(name, channel, subfolder=None):
     """Boolean indicating if waves file exists."""
     return os.path.isfile(DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=FileType.waves))
+
+def load_feelings(name, subfolder=None, suffix=None):
+    """Read feelings data from csv, assure the channels and return the dataframe"""
+    fname = DumpFileHandler.get_fname(name, subfolder, suffix, tipo=FileType.feelings)
+
+    try:
+        df = pd.read_csv(fname, index_col=0)
+        print("Feelings loaded from file: {}".format(fname))
+    except FileNotFoundError:
+        basic.perror("The file {} wasn't found".format(fname))
+
+    # Assure channels in columns
+    channels = info.get_feelings_colnames()
+    channels = _cmp_chs(df.columns, channels)
+    times = df[info.colname_timestamps]
+    df = df[channels]
+
+    return times, df
+
+def save_feelings(df, name, subfolder=None, suffix=None):
+    """Save a feelings dataframe to a .csv"""
+    if df is None:
+        return
+        
+    DumpFileHandler.assure_folder(subfolder, FileType.feelings)
+    fname = DumpFileHandler.get_fname(name, subfolder, suffix, tipo=FileType.feelings)
+
+    df.to_csv(fname, float_format='%f')
+    print("Feelings saved to file: {}".format(fname))

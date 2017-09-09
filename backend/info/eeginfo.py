@@ -1,6 +1,6 @@
 """Info about eeg data."""
 
-timestamps_column = 'timestamps'
+colname_timestamps = 'timestamps'
 
 def get_chs_muse(aux):
     """Get the channel names in muse order. aux indicates if include auxiliary channel"""
