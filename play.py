@@ -207,7 +207,7 @@ def main():
     basic.report("Stopped receiving muse data", level=0)
     print("muse out") # DEBUG
 
-    # # DEBUG: save a file with the handles
+    # # DEBUG: save a file with the handles (debugging muse bluetooth)
     # df = pd.DataFrame(muse.lista)
     #
     # col0 = df.columns[0]

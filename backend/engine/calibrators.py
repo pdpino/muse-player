@@ -138,8 +138,8 @@ class FeelCalculator(WaveCalibrator):
         super().__init__()
 
         # Calibrate objects # start empty
-        self.collect_data = None
-        self.data_counter = 0
+        self.baseline_data = None
+        self.baseline_counter = 0
 
         # Alias for the function
         self.feel = self.calibrate
@@ -152,17 +152,16 @@ class FeelCalculator(WaveCalibrator):
         # What does the class do
         self._what_does = "collecting"
 
-        # Choose function to test
-        self._test = self._test_population if test_population else self._test_one
-
+        self.relax = FeelAccumulator(test_population)
+        self.concentrate = FeelAccumulator(test_population)
 
     def _return_empty_feel(self):
         return None
 
     def _start(self, power):
         # Signal has been received, start variables
-        self.collect_data = []
-        self.data_counter = 0
+        self.baseline_data = []
+        self.baseline_counter = 0
 
         # Change status to start calibrating in the next iteration
         self._set_status(WaveCalibStatus.Calibrating)
@@ -171,29 +170,25 @@ class FeelCalculator(WaveCalibrator):
 
     def _calibrating(self, power):
         # Add data to the array
-        self.collect_data.append(power)
-        self.data_counter += 1
+        self.baseline_data.append(power)
+        self.baseline_counter += 1
 
         return self._return_empty_feel()
 
     def _stop(self, power):
         # Average the collected data
-        if self.data_counter > 0:
+        if self.baseline_counter > 0:
             # data as array
-            all_data = np.array(self.collect_data) # shape: (time, n_chs, n_freqs)
+            all_data = np.array(self.baseline_data) # shape: (time, n_chs, n_freqs)
 
-            # Flattened data for alpha in one channel # HACK: channel and wave hardcoded
-            flat_data = all_data[:, 0, info.get_freqs_filter(self.arr_freqs, 8, 13)].flatten()
+            # Flattened data # HACK: channels and waves hardcoded
+            flat_alpha = all_data[:, 0::3, info.get_freqs_filter(self.arr_freqs, 8, 13)].flatten()
+            flat_beta = all_data[:, 1:3, info.get_freqs_filter(self.arr_freqs, 13, 30)].flatten()
 
-            # Fit gaussian
-            self.fit_mu, self.fit_sd = norm.fit(flat_data)
-            self.real_mu = np.mean(flat_data)
-            real_var = np.var(flat_data)
-            self.real_var_by_n = real_var / len(flat_data)
+            self.relax.add_base(flat_alpha)
+            self.concentrate.add_base(flat_beta)
 
-
-            # New queue to accumulate data
-            self.accumulated = []
+            self.accumulated = 0
 
             self._set_status(WaveCalibStatus.Yes)
         else:
@@ -208,36 +203,72 @@ class FeelCalculator(WaveCalibrator):
 
     def _yes(self, power):
         """Return the data once the calibrating time has passed."""
-        # Get waves
-        alpha = tf.get_wave(power, self.arr_freqs, 8, 13) # HACK: alpha wave hardcoded
-        # alpha has shape: (n_chs, )
+        # Get waves # HACK: waves hardcoded
+        alpha = tf.get_wave(power, self.arr_freqs, 8, 13) # alpha has shape: (n_chs, )
+        beta = tf.get_wave(power, self.arr_freqs, 13, 30)
 
-        # grab a channel
-        alpha = alpha[0] # HACK: hardcoded
+        # grab channels # HACK: channels hardcoded
+        alpha1 = alpha[0] # ear channels
+        alpha2 = alpha[3]
+        beta1 = beta[1] # forehead channels
+        beta2 = beta[2]
 
         # Accumulate
-        self.accumulated.append(alpha)
+        self.relax.accumulate_data(alpha1, alpha2)
+        self.concentrate.accumulate_data(beta1, beta2)
+        self.accumulated += 1
 
-        if len(self.accumulated) > self._limit_population:
+        if self.accumulated > self._limit_population:
             # Hypothesis test
-            statistic = self._test()
+            current_relax = self.relax.test()
+            current_concentrate = self.concentrate.test()
 
-            # Empty list
-            self.accumulated = []
+            self.relax.reset_data()
+            self.concentrate.reset_data()
 
-            return statistic
+            # Restart
+            self.accumulated = 0
+
+            return [current_relax, current_concentrate]
         else:
             return self._return_empty_feel()
 
+class FeelAccumulator(object):
+    """Accumulates feeling information."""
+
+    def __init__(self, test_population=False):
+        self.test = self._test_one if not test_population else self._test_population
+
+        self.reset_data()
+
+    def add_base(self, base_data):
+        """Add baseline data for that feeling."""
+        # Fit gaussian # for a regular hypothesis test
+        self.fit_mu, self.fit_sd = norm.fit(base_data)
+
+        # Save for poblations test
+        self.real_mu = np.mean(base_data)
+        self.real_var_by_n = np.var(base_data) / len(base_data)
+
+    def accumulate_data(self, *new_data):
+        self.accumulated_data.extend([*new_data])
+        self.accumulated_counter += 1
+
+    def reset_data(self):
+        self.accumulated_data = []
+        self.accumulated_counter = 0
+
     def _test_one(self):
-        """Perform an hypothesis test for the new population (self.accumulated) vs the collected data."""
-        numerator = np.mean(self.accumulated) - self.fit_mu
-        denominator = self.fit_sd/np.sqrt(len(self.accumulated))
-        return numerator / denominator
+        """Perform an hypothesis test for the new population (self.accumulated_data) vs the collected data."""
+        numerator = np.mean(self.accumulated_data) - self.fit_mu
+        denominator = self.fit_sd/np.sqrt(self.accumulated_counter)
+        statistic = numerator / denominator
+        return statistic
 
     def _test_population(self):
-        """Perform a hypothesis test between the new population (self.accumulated) and the collected population."""
-        acum_var_by_n = np.var(self.accumulated)/len(self.accumulated)
-        numerator = np.mean(self.accumulated) - self.real_mu
+        """Perform a hypothesis test between the new population (self.accumulated_data) and the collected population."""
+        acum_var_by_n = np.var(self.accumulated_data) / self.accumulated_counter
+        numerator = np.mean(self.accumulated_data) - self.real_mu
         denominator = np.sqrt(self.real_var_by_n + acum_var_by_n)
-        return numerator / denominator
+        statistic = numerator / denominator
+        return statistic
