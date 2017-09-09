@@ -142,15 +142,17 @@ class EEGBuffer(DataBuffer):
 class WaveBuffer(EEGBuffer):
     """Buffer to stream waves data (alpha, beta, etc)."""
 
-    def __init__(self, name="", window=256, step=25, srate=256):
+    def __init__(self, name="", window=256, step=25, srate=256, test_population=False, feeling_interval=1):
         """Initialize."""
         super().__init__(name, maxsize=None, yield_function=None)
 
-        # TODO: delete queue and yielder (so they don't waste space)
+        # TODO: delete queue and yielder created in super() (so they don't waste space)
 
+        # This class needs a client to work fine
+        self.is_stream_connected = False
 
         # Buffer # HACK: 12 samples and 6 (5chs + time) hardcoded
-        self._size_buffer = 12*1000 # TODO: define adecuate value
+        self._size_buffer = 12*1000 # HACK: define adecuate value (instead of 1000)
         self._buffer = np.zeros((6, self._size_buffer))
 
         # Pointers to the buffer
@@ -165,8 +167,7 @@ class WaveBuffer(EEGBuffer):
         self.step = step
 
         # Status of the wave (about calibration)
-        self.calibrator = crs.WaveDivider()
-        # REVIEW: move calibrator to base class DataBuffer?
+        self.calibrator = crs.WaveDivider() # REVIEW: move calibrator to base class DataBuffer?
 
         # Array of frequencies
         arr_freqs = tf.get_arr_freqs(window, srate)
@@ -175,10 +176,16 @@ class WaveBuffer(EEGBuffer):
         self._yielder = yielders.WaveYielder(np.array(arr_freqs))
 
         # Feel indicator
-        self.feeler = crs.FeelCalculator(np.array(arr_freqs)) # copy
+        waves_freq = int(window/step)
+        self.feeler = crs.FeelCalculator(np.array(arr_freqs),
+                    test_population=test_population,
+                    limit_population=waves_freq*feeling_interval)
 
     def start_calibrating(self):
         """Set the status to start recording calibrating data."""
+        if not self.is_stream_connected:
+            print("Can't start calibrating if it isn't streaming") # REFACTOR: error msg
+            return False
         return self.calibrator.start_calibrating()
 
     def stop_calibrating(self):
@@ -187,11 +194,19 @@ class WaveBuffer(EEGBuffer):
 
     def start_collecting(self):
         """Start collecting baseline data to detect emotions."""
-        return self.feeler.start_calibrating()
+        if self.calibrator.is_calibrated():
+            return self.feeler.start_calibrating()
+        else:
+            print("You must calibrate the data before collecting") # REFACTOR: error msg
+            return False
 
     def stop_collecting(self):
         """Stop collecting data to detect emotions."""
-        return self.feeler.stop_calibrating()
+        if self.calibrator.is_calibrated():
+            return self.feeler.stop_calibrating()
+        else:
+            print("You must calibrate the data before collecting") # REFACTOR: error msg
+            return False
 
     def incoming_data(self, timestamps, data):
         """Override the method for incoming data."""
@@ -231,6 +246,8 @@ class WaveBuffer(EEGBuffer):
 
     def data_generator(self):
         """Generator to stream the data."""
+
+        self.is_stream_connected = True
 
         yield "event: config\ndata: waves\n\n"
 
@@ -272,4 +289,4 @@ class WaveBuffer(EEGBuffer):
                 print(feeling)
 
             # # Get waves
-            # yield from self._yielder.yield_function(t, power)
+            yield from self._yielder.yield_function(t, power)

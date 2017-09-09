@@ -14,7 +14,7 @@ class WaveCalibStatus(Enum):
     Yes = 4 # The baseline is already saved and the data is being normalized
 
 class WaveCalibrator(object):
-    """Provides functions to calibrate data."""
+    """Abstract class to calibrate data."""
 
     def __init__(self):
         # Functions to call
@@ -29,6 +29,9 @@ class WaveCalibrator(object):
         # Status
         self._lock_s = threading.Lock()
         self._status = WaveCalibStatus.No
+
+        # What do the class do
+        self._what_does = "calibrating"
 
     def _set_status(self, new_status):
         """Wrapper to change the status of the calibrator."""
@@ -52,10 +55,13 @@ class WaveCalibrator(object):
         return power
 
     def _yes(self, power):
-        return 10*np.log10(power/self.calib_arr)
+        return power
 
     def _no(self, power):
         return power
+
+    def is_calibrated(self):
+        return self._get_status() == WaveCalibStatus.Yes
 
     def calibrate(self, power):
         """Public method to call in each iteration, it will be decided what to do with the power matrix according to the status."""
@@ -63,8 +69,12 @@ class WaveCalibrator(object):
 
     def start_calibrating(self):
         """Set start calibrating."""
-        self._set_status(WaveCalibStatus.Start)
-        return True
+        if self._get_status() == WaveCalibStatus.No:
+            self._set_status(WaveCalibStatus.Start)
+            return True
+        else:
+            print("Can't start calibrating again") # REFACTOR: error msg
+            return False
 
     def stop_calibrating(self):
         """Set stop calibrating."""
@@ -72,10 +82,11 @@ class WaveCalibrator(object):
             self._set_status(WaveCalibStatus.Stop)
             return True
         else:
+            print("Can't stop {} if you are not {}!".format(self._what_does, self._what_does))
             return False
 
 class WaveDivider(WaveCalibrator):
-    """."""
+    """Provides calibration dividing data by a baseline period."""
 
     def __init__(self):
         super().__init__()
@@ -111,18 +122,21 @@ class WaveDivider(WaveCalibrator):
         return power
 
     def _yes(self, power):
-        """Return the data once the calibrating time has passed."""
-        # Use baseline data to normalize
+        """Return the data divided by baseline."""
         return 10*np.log10(power/self.calib_arr)
 
     def _no(self, power):
         return power
 
 class FeelCalculator(WaveCalibrator):
-    """."""
+    """Collect data and calculate feeling from new data comparting with the old data."""
 
-    def __init__(self, arr_freqs):
+    def __init__(self, arr_freqs, test_population=False, limit_population=10):
+        """Constructor.
+
+        limit_population -- limit the amount of data in each interval"""
         super().__init__()
+
         # Calibrate objects # start empty
         self.collect_data = None
         self.data_counter = 0
@@ -132,6 +146,15 @@ class FeelCalculator(WaveCalibrator):
 
         # List of frequencies
         self.arr_freqs = arr_freqs
+
+        self._limit_population = limit_population
+
+        # What does the class do
+        self._what_does = "collecting"
+
+        # Choose function to test
+        self._test = self._test_population if test_population else self._test_one
+
 
     def _return_empty_feel(self):
         return None
@@ -156,38 +179,65 @@ class FeelCalculator(WaveCalibrator):
     def _stop(self, power):
         # Average the collected data
         if self.data_counter > 0:
-            all_data = np.array(self.collect_data) # data as array # shape: (time, n_chs, n_freqs)
+            # data as array
+            all_data = np.array(self.collect_data) # shape: (time, n_chs, n_freqs)
 
             # Flattened data for alpha in one channel # HACK: channel and wave hardcoded
             flat_data = all_data[:, 0, info.get_freqs_filter(self.arr_freqs, 8, 13)].flatten()
 
             # Fit gaussian
-            self.mu, self.sd = norm.fit(flat_data)
+            self.fit_mu, self.fit_sd = norm.fit(flat_data)
+            self.real_mu = np.mean(flat_data)
+            real_var = np.var(flat_data)
+            self.real_var_by_n = real_var / len(flat_data)
 
-            # get effective divisor
-            self.sd /= np.sqrt(len(flat_data))
 
             # New queue to accumulate data
             self.accumulated = []
 
             self._set_status(WaveCalibStatus.Yes)
         else:
+            print("No data found to collect, try collecting again") # REFACTOR: warn msg
             self._set_status(WaveCalibStatus.No)
 
         return self._return_empty_feel()
 
-    def _yes(self, power):
-        """Return the data once the calibrating time has passed."""
-        alpha = tf.get_wave(power, self.arr_freqs, 8, 13) # HACK: alpha wave hardcoded
-        statistic = (alpha - self.mu)/self.sd
-        self.accumulated.append(statistic)
-        if len(self.accumulated) > 10: # HACK: value to accumulate hardcoded
-            avg = np.median(self.accumulated)
-            self.accumulated = [] # Empty list
-            return avg
-        else:
-            return self._return_empty_feel()
-
     def _no(self, power):
         """Return the raw data."""
         return self._return_empty_feel()
+
+    def _yes(self, power):
+        """Return the data once the calibrating time has passed."""
+        # Get waves
+        alpha = tf.get_wave(power, self.arr_freqs, 8, 13) # HACK: alpha wave hardcoded
+        # alpha has shape: (n_chs, )
+
+        # grab a channel
+        alpha = alpha[0] # HACK: hardcoded
+
+        # Accumulate
+        self.accumulated.append(alpha)
+
+        if len(self.accumulated) > self._limit_population:
+            # Hypothesis test
+            statistic = self._test()
+
+            # Empty list
+            self.accumulated = []
+
+            return statistic
+        else:
+            return self._return_empty_feel()
+
+    def _test_one(self):
+        """Perform an hypothesis test for the new population (self.accumulated) vs the collected data."""
+        numerator = np.mean(self.accumulated) - self.fit_mu
+        denominator = self.fit_sd/np.sqrt(len(self.accumulated))
+        return numerator / denominator
+
+    def _test_population(self):
+        """Perform a hypothesis test between the new population (self.accumulated) and the collected population."""
+        acum_var_by_n = np.var(self.accumulated)/len(self.accumulated)
+        numerator = np.mean(self.accumulated) - self.real_mu
+        denominator = np.sqrt(self.real_var_by_n + acum_var_by_n)
+        return numerator / denominator

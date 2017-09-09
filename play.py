@@ -55,6 +55,13 @@ def parse_args():
         group_stream_data.add_argument('--stream_n', default=1, type=int,
                             help="If --stream_mode n is selected, define the amount of data to yield")
 
+        group_feeling = parser.add_argument_group(title="Feeling calculation")
+        group_feeling.add_argument('--test_population', action='store_true',
+                            help="If present, use a populations test instead of a simple hypothesis test")
+        group_feeling.add_argument('--feel_interval', type=float, default=1,
+                            help="Interval in seconds to grab feeling data")
+
+
         parsers.add_file_args(parser) # File arguments
         return parser
 
@@ -79,7 +86,8 @@ def main():
 
     # Container for the incoming data
     if args.stream_waves:
-        data_buffer = engine.WaveBuffer(name="waves", window=256, step=25, srate=256)
+        data_buffer = engine.WaveBuffer(name="waves", window=256, step=25, srate=256,
+                            test_population=args.test_population, feeling_interval=args.feel_interval)
     else:
         data_buffer = engine.EEGBuffer(name="eeg",
                             yield_function=engine.EEGYielder.get_yielder(args.stream_mode))
@@ -130,10 +138,6 @@ def main():
         # Wait for a buffer zone
         sleep(1)
 
-        def ask_config():
-            muse.ask_config() # only works if push_info was enabled
-            sleep(0.5) # let it print
-            return None
         def start_calib():
             if not data_buffer.start_calibrating(): # Indicate if success
                 return None
@@ -154,6 +158,10 @@ def main():
                 return None
             print("stopped collecting")
             return info.stop_collect_mark
+        def ask_config():
+            muse.ask_config() # only works if push_info was enabled
+            sleep(0.5) # let it print
+            return None
         def toggle_save_opt():
             args.save = not args.save
             print("save status = {}".format(args.save))
