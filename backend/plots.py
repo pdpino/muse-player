@@ -255,3 +255,23 @@ def plot_histogram(wave, dist_fn=None, dist_args=None, title=None):
     plt.title(title)
     _maximize()
     plt.show()
+
+def plot_feelings(t, df, fname, marks_t=None, marks_m=None, subplots=False):
+    """Plot feelings."""
+
+    for feeling_name in info.get_feelings_colnames():
+        if not feeling_name in df.columns:
+            basic.perror("{} not found in feelings file".format(feeling_name), force_continue=True)
+            continue
+
+        plt.plot(t, df[feeling_name].as_matrix(), label=feeling_name)
+
+        plt.xlabel('Time (s)')
+        plt.ylabel('Hypothesis test value')
+
+    _plot_marks(marks_t, marks_m)
+
+    plt.suptitle("Feelings from {}".format(fname), fontsize=20)
+    plt.legend()
+    _maximize()
+    plt.show()
