@@ -1,7 +1,7 @@
 """Info about the feelings."""
 
-colname_relax = "Relaxation"
-colname_concentrate = "Concentration"
+colname_relaxation = "Relaxation"
+colname_concentration = "Concentration"
 
 def get_feelings_colnames():
-    return [colname_relax, colname_concentrate]
+    return [colname_relaxation, colname_concentration]

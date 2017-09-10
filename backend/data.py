@@ -158,7 +158,7 @@ def load_feelings(name, subfolder=None, suffix=None):
 
     try:
         df = pd.read_csv(fname, index_col=0)
-        print("Feelings loaded from file: {}".format(fname))
+        basic.report("Feelings loaded from file: {}".format(fname))
     except FileNotFoundError:
         basic.perror("The file {} wasn't found".format(fname))
 
@@ -174,9 +174,9 @@ def save_feelings(df, name, subfolder=None, suffix=None):
     """Save a feelings dataframe to a .csv"""
     if df is None:
         return
-        
+
     DumpFileHandler.assure_folder(subfolder, FileType.feelings)
     fname = DumpFileHandler.get_fname(name, subfolder, suffix, tipo=FileType.feelings)
 
     df.to_csv(fname, float_format='%f')
-    print("Feelings saved to file: {}".format(fname))
+    basic.report("Feelings saved to file: {}".format(fname))

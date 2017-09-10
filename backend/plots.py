@@ -259,12 +259,15 @@ def plot_histogram(wave, dist_fn=None, dist_args=None, title=None):
 def plot_feelings(t, df, fname, marks_t=None, marks_m=None, subplots=False):
     """Plot feelings."""
 
+    i = 0
+    colors = ['red', 'blue'] # HACK
     for feeling_name in info.get_feelings_colnames():
         if not feeling_name in df.columns:
             basic.perror("{} not found in feelings file".format(feeling_name), force_continue=True)
             continue
 
-        plt.plot(t, df[feeling_name].as_matrix(), label=feeling_name)
+        plt.plot(t, df[feeling_name].as_matrix(), 'ro', color=colors[i], label=feeling_name)
+        i += 1
 
         plt.xlabel('Time (s)')
         plt.ylabel('Hypothesis test value')
