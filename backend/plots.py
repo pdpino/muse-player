@@ -14,27 +14,51 @@ def _maximize():
     mng.resize(*mng.window.maxsize()) # 'TkAgg' backend
     # mng.full_screen_toggle() # Screen to full (really full) size (can't even see the exit button)
 
-def _plot_marks(marks_t, marks_m):
+def _plot_marks(marks_t, marks_m, ignore_calibration=False, alternate_colors=False, alternate_lines=False):
     """Plot marks in time."""
     if marks_t is None or marks_m is None:
         return
 
     if len(marks_t) != len(marks_m):
         basic.perror("Marks times and messages do not match", force_continue=True)
-    else:
-        # NOTE: to use a scale of colors:
-        # colors = 'winter' #'BuGn'
-        # cm = plt.get_cmap(colors)
-        # n = len(marks_t)
-        # # Then use color=cm(i/n)
+        return
 
-        for i in range(len(marks_t)):
-            t = marks_t[i]
-            m = marks_m[i]
-            if info.is_stop_mark(m):
-                m = None # No label
-            plt.axvline(t, color='black', label=m)
-        plt.legend(loc='upper center')
+    # NOTE: to use a scale of colors:
+    # colors = 'winter' #'BuGn'
+    # cm = plt.get_cmap(colors)
+    # n = len(marks_t)
+    # # Then use color=cm(i/n)
+
+    def choose_same_or_alternate(options, alternate=True):
+        """Return a lambda function that return options[0] all the time or cylce through options, depending on same"""
+        if alternate:
+            return lambda i: options[i % len(options)]
+        else:
+            return lambda i: options[0]
+
+    get_color = choose_same_or_alternate(['black', 'blue'], alternate_colors)
+    get_linestyle = choose_same_or_alternate(['-', '--'], alternate_lines)
+
+    i_color = 0
+    for i in range(len(marks_t)):
+        mark_time = marks_t[i]
+        mark_label = marks_m[i]
+
+        i_color += 1
+
+        if info.is_stop_mark(mark_label):
+            mark_label = None # No label
+            i_color -= 1
+
+        if ignore_calibration and info.is_calib_mark(mark_label):
+            mark_label = None
+
+        color = get_color(i_color)
+        linestyle = get_linestyle(i_color)
+
+        plt.axvline(mark_time, linestyle=linestyle, color=color, label=mark_label)
+
+    plt.legend(loc='upper center')
 
 def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None, max_freq=None):
     """Plot a contour plot with the power.
@@ -271,7 +295,7 @@ def plot_feelings(t, df, fname, marks_t=None, marks_m=None, lines=False):
         plt.xlabel('Time (s)')
         plt.ylabel('Hypothesis test value')
 
-    _plot_marks(marks_t, marks_m)
+    _plot_marks(marks_t, marks_m, ignore_calibration=True, alternate_colors=False, alternate_lines=True)
 
     plt.suptitle("Feelings from {}".format(fname), fontsize=20)
     plt.legend()
