@@ -62,6 +62,9 @@ class Graph {
     config.title = config.title || "Graph";
     config.colors = config.colors || generateRandomColors(config.nChannels);
 
+    config.xAxisLabel = config.xAxisLabel || "Time (s)";
+    config.yAxisLabel = config.yAxisLabel || "Value";
+
     return true;
   }
 
@@ -74,7 +77,8 @@ class Graph {
    * @param {Number} yTicks
    */
   _initEmptyGraph(containerID, width, height, xTicks, yTicks){
-    this.margin = {top: 40, right: 10, bottom: 30, left: 60};
+    this.margin = {top: 40, right: 10, bottom: 50, left: 60};
+    this.labelPadding = {bottom: 40, left: 40};
     this.width = width - this.margin.left - this.margin.right;
     this.height = height - this.margin.top - this.margin.bottom;
 
@@ -263,6 +267,33 @@ class Graph {
   }
 
   /**
+   * @source: http://bl.ocks.org/phoebebright/3061203
+   */
+  _setAxisLabels(xAxisLabel, yAxisLabel){
+    // this.svg.append("text")
+    //     .attr("text-anchor", "middle")
+    //     .attr("transform", "translate("+ (-this.padding.left/2) +","+(this.height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
+    //     .text(yAxisLabel);
+
+    this.svg.append("text")
+      // .attr("class", "y label")
+      .attr("text-anchor", "middle")
+      .attr("x", this.width/2)
+      .attr("y", this.height + this.labelPadding.bottom)
+      .text(xAxisLabel);
+
+    this.svg.append("text")
+      // .attr("class", "y label")
+      .attr("text-anchor", "middle")
+      .attr("x", -this.height/2)
+      .attr("y", -this.labelPadding.left)
+      .attr("transform", "rotate(-90)")
+      .text(yAxisLabel);
+
+    console.log("labels set");
+  }
+
+  /**
    * Set the title for the graph
    */
   _setTitle(title){
@@ -295,11 +326,13 @@ class Graph {
    * Select the type of the graph
    */
   selectType(config){
+    this._validateSelectParams(config);
     this.nChannels = config.nChannels;
     this._initChannels(config.colors);
     this._setLegend(config.channelNames);
     this._setLineFunctions();
     this._setTitle(config.title);
+    this._setAxisLabels(config.xAxisLabel, config.yAxisLabel);
 
     this.isSet = true;
   }
@@ -554,6 +587,7 @@ $(document).ready( function() {
     channelNames: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
     colors: ["black", "red", "blue", "green", "cyan"],
     title: 'EEG electrodes',
+    yAxisLabel: 'Raw signal (mV)',
   }
 
   const wavesGraphConfig = {
@@ -561,7 +595,16 @@ $(document).ready( function() {
     channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
     colors: ["blue", "orange", "red", "green", "magenta"],
     title: 'Waves',
+    yAxisLabel: 'Power (dB)',
   }
+
+  // const debugGraphConfig = {
+  //   nChannels: 5,
+  //   channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
+  //   colors: ["blue", "orange", "red", "green", "magenta"],
+  //   title: 'Waves',
+  //   yAxisLabel: 'Power (dB)',
+  // }
 
   const graph = new Graph({
     container: "#graph_container",
