@@ -2,6 +2,8 @@
 from scipy.stats import norm
 from backend import data, plots
 
+# TODO: merge this in plotdata.py
+
 def main():
     power = data.load_waves("test_eyes", "TP9")
 

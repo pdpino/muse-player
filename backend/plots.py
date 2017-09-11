@@ -37,7 +37,7 @@ def _plot_marks(marks_t, marks_m, ignore_calibration=False, alternate_colors=Fal
             return lambda i: options[0]
 
     get_color = choose_same_or_alternate(['black', 'blue'], alternate_colors)
-    get_linestyle = choose_same_or_alternate(['-', '--'], alternate_lines)
+    get_linestyle = choose_same_or_alternate(['-', '--', ':'], alternate_lines)
 
     i_color = 0
     for i in range(len(marks_t)):
@@ -98,7 +98,7 @@ def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None
 
 
         # Add marks in time
-        _plot_marks(marks_t, marks_m)
+        _plot_marks(marks_t, marks_m, ignore_calibration=True, alternate_lines=True)
 
         plt.title(channel)
 
