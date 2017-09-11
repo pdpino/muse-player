@@ -92,7 +92,10 @@ def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None
         # Plot
         colors = 'nipy_spectral' #'bwr'  #'seismic' #'coolwarm' #
         ax = plt.contourf(arr_times, arr_freqs, matrix, 50, cmap=plt.get_cmap(colors))
-        plt.colorbar(ax)
+
+        cbar = plt.colorbar(ax)
+        cbar.ax.set_ylabel('Power (dB)')
+
         plt.xlabel('Time (s)')
         plt.ylabel('Frequency (Hz)')
 
