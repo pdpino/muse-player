@@ -270,11 +270,6 @@ class Graph {
    * @source: http://bl.ocks.org/phoebebright/3061203
    */
   _setAxisLabels(xAxisLabel, yAxisLabel){
-    // this.svg.append("text")
-    //     .attr("text-anchor", "middle")
-    //     .attr("transform", "translate("+ (-this.padding.left/2) +","+(this.height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
-    //     .text(yAxisLabel);
-
     this.svg.append("text")
       // .attr("class", "y label")
       .attr("text-anchor", "middle")
@@ -289,8 +284,6 @@ class Graph {
       .attr("y", -this.labelPadding.left)
       .attr("transform", "rotate(-90)")
       .text(yAxisLabel);
-
-    console.log("labels set");
   }
 
   /**
@@ -658,7 +651,7 @@ $(document).ready( function() {
                         break;
 
                       default:
-                        console.log("Wrong type of graph received from server: ", e.data);
+                        console.log("Type of graph received from server not recognized: ", e.data);
                         return;
                     }
                     graph.selectType(graphConfig);
@@ -667,8 +660,6 @@ $(document).ready( function() {
     });
 
   $("#btn-start-conn").click( function(){
-    if(!graph.isSet) return;
-    graph.initEmptyData();
     stream.start();
   });
 
