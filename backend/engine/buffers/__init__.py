@@ -1,3 +1,3 @@
 """Module that provides buffers for the eeg data."""
-from .windowbuffer import *
-from .simplebuffer import *
+from .eegbuffer import *
+from .eegwindowbuffer import *
