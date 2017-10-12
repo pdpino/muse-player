@@ -88,13 +88,15 @@ def main():
     if args.stream_waves:
         data_buffer = engine.WaveBuffer(name="waves", window=256, step=25, srate=256,
                             test_population=args.test_population, feeling_interval=args.feel_interval)
+        raise("Stream waves not refactored yet")
     else:
-        data_buffer = engine.EEGBuffer(name="eeg",
-                            yield_function=engine.EEGYielder.get_yielder(args.stream_mode))
+        # data_buffer = engine.EEGBuffer(name="eeg",
+        #                     yield_function=engine.EEGYielder.get_yielder(args.stream_mode))
+        eeg_engine = engine.EEGEngine(name="eeg", processor_args=[args.stream_n])
 
     # Conectar muse
     muse = Muse(address=args.address,
-                callback=data_buffer.incoming_data,
+                callback=eeg_engine.incoming_data,
                 # callback_other=other_buffer.incoming_data, # DEBUG: see other data
                 push_info=True, # DEBUG: push info msgs from muse (to ask config, see battery percentage)
                 norm_factor=args.nfactor, norm_sub=args.nsub)
@@ -113,16 +115,16 @@ def main():
         stream.daemon = True
 
         # Set args for the generator
-        if args.stream_waves:
-            gen_args = [] # No arguments
-        else:
-            gen_args = [args.stream_n]
+        # if args.stream_waves:
+        #     gen_args = [] # No arguments
+        # else:
+        #     gen_args = [args.stream_n]
 
         # Connect data to send
         @app.route(args.url)
         def stream_data():
             """Stream the eeg data."""
-            return Response(data_buffer.data_generator(*gen_args), mimetype="text/event-stream")
+            return Response(eeg_engine.outgoing_data(), mimetype="text/event-stream")
 
     ## Iniciar
     muse.start()
@@ -135,76 +137,81 @@ def main():
 
     print("Started receiving data")
     if args.time is None:
-        # Wait for a buffer zone
-        sleep(1)
-
-        def start_calib():
-            if not data_buffer.start_calibrating(): # Indicate if success
-                return None
-            print("started calibrating")
-            return info.start_calib_mark
-        def stop_calib():
-            if not data_buffer.stop_calibrating():
-                return None
-            print("stopped calibrating")
-            return info.stop_calib_mark
-        def start_collect():
-            if not data_buffer.start_collecting(): # Indicate if success
-                return None
-            print("started collecting")
-            return info.start_collect_mark
-        def stop_collect():
-            if not data_buffer.stop_collecting():
-                return None
-            print("stopped collecting")
-            return info.stop_collect_mark
-        def ask_config():
-            muse.ask_config() # only works if push_info was enabled
-            sleep(0.5) # let it print
-            return None
-        def toggle_save_opt():
-            args.save = not args.save
-            print("save status = {}".format(args.save))
-            return None
-
-        commands = {
-            "-c": ask_config, # DEBUG: you can input this to see what comes in config in muse
-            "-1": start_calib,
-            "-2": stop_calib,
-            "-3": start_collect,
-            "-4": stop_collect,
-            "--save": toggle_save_opt
-            }
-
         try:
-            print("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):")
             while True:
-                # Mark time
-                message = input("\tcmd: ")
-                t = data_buffer.get_last_timestamp()
+                sleep(1)
+        except KeyboardInterrupt:
+            pass
 
-                # Special commands
-                if message in commands:
-                    message = commands[message]()
-                    if message is None:
-                        continue
-
-                # Save
-                marks.append(t)
-                messages.append(message.lower())
-        except KeyboardInterrupt: # Ctrl-c
-            print("Exiting")
-            basic.mute_ctrlc() # So the finishing process isn't interrupted
+        # Wait for a buffer zone
+        # sleep(1)
+        # def start_calib():
+        #     if not data_buffer.start_calibrating(): # Indicate if success
+        #         return None
+        #     print("started calibrating")
+        #     return info.start_calib_mark
+        # def stop_calib():
+        #     if not data_buffer.stop_calibrating():
+        #         return None
+        #     print("stopped calibrating")
+        #     return info.stop_calib_mark
+        # def start_collect():
+        #     if not data_buffer.start_collecting(): # Indicate if success
+        #         return None
+        #     print("started collecting")
+        #     return info.start_collect_mark
+        # def stop_collect():
+        #     if not data_buffer.stop_collecting():
+        #         return None
+        #     print("stopped collecting")
+        #     return info.stop_collect_mark
+        # def ask_config():
+        #     muse.ask_config() # only works if push_info was enabled
+        #     sleep(0.5) # let it print
+        #     return None
+        # def toggle_save_opt():
+        #     args.save = not args.save
+        #     print("save status = {}".format(args.save))
+        #     return None
+        #
+        # commands = {
+        #     "-c": ask_config, # DEBUG: you can input this to see what comes in config in muse
+        #     "-1": start_calib,
+        #     "-2": stop_calib,
+        #     "-3": start_collect,
+        #     "-4": stop_collect,
+        #     "--save": toggle_save_opt
+        #     }
+        #
+        # try:
+        #     print("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):")
+        #     while True:
+        #         # Mark time
+        #         message = input("\tcmd: ")
+        #         t = data_buffer.get_last_timestamp()
+        #
+        #         # Special commands
+        #         if message in commands:
+        #             message = commands[message]()
+        #             if message is None:
+        #                 continue
+        #
+        #         # Save
+        #         marks.append(t)
+        #         messages.append(message.lower())
+        # except KeyboardInterrupt: # Ctrl-c
+        #     print("Exiting")
+        #     basic.mute_ctrlc() # So the finishing process isn't interrupted
     else:
         basic.mute_ctrlc()
         print("\tfor (aprox) {} seconds".format(args.time))
         sleep(args.time) # HACK: its aprox time
 
     muse.stop()
-    print("Muse stopped") # DEBUG
+    # print("Muse stopped") # DEBUG
     muse.disconnect() # FIXME: sometimes a thread gets stuck here
-    print("Muse disconnected") # DEBUG
-    
+    # print("Muse disconnected") # DEBUG
+
     print("Stopped receiving muse data")
 
     # # DEBUG: save a file with the handles (debugging muse bluetooth)
@@ -215,21 +222,21 @@ def main():
     # df.to_csv("debug/debug2.csv", index=False, header=False) # Guardar a archivo
 
     # Print running time
-    basic.report("Received data for {}", data_buffer.get_running_time(), level=1)
+    basic.report("Received data for {}", eeg_engine.get_running_time(), level=1)
 
     if args.save:
         # Save eeg data
-        eeg = data_buffer.get_eeg()
+        eeg = eeg_engine.generate_eeg_df()
         data.save_eeg(eeg, args.fname, args.subfolder)
 
-        # Save marks
-        marks = data_buffer.normalize_marks(marks)
-        data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
-
-        # Save feelings, if any
-        if type(data_buffer) is engine.WaveBuffer:
-            feelings = data_buffer.get_feelings()
-            data.save_feelings(feelings, args.fname, args.subfolder)
+        ## Save marks
+        # marks = data_buffer.normalize_marks(marks)
+        # data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
+        #
+        # # Save feelings, if any
+        # if type(data_buffer) is engine.WaveBuffer:
+        #     feelings = data_buffer.get_feelings()
+        #     data.save_feelings(feelings, args.fname, args.subfolder)
 
     return 0
 
