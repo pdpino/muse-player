@@ -1,3 +1,5 @@
+### DEPRECATED!!
+
 """Module that provides classes to handle the connections."""
 from time import time
 from collections import deque
@@ -8,7 +10,7 @@ import basic
 from backend import tf, info
 from . import calibrators as crs, yielders
 
-class DataBuffer(object):
+class DataBuffer:
     """Receives incoming data and provides a generator to yield it."""
 
     def __init__(self, name="", maxsize=10, yield_function=None):
@@ -86,53 +88,6 @@ class DataBuffer(object):
             self.lock_q.release()
 
             yield from self._yielder(t, t_init, d, n_data)
-
-class EEGBuffer(DataBuffer):
-    """Contains the eeg data produced by Muse, provides provides functionality for eeg data"""
-    def get_running_time(self):
-        """Return the time that it has been running.
-
-        It is not thread safe, use it only when the incoming data has stopped"""
-        if len(self._full_time) == 0:
-            return 0
-
-        t_end = self._full_time[-1][-1]
-        t_init = self._full_time[0][0]
-        t = t_end - t_init
-        return basic.sec2hr(t)
-
-    def get_last_timestamp(self):
-        """Return the last timestamp. Thread safe"""
-        with self.lock_l:
-            return self._full_time[-1][-1]
-
-    def normalize_marks(self, marks):
-        """Receive a marks list (timestamps), normalize the time."""
-        return np.array(marks) - self._full_time[0][0]
-
-    def _normalize_time(self, times=None):
-        """Concatenate and return its timestamps."""
-        timestamps = np.concatenate(times or self._full_time)
-        return timestamps - timestamps[0]
-
-    def _normalize_data(self):
-        """Return the data concatenated"""
-        return np.concatenate(self._full_data, 1).T
-
-    def get_eeg(self):
-        """Preprocess the eeg data and return it as a pd.DataFrame.
-
-        It doesn't affect the saved data, creates copies"""
-        if len(self._full_time) == 0 or len(self._full_data) == 0:
-            return None
-
-        timestamps = self._normalize_time()
-        eeg_data = self._normalize_data()
-
-        eeg_df = pd.DataFrame(data=eeg_data, columns=info.get_chs_muse(aux=True))
-        eeg_df[info.colname_timestamps] = timestamps
-
-        return eeg_df
 
 class WaveBuffer(EEGBuffer):
     """Buffer to stream waves data (alpha, beta, etc)."""

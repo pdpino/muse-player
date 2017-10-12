@@ -1,3 +1,2 @@
-"""Submodule that provides classes to do the streaming."""
-from .buffers import *
-from .yielders import *
+"""Submodule that provides an engine for the streaming."""
+from .engine import *
