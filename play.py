@@ -25,8 +25,9 @@ def parse_args():
                             help="Seconds to record data (aprox). If none, stop listening only when interrupted")
         parser.add_argument('--save', action="store_true", help="Save a .csv with the raw data")
         parser.add_argument('--stream', action="store_true", help="Stream the data to a web client")
-        parser.add_argument('-w', '--stream_waves', action="store_true",
-                            help="Stream the wave data (instead of EEG) (beta)")
+        parser.add_argument('--stream_type', choices=['eeg', 'waves', 'feel'], default='eeg',
+                            help="Select what to stream") # REVIEW: use global list?
+
 
 
         group_bconn = parser.add_argument_group(title="Bluetooth connection")
@@ -84,17 +85,25 @@ def main():
     # Get arguments
     args = parse_args()
 
-    # Container for the incoming data
-    if args.stream_waves:
-        data_buffer = engine.WaveBuffer(name="waves", window=256, step=25, srate=256,
-                            test_population=args.test_population, feeling_interval=args.feel_interval)
-        raise("Stream waves not refactored yet")
-    else:
-        # data_buffer = engine.EEGBuffer(name="eeg",
-        #                     yield_function=engine.EEGYielder.get_yielder(args.stream_mode))
-        eeg_engine = engine.EEGEngine(name="eeg", processor_args=[args.stream_n])
+    # Select processor for the EEG data
+    if args.stream_type == 'waves':
+        # data_buffer = engine.WaveBuffer(name="waves", window=256, step=25, srate=256,
+        #                     test_population=args.test_population, feeling_interval=args.feel_interval)
+        processor = engine.WaveProcessor()
 
-    # Conectar muse
+    else if args.stream_type == 'eeg':
+        processor = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
+
+    else if args.stream_type == 'feel':
+        raise("Stream feeling not implemented yet")
+
+    else:
+        raise("Stream type not recognized: {}".format(args.stream_type))
+
+    # Engine that handles the incoming, processing and outgoing data
+    eeg_engine = engine.EEGEngine(args.stream_type, processor)
+
+    # Connect muse
     muse = Muse(address=args.address,
                 callback=eeg_engine.incoming_data,
                 # callback_other=other_buffer.incoming_data, # DEBUG: see other data
@@ -113,12 +122,6 @@ def main():
         # Thread
         stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
         stream.daemon = True
-
-        # Set args for the generator
-        # if args.stream_waves:
-        #     gen_args = [] # No arguments
-        # else:
-        #     gen_args = [args.stream_n]
 
         # Connect data to send
         @app.route(args.url)

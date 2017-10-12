@@ -10,84 +10,85 @@ import basic
 from backend import tf, info
 from . import calibrators as crs, yielders
 
-class DataBuffer:
-    """Receives incoming data and provides a generator to yield it."""
-
-    def __init__(self, name="", maxsize=10, yield_function=None):
-        """Initialize."""
-        self.name = name
-
-        # All the data
-        self._full_time = []
-        self._full_data = []
-        self.lock_l = threading.Lock() # Lock lists
-
-        # Queues para stream de datos, # thread safe
-        self._q_time = deque(maxlen=maxsize)
-        self._q_data = deque(maxlen=maxsize)
-        self.lock_q = threading.Lock() # Lock queues
-
-        # Yielder
-        self._yielder = yield_function
-
-    def start_calibrating(self):
-        """Method to start calibrating, override it."""
-        # print("{} buffer can't stream calibrated data".format(self.name))
-        return False
-
-    def stop_calibrating(self):
-        """Method to stop calibrating, override it."""
-        # print("{} buffer can't stream calibrated data".format(self.name))
-        return False
-
-    def start_collecting(self):
-        """Start collecting baseline data to detect emotions."""
-        return False
-
-    def stop_collecting(self):
-        """Stop collecting data to detect emotions."""
-        return False
-
-    def incoming_data(self, timestamps, new_data):
-        """Process the incoming data."""
-        # Add to full lists
-        with self.lock_l:
-            self._full_time.append(timestamps)
-            self._full_data.append(new_data)
-
-        # Add to queue
-        with self.lock_q:
-            self._q_time.append(timestamps)
-            self._q_data.append(new_data)
-
-    def data_generator(self, n_data=None):
-        """Generator to stream the data.
-
-        Parameters:
-        n_data -- parameter passed to the yielder"""
-
-        if self._yielder is None:
-            basic.perror("Can't stream the data without a yielder")
-
-        yield "event: config\ndata: eeg\n\n" # Start message
-
-        with self.lock_q:
-            # Drop old data in queue
-            self._q_time.clear()
-            self._q_data.clear()
-            t_init = time() # Set an initial time as marker
-
-        while True:
-            self.lock_q.acquire()
-            if len(self._q_time) == 0 or len(self._q_data) == 0: # NOTE: both lengths should always be the same
-                self.lock_q.release()
-                continue
-
-            t = self._q_time.popleft()
-            d = self._q_data.popleft()
-            self.lock_q.release()
-
-            yield from self._yielder(t, t_init, d, n_data)
+## DEPRECATED: changed by EEGEngine
+# class DataBuffer:
+#     """Receives incoming data and provides a generator to yield it."""
+#
+#     def __init__(self, name="", maxsize=10, yield_function=None):
+#         """Initialize."""
+#         self.name = name
+#
+#         # All the data
+#         self._full_time = []
+#         self._full_data = []
+#         self.lock_l = threading.Lock() # Lock lists
+#
+#         # Queues para stream de datos, # thread safe
+#         self._q_time = deque(maxlen=maxsize)
+#         self._q_data = deque(maxlen=maxsize)
+#         self.lock_q = threading.Lock() # Lock queues
+#
+#         # Yielder
+#         self._yielder = yield_function
+#
+#     def start_calibrating(self):
+#         """Method to start calibrating, override it."""
+#         # print("{} buffer can't stream calibrated data".format(self.name))
+#         return False
+#
+#     def stop_calibrating(self):
+#         """Method to stop calibrating, override it."""
+#         # print("{} buffer can't stream calibrated data".format(self.name))
+#         return False
+#
+#     def start_collecting(self):
+#         """Start collecting baseline data to detect emotions."""
+#         return False
+#
+#     def stop_collecting(self):
+#         """Stop collecting data to detect emotions."""
+#         return False
+#
+#     def incoming_data(self, timestamps, new_data):
+#         """Process the incoming data."""
+#         # Add to full lists
+#         with self.lock_l:
+#             self._full_time.append(timestamps)
+#             self._full_data.append(new_data)
+#
+#         # Add to queue
+#         with self.lock_q:
+#             self._q_time.append(timestamps)
+#             self._q_data.append(new_data)
+#
+#     def data_generator(self, n_data=None):
+#         """Generator to stream the data.
+#
+#         Parameters:
+#         n_data -- parameter passed to the yielder"""
+#
+#         if self._yielder is None:
+#             basic.perror("Can't stream the data without a yielder")
+#
+#         yield "event: config\ndata: eeg\n\n" # Start message
+#
+#         with self.lock_q:
+#             # Drop old data in queue
+#             self._q_time.clear()
+#             self._q_data.clear()
+#             t_init = time() # Set an initial time as marker
+#
+#         while True:
+#             self.lock_q.acquire()
+#             if len(self._q_time) == 0 or len(self._q_data) == 0: # NOTE: both lengths should always be the same
+#                 self.lock_q.release()
+#                 continue
+#
+#             t = self._q_time.popleft()
+#             d = self._q_data.popleft()
+#             self.lock_q.release()
+#
+#             yield from self._yielder(t, t_init, d, n_data)
 
 class WaveBuffer(EEGBuffer):
     """Buffer to stream waves data (alpha, beta, etc)."""
@@ -120,7 +121,7 @@ class WaveBuffer(EEGBuffer):
         self.calibrator = crs.WaveDivider() # REVIEW: move calibrator to base class DataBuffer?
 
         # Array of frequencies
-        arr_freqs = tf.get_arr_freqs(window, srate)
+        arr_freqs = tf.get_freqs_resolution(window, srate)
 
         # Yielder # REVIEW: here yielder is an object, in the other buffers is a function
         self._yielder = yielders.WaveYielder(np.array(arr_freqs))
@@ -234,6 +235,8 @@ class WaveBuffer(EEGBuffer):
 
             # Calibrate, if any
             power = self.calibrator.calibrate(power)
+
+            # yield from self._yielder.yield_function(t_normalized, power)
 
             # Detect emotion
             feeling = self.feeler.feel(power)

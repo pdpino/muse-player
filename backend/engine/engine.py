@@ -2,21 +2,27 @@ from time import time
 from . import eegcollector, buffers, processors
 
 class EEGEngine:
-    """."""
+    """Engine to handle receiving muse EEG and streaming different kinds of data."""
 
-    def __init__(self, name, processor_args):
-        """Initialize."""
+    def __init__(self, name, processor):
+        """Initialize.
+
+        name -- string identifier
+        processor -- implements interface IProcessor""" # TODO
+
         self.name = name
         self.start_msg = "event: config\ndata: eeg\n\n"
         # "event: config\ndata: waves\n\n"
 
         self.eeg_collector = eegcollector.EEGCollector()
-        self.get_running_time = self.eeg_collector.get_running_time # REVIEW: use property getter?
+
+        # REVIEW: use property getter?
+        self.get_running_time = self.eeg_collector.get_running_time
         self.generate_eeg_df = self.eeg_collector.generate_eeg_df
 
         self.eeg_buffer = buffers.EEGBuffer()
 
-        self.processor = processors.EEGRawYielder("n", args=processor_args)
+        self.processor = processor
 
     ## FUTURE:
     # def send_signal_calibrator(sent_signal):
@@ -50,5 +56,14 @@ class EEGEngine:
 
             if timestamp is None or new_data is None:
                 continue
+
+            # Process EEG
+            # self.eeg_processor.process(t_init, timestamp, new_data)
+
+            # Process frequencies
+            # self.freq_processor.process(t_init, timestamp, new_data)
+
+            # Process feelings
+            # self.feel_processor.process()
 
             yield from self.processor.process(t_init, timestamp, new_data)
