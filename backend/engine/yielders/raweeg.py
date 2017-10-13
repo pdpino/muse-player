@@ -1,6 +1,7 @@
 import basic
+from . import base
 
-class EEGRawYielder:
+class EEGRawYielder(base.BaseYielder):
     """Process raw eeg data and yields it in a specified way
 
     Assumes that the shape of the data is:
@@ -8,6 +9,8 @@ class EEGRawYielder:
     data.shape == (5, 12)"""
 
     def __init__(self, mode, args=None):
+        self.config_data = "eeg"
+
         ## REFACTOR: use formatter instead
         # String para hacer yield
         # EEG envia (timestamp, ch0, ch1, ch2, ch3, ch4)
@@ -70,12 +73,6 @@ class EEGRawYielder:
                 data[2][i], \
                 data[3][i], \
                 data[4][i] )
-
-    def has_start_message(self):
-        return True
-
-    def start_message(self):
-        return "event: config\ndata: eeg\n\n"
 
     def generate(self, t_init, timestamp, new_data):
         """Yield raw eeg data."""

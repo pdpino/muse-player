@@ -1,11 +1,14 @@
 from backend import tf, info
+from . import base
 
-class WaveYielder:
+class WaveYielder(base.BaseYielder):
     """Yield the waves to the client."""
 
     # TODO: be able to yield one channel, mean of channels, max of channels, etc
 
     def __init__(self, arr_freqs, channel=0):
+        self.config_data = "waves"
+        
         # Array of frequencies to order the fft
         self.arr_freqs = arr_freqs
 
@@ -22,11 +25,6 @@ class WaveYielder:
             self.str_format += ", {}"
         self.str_format += "\n\n"
 
-    def has_start_message(self):
-        return True
-
-    def start_message(self):
-        return "event: config\ndata: waves\n\n"
 
     def generate(self, t, power):
         all_waves = []

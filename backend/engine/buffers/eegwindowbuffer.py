@@ -7,8 +7,8 @@ class EEGWindowBuffer():
     def __init__(self, window=256, step=25):
         """Initialize."""
 
-        # HACK: data hardcoded
-        n_samples = 12
+        # values hardcoded
+        n_samples = 12 # samples of each muse message
         n_chs = 6 # 5chs + time
 
         # Buffer
