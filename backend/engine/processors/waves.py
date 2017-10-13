@@ -1,7 +1,8 @@
 from backend import tf
 from .. import calibrators, yielders
+from . import base
 
-class WaveProcessor:
+class WaveProcessor(base.BaseProcessor):
     """Process the EEG transforming it into waves."""
 
     def __init__(self, generator):
@@ -9,12 +10,6 @@ class WaveProcessor:
         self.calibrator = calibrators.WaveDivider()
 
         self.generator = generator
-
-    def has_start_message(self):
-        return self.generator.has_start_message()
-
-    def start_message(self):
-        return self.generator.start_message()
 
     def generate(self, t_init, timestamp, new_data):
         """Make a TF analysis of the data and delegates to a processor."""

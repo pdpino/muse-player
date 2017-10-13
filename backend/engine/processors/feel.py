@@ -1,8 +1,9 @@
 import numpy as np
 from backend import tf
 from .. import collectors, calibrators, yielders
+from . import base
 
-class FeelProcessor:
+class FeelProcessor(base.BaseProcessor):
     """Provides a feeling processor."""
 
     def __init__(self):
@@ -26,12 +27,6 @@ class FeelProcessor:
 
         # Yielding
         self.generator = yielders.FeelYielder()
-
-    def has_start_message(self):
-        return self.generator.has_start_message()
-
-    def start_message(self):
-        return self.generator.start_message()
 
     def generate(self, timestamp, power):
         """Generator of feelings."""
