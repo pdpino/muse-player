@@ -11,7 +11,7 @@ from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
 import basic
-from backend import parsers, data, engine, info
+from backend import parsers, data, engine, info, tf
 
 def parse_args():
     """Create a parser, get the args, return them preprocessed."""
@@ -86,22 +86,40 @@ def main():
     args = parse_args()
 
     # Select processor for the EEG data
-    if args.stream_type == 'waves':
-        # data_buffer = engine.WaveBuffer(name="waves", window=256, step=25, srate=256,
-        #                     test_population=args.test_population, feeling_interval=args.feel_interval)
-        processor = engine.WaveProcessor()
+    name = args.stream_type
+    if args.stream_type == 'eeg':
+        eeg_buffer = engine.buffers.EEGBuffer()
 
-    else if args.stream_type == 'eeg':
-        processor = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
+        # yielder_args = (args.stream_n,) if args.stream_mode == "n" else []
 
-    else if args.stream_type == 'feel':
-        raise("Stream feeling not implemented yet")
+        generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
+
+    elif args.stream_type == 'waves':
+        eeg_buffer = engine.buffers.EEGWindowBuffer()
+
+        # HACK: values for the yielder hardcoded
+        window = 256
+        srate = 256
+        channel = 0
+
+        arr_freqs = tf.get_freqs_resolution(window, srate)
+        wave_yielder = yielders.WaveYielder(arr_freqs, channel=channel)
+
+        generator = engine.WaveProcessor(wave_yielder)
+
+    elif args.stream_type == 'feel':
+        eeg_buffer = engine.buffers.EEGWindowBuffer()
+
+        feel_generator = engine.FeelProcessor()
+
+        generator = engine.WaveProcessor(feel_generator)
 
     else:
         raise("Stream type not recognized: {}".format(args.stream_type))
 
+
     # Engine that handles the incoming, processing and outgoing data
-    eeg_engine = engine.EEGEngine(args.stream_type, processor)
+    eeg_engine = engine.EEGEngine(name, eeg_buffer, generator)
 
     # Connect muse
     muse = Muse(address=args.address,
@@ -229,7 +247,7 @@ def main():
 
     if args.save:
         # Save eeg data
-        eeg = eeg_engine.generate_eeg_df()
+        eeg = eeg_engine.export()
         data.save_eeg(eeg, args.fname, args.subfolder)
 
         ## Save marks
