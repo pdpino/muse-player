@@ -85,6 +85,9 @@ def main():
     # Get arguments
     args = parse_args()
 
+    # FUTURE: Dictionary for the signals
+    # signals = dict()
+
     # Select processor for the EEG data
     name = args.stream_type
     if args.stream_type == 'eeg':
