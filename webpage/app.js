@@ -270,6 +270,8 @@ class Graph {
    * @source: http://bl.ocks.org/phoebebright/3061203
    */
   _setAxisLabels(xAxisLabel, yAxisLabel){
+    // TODO: delete previous labels
+    
     this.svg.append("text")
       // .attr("class", "y label")
       .attr("text-anchor", "middle")
@@ -591,13 +593,13 @@ $(document).ready( function() {
     yAxisLabel: 'Power (dB)',
   }
 
-  // const debugGraphConfig = {
-  //   nChannels: 5,
-  //   channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
-  //   colors: ["blue", "orange", "red", "green", "magenta"],
-  //   title: 'Waves',
-  //   yAxisLabel: 'Power (dB)',
-  // }
+  const feelGraphConfig = {
+    nChannels: 2,
+    channelNames: ["relaxation", "concentration"],
+    colors: ["blue", "red"],
+    title: 'State of mind',
+    yAxisLabel: 'Power (dB)',
+  }
 
   const graph = new Graph({
     container: "#graph_container",
@@ -622,41 +624,49 @@ $(document).ready( function() {
     dy_move: 50
     });
 
+  const recvMsg = function(e){
+    if(!graph.isSet) return;
+
+    let arr = e.data.split(",").map(parseFloat);
+
+    if(arr[0] < 0) return; // Ignore negative time
+
+    // REVIEW: check arr.length == n channels
+    while(arr.length < graphConfig.nChannels + 1){ // Fill with 0s if received less channels
+      arr.push(0.0);
+    }
+
+    graph.update(arr);
+  }
+
+  const recvConfig = function (e){
+      switch(e.data) {
+        case "eeg":
+          graphConfig = eegGraphConfig;
+          break;
+
+        case "waves":
+          graphConfig = wavesGraphConfig;
+          break;
+
+        case "feel":
+          graphConfig = feelGraphConfig;
+          break;
+
+        default:
+          console.log("Type of graph received from server not recognized: ", e.data);
+          return;
+      }
+      graph.selectType(graphConfig);
+      graph.initEmptyData();
+    }
+
   const stream = new Connection({
       url: "http://localhost:8889/data/muse",
       statusText: "#status-text",
       statusIcon: "#status-icon",
-      recvMsg: function(e){
-                if(!graph.isSet) return;
-
-                let arr = e.data.split(",").map(parseFloat);
-
-                if(arr[0] < 0) return; // Ignore negative time
-
-                // REVIEW: check arr.length == n channels
-                while(arr.length < graphConfig.nChannels + 1){ // Fill with 0s if received less channels
-                  arr.push(0.0);
-                }
-
-                graph.update(arr);
-              },
-      recvConfig: function(e){
-                    switch(e.data) {
-                      case "eeg":
-                        graphConfig = eegGraphConfig;
-                        break;
-
-                      case "waves":
-                        graphConfig = wavesGraphConfig;
-                        break;
-
-                      default:
-                        console.log("Type of graph received from server not recognized: ", e.data);
-                        return;
-                    }
-                    graph.selectType(graphConfig);
-                    graph.initEmptyData();
-                  },
+      recvMsg,
+      recvConfig,
     });
 
   $("#btn-start-conn").click( function(){
