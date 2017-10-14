@@ -1,3 +1,5 @@
+### DEPRECATED
+
 """Provide calibrator handlers."""
 import threading
 from enum import Enum

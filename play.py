@@ -91,31 +91,40 @@ def main():
     # Select processor for the EEG data
     name = args.stream_type
     if args.stream_type == 'eeg':
+        # Use a normal buffer
         eeg_buffer = engine.buffers.EEGBuffer()
 
+        # Generator yields raw EEG
         # yielder_args = (args.stream_n,) if args.stream_mode == "n" else []
-
         generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
 
     elif args.stream_type == 'waves':
+        # Use a window buffer
         eeg_buffer = engine.buffers.EEGWindowBuffer()
 
-        # HACK: values for the yielder hardcoded
-        window = 256
+        # Create wave yielder
+        window = 256 # HACK: values for the yielder hardcoded
         srate = 256
         channel = 0
-
         arr_freqs = tf.get_freqs_resolution(window, srate)
-        wave_yielder = yielders.WaveYielder(arr_freqs, channel=channel)
+        wave_yielder = engine.yielders.WaveYielder(arr_freqs, channel=channel)
 
+        # Wave processor that uses the wave yielder
         generator = engine.WaveProcessor(wave_yielder)
 
     elif args.stream_type == 'feel':
+        # Use a window buffer
         eeg_buffer = engine.buffers.EEGWindowBuffer()
 
-        feel_generator = engine.FeelProcessor()
+        # Create yielder for the feelings
+        accum_samples = 10
+        feeler = engine.feelers.FeelerRelaxConc()
 
-        generator = engine.WaveProcessor(feel_generator)
+        # Feeling processor, that use the yielder
+        feel_processor = engine.FeelProcessor(accum_samples, feeler)
+
+        # Wave processor, that uses the feel processor
+        generator = engine.WaveProcessor(feel_processor)
 
     else:
         raise("Stream type not recognized: {}".format(args.stream_type))

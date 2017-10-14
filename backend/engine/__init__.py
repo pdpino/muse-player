@@ -24,13 +24,14 @@ The flow of the engine is the following:
 This flow is useful to chain processors. Examples:
     - To stream the raw eeg, no processing is needed, then the generator is a EEGRawYielder
     - To stream waves, the generator will be a WaveProcessor (apply FT analysis to raw EEG), which have a WaveYielder inside to do the yielding
-    - To stream feelings, the generator will be a WaveProcessor with a FeelProcessor (transform frequency analysis in a feeling) inside, which will have a FeelYielder to do the yielding
+    - To stream feelings, the generator will be a WaveProcessor with a FeelProcessor (transform frequency analysis in a feeling) inside, which will have a Feeler (can calculate and yield a specific type of feeling) to do the yielding
 
 The processors may have inside calibrators and/or calculators to do the hard work
 
 """
 
 from .engine import *
+from .buffers import *
 from .processors import *
 from .yielders import *
-from .buffers import *
+from .feelers import *
