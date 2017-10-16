@@ -1,48 +1,42 @@
 from . import base
 
-class WaveDivider(base.Calibrator):
-    """Provides calibration dividing data by a baseline period."""
+class WaveDivider:
+    """Implements IBaselineHandler.
+
+    TODO"""
 
     def __init__(self):
-        super().__init__()
-
-        # Calibration objects
+        # Empty calibration objects
         self.baseline = None
         self.counter = 0
 
-    def _start_calibrating(self, power):
-        """Start collecting baseline."""
+    def non_calibrated(self, power):
+        return power
+
+    def start_calibrating(self, power):
+        """Start collecting power baseline."""
         self.baseline = np.zeros(power.shape)
         self.counter = 0
 
-        # Move to calibrating
-        self._set_status_calibrating()
-
         return power
 
-    def _calibrating(self, power):
+    def calibrating(self, power):
         """Collect the data in the baseline."""
         self.baseline += power
         self.counter += 1
 
         return power
 
-    def _stop_calibrating(self, power):
+    def stop_calibrating(self, power):
         """Stop collecting the baseline"""
-
+        is_ok = False
         if self.counter > 0:
+            is_ok = True
             self.baseline /= self.counter
-            self._set_status_calibrated()
-        else:
-            # REVIEW: error msg
-            self._set_status_non_calibrated()
 
-        return power
+        return power, is_ok
 
-    def _calibrated(self, power):
-        """Return the data divided by baseline."""
+    def calibrated(self, power):
+        """Return the data divided by the baseline."""
         # REFACTOR: use function in tf module
         return 10*np.log10(power/self.baseline)
-
-    def _non_calibrated(self, power):
-        return power
