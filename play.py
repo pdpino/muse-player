@@ -121,7 +121,7 @@ def main():
         feeler = engine.feelers.FeelerRelaxConc()
 
         # Feeling processor, that use the yielder
-        feel_processor = engine.FeelProcessor(accum_samples, feeler)
+        feel_processor = engine.FeelProcessor(feeler, accum_samples)
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)

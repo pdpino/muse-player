@@ -1,13 +1,16 @@
 from backend import tf
-from .. import calibrators, yielders
+from .. import calibrators, collectors
 from . import base
 
 class WaveProcessor(base.BaseProcessor):
     """Process the EEG transforming it into waves."""
 
-    def __init__(self, generator):
-        # Calibrator
-        self.calibrator = calibrators.WaveDivider()
+    def __init__(self, generator, accum_samples=1):
+        # Calibrator uses a wave divider to do the calculation
+        self.calibrator = calibrators.Calibrator(WaveDivider())
+
+        # To accumulate data in more than one instant
+        self.accumulator = collectors.DataAccumulator(samples=accum_samples)
 
         self.generator = generator
 
@@ -16,10 +19,15 @@ class WaveProcessor(base.BaseProcessor):
         # Apply fft
         power = tf.apply_fft(new_data) # shape: (n_chs, n_freqs)
 
-        # Calibrate
+        # Calibrate dividing by a baseline
         power = self.calibrator.calibrate(power)
+
+        # Accumulate in time
+        effective_power = self.accumulator.accumulate(power)
+        if effective_power is None:
+            return
 
         # Normalize time
         t_normalized = timestamp - t_init
 
-        yield from self.generator.generate(t_normalized, power)
+        yield from self.generator.generate(t_normalized, effective_power)

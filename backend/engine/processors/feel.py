@@ -1,32 +1,18 @@
 import numpy as np
-from .. import collectors
+from .. import collectors, calibrators
 from . import base
-
-class EmptyBaselineHandler:
-    def update(self, timestamp, feeling):
-        """Don't update anything."""
-        return True
-
-    def normalize(self, feeling):
-        """Don't normalize, return same feeling."""
-        return feeling
 
 class FeelProcessor(base.BaseProcessor):
     """Provides a feeling processor."""
 
-    def __init__(self, accum_samples, feeler):
-        """Constructor.
+    def __init__(self, feeler, accum_samples=1):
+        """Constructor."""
 
-        TODO
-        """
         # Baseline handler
-        self.baseline_handler = EmptyBaselineHandler() # TODO: use real handler
+        self.baseline_handler = calibrators.EmptyBaselineHandler() # TODO: use real handler
 
         # To accumulate data in more than one instant
-        if accum_samples > 1:
-            self.accumulator = collectors.PowerAccumulator()
-        else:
-            self.accumulator = collectors.NoPowerAccumulator()
+        self.accumulator = collectors.DataAccumulator(samples=accum_samples)
 
         # Feeler, provides formula and yielding
         self.feeler = feeler
@@ -40,24 +26,23 @@ class FeelProcessor(base.BaseProcessor):
     def generate(self, timestamp, power):
         """Generator of feelings."""
 
-        # Accumulate in time
-        effective_power = self.accumulator.accumulate(power)
-        if effective_power is None:
-            return
-
         # Apply feeling formula
-        raw_feeling = self.feeler.calculate(effective_power)
+        feeling = self.feeler.calculate(power)
 
-        # Update baseline
-        baseline_ready = self.baseline_handler.update(timestamp, raw_feeling)
-        if not baseline_ready:
+        # Accumulate in time
+        effective_feeling = self.accumulator.accumulate(feeling)
+        if effective_feeling is None:
             return
+
+        # REVIEW: calibrator could use accumulator.accumulated_data to correct
 
         # Normalize by baseline
-        feeling = self.baseline_handler.normalize(raw_feeling)
+        normalized_feeling = self.calibrator.calibrate(effective_feeling)
+        if normalized_feeling is None:
+            return
 
         # Collect processed feeling
-        self.collector.collect(timestamp, feeling)
+        self.collector.collect(timestamp, normalized_feeling)
 
         # Yield it
-        yield from self.feeler.generate(timestamp, feeling)
+        yield from self.feeler.generate(timestamp, normalized_feeling)
