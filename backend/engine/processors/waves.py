@@ -3,11 +3,14 @@ from .. import calibrators, collectors
 from . import base
 
 class WaveProcessor(base.BaseProcessor):
-    """Process the EEG transforming it into waves."""
+    """Process the EEG transforming it into waves.
+
+    TODO"""
 
     def __init__(self, generator, accum_samples=1):
+        """Constructor."""
         # Calibrator uses a wave divider to do the calculation
-        self.calibrator = calibrators.Calibrator(WaveDivider())
+        self.calibrator = calibrators.Calibrator(calibrators.WaveDivider())
 
         # To accumulate data in more than one instant
         self.accumulator = collectors.DataAccumulator(samples=accum_samples)

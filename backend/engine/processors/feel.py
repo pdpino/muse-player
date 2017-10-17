@@ -3,16 +3,17 @@ from .. import collectors, calibrators
 from . import base
 
 class FeelProcessor(base.BaseProcessor):
-    """Provides a feeling processor."""
+    """Provides a feeling processor.
 
-    def __init__(self, feeler, accum_samples=1):
+    TODO"""
+
+    def __init__(self, feeler):
         """Constructor."""
 
-        # Baseline handler
-        self.baseline_handler = calibrators.EmptyBaselineHandler() # TODO: use real handler
-
-        # To accumulate data in more than one instant
-        self.accumulator = collectors.DataAccumulator(samples=accum_samples)
+        # Calibrator
+        # TODO: select from outside
+        # self.calibrator = calibrators.Calibrator(calibrators.BaselineFeeling())
+        self.calibrator = calibrators.NoCalibrator()
 
         # Feeler, provides formula and yielding
         self.feeler = feeler
@@ -27,22 +28,15 @@ class FeelProcessor(base.BaseProcessor):
         """Generator of feelings."""
 
         # Apply feeling formula
-        feeling = self.feeler.calculate(power)
-
-        # Accumulate in time
-        effective_feeling = self.accumulator.accumulate(feeling)
-        if effective_feeling is None:
-            return
-
-        # REVIEW: calibrator could use accumulator.accumulated_data to correct
+        raw_feeling = self.feeler.calculate(power)
 
         # Normalize by baseline
-        normalized_feeling = self.calibrator.calibrate(effective_feeling)
-        if normalized_feeling is None:
+        feeling = self.calibrator.calibrate(raw_feeling)
+        if feeling is None:
             return
 
         # Collect processed feeling
-        self.collector.collect(timestamp, normalized_feeling)
+        self.collector.collect(timestamp, feeling)
 
         # Yield it
-        yield from self.feeler.generate(timestamp, normalized_feeling)
+        yield from self.feeler.generate(timestamp, feeling)

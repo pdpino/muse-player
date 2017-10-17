@@ -1,9 +1,8 @@
 """Provide a calibrator to compare with a baseline."""
-from . import base
-# import numpy as np
-# from scipy.stats import norm
-# from backend import info, tf
+from scipy.stats import norm
+import numpy as np
 
+### DEPRECATED
 # class FeelCalculator(Calibrator):
 #     """Collect data and calculate feeling from new data comparting with the old data."""
 #
@@ -108,60 +107,47 @@ from . import base
 #             return [current_relax, current_concentrate]
 #         else:
 #             return self._return_empty_feel()
-#
-# class FeelAccumulator:
-#     """Accumulates feeling information."""
-#
-#     def __init__(self, test_population=False):
-#         self.test = self._test_one if not test_population else self._test_population
-#
-#         self.reset_data()
-#
-#     def add_base(self, base_data):
-#         """Add baseline data for that feeling."""
-#         # Fit gaussian # for a regular hypothesis test
-#         self.fit_mu, self.fit_sd = norm.fit(base_data)
-#
-#         # Save for poblations test
-#         self.real_mu = np.mean(base_data)
-#         self.real_var_by_n = np.var(base_data) / len(base_data)
-#
-#     def accumulate_data(self, *new_data):
-#         self.accumulated_data.extend([*new_data])
-#         self.accumulated_counter += 1
-#
-#     def reset_data(self):
-#         self.accumulated_data = []
-#         self.accumulated_counter = 0
-#
-#     def _test_one(self):
-#         """Perform an hypothesis test for the new population (self.accumulated_data) vs the collected data."""
-#         numerator = np.mean(self.accumulated_data) - self.fit_mu
-#         denominator = self.fit_sd/np.sqrt(self.accumulated_counter)
-#         statistic = numerator / denominator
-#         return statistic
-#
-#     def _test_population(self):
-#         """Perform a hypothesis test between the new population (self.accumulated_data) and the collected population."""
-#         acum_var_by_n = np.var(self.accumulated_data) / self.accumulated_counter
-#         numerator = np.mean(self.accumulated_data) - self.real_mu
-#         denominator = np.sqrt(self.real_var_by_n + acum_var_by_n)
-#         statistic = numerator / denominator
-#         return statistic
 
-class OneTimeFeeling:
+### DEPRECATED: population tests
+# def add_base(self, base_data):
+#     """Add baseline data for that feeling."""
+#     # Save for poblations test
+#     self.real_mu = np.mean(base_data)
+#     self.real_var_by_n = np.var(base_data) / len(base_data)
+#
+# def _test_population(self):
+#     """Perform a hypothesis test between the new population (self.accumulated_data) and the collected population."""
+#     acum_var_by_n = np.var(self.accumulated_data) / self.accumulated_counter
+#     numerator = np.mean(self.accumulated_data) - self.real_mu
+#     denominator = np.sqrt(self.real_var_by_n + acum_var_by_n)
+#     statistic = numerator / denominator
+#     return statistic
+
+
+class BaselineFeeling:
     """Implements IBaselineHandler.
 
     TODO
     returns None because feel is not ready"""
 
-    def __init__(self):
+    def __init__(self, baseline_limit=10, accumulator_limit=1):
         """."""
+        self.baseline_limit = baseline_limit
+
+        self.accumulator_limit = accumulator_limit
+
         self._reset_baseline()
+        self._reset_accumulator()
 
     def _reset_baseline(self):
         self.baseline_data = []
         self.baseline_counter = 0
+
+    def _reset_accumulator(self):
+        # HACK:
+        # should this be in another object ?? design it better!
+        self.accumulator_data = []
+        self.accumulator_counter = 0
 
     def start_calibrating(self, feeling):
         """Signal has been received, start variables."""
@@ -174,7 +160,9 @@ class OneTimeFeeling:
         self.baseline_data.append(feeling)
         self.baseline_counter += 1
 
-        return None
+        stop_calibrating = self.baseline_counter >= self.baseline_limit
+
+        return None, stop_calibrating
 
     def stop_calibrating(self, feeling):
         if self.baseline_counter > 0:
@@ -192,6 +180,9 @@ class OneTimeFeeling:
                 self.fit_mu.append(fit_mu)
                 self.fit_sd.append(fit_sd)
 
+            # Start accumulator
+            self._reset_accumulator()
+
             is_ok = True
         else:
             self._reset_baseline() # Just in case
@@ -203,41 +194,29 @@ class OneTimeFeeling:
         return None
 
     def calibrated(self, feeling):
-        statistics = []
+        self.accumulator_data.append(feeling)
+        self.accumulator_counter += 1
 
-        for i_feel in range(self.n_feelings):
-            numerator = feeling[i_feel] - self.fit_mu[i_feel]
-            denominator = self.fit_sd[i_feel] / np.sqrt(self.baseline_counter)
-            statistics.append(numerator / denominator)
+        if self.accumulator_counter >= self.accumulator_limit:
+            statistics = []
 
-        # REVIEW: Is the test correctly applied?
+            accumulated_feelings = np.array(self.accumulator_data)
 
-        return statistics
+            for i_feel in range(self.n_feelings):
+                # Mean of the accumulated data
+                feeling = np.mean(accumulated_feelings[:, i_feel])
 
+                # Calculate statistic
+                numerator = feeling - self.fit_mu[i_feel]
+                denominator = self.fit_sd[i_feel] / np.sqrt(self.baseline_counter)
 
-class FeelAccumulator:
-    """Accumulates feeling information."""
+                # statistics of all the feelings saved
+                statistics.append(numerator / denominator)
 
-    def add_base(self, base_data):
-        """Add baseline data for that feeling."""
-        # Fit gaussian # for a regular hypothesis test
-        self.fit_mu, self.fit_sd = norm.fit(base_data)
+                # REVIEW: Is the test correctly applied?
 
-        # Save for poblations test
-        self.real_mu = np.mean(base_data)
-        self.real_var_by_n = np.var(base_data) / len(base_data)
+            self._reset_accumulator()
 
-    def _test_one(self):
-        """Perform an hypothesis test for the new population (self.accumulated_data) vs the collected data."""
-        numerator = np.mean(self.accumulated_data) - self.fit_mu
-        denominator = self.fit_sd/np.sqrt(self.accumulated_counter)
-        statistic = numerator / denominator
-        return statistic
-
-    def _test_population(self):
-        """Perform a hypothesis test between the new population (self.accumulated_data) and the collected population."""
-        acum_var_by_n = np.var(self.accumulated_data) / self.accumulated_counter
-        numerator = np.mean(self.accumulated_data) - self.real_mu
-        denominator = np.sqrt(self.real_var_by_n + acum_var_by_n)
-        statistic = numerator / denominator
-        return statistic
+            return statistics
+        else:
+            return None

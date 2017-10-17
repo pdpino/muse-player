@@ -1,7 +1,7 @@
 from ..yielders import base
 
 class Feeler(base.BaseYielder):
-    """Specialization of Yielder.
+    """Implements IFeelYielder.
 
     Provides a formula for calculating a feeling and a generate method for yielding the feeling
 

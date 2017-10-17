@@ -117,11 +117,10 @@ def main():
         eeg_buffer = engine.buffers.EEGWindowBuffer()
 
         # Create yielder for the feelings
-        accum_samples = 10
         feeler = engine.feelers.FeelerRelaxConc()
 
         # Feeling processor, that use the yielder
-        feel_processor = engine.FeelProcessor(feeler, accum_samples)
+        feel_processor = engine.FeelProcessor(feeler)
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)

@@ -1,9 +1,8 @@
-from . import base
-
 class WaveDivider:
     """Implements IBaselineHandler.
 
-    TODO"""
+    TODO
+    """
 
     def __init__(self):
         # Empty calibration objects
@@ -25,7 +24,9 @@ class WaveDivider:
         self.baseline += power
         self.counter += 1
 
-        return power
+        stop_calibrating = False # Stop only when the signal is sent
+
+        return power, stop_calibrating
 
     def stop_calibrating(self, power):
         """Stop collecting the baseline"""

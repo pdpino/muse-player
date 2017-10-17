@@ -50,6 +50,9 @@ class Calibrator:
     def _set_status_non_calibrated(self):
         self._set_status(self, CalibrationStatus.NonCalibrated)
 
+    def _set_status_stop_calibrating(self):
+        self._set_status(self, CalibrationStatus.Stop)
+
     def _set_status_calibrated(self):
         self._set_status(self, CalibrationStatus.Calibrated)
 
@@ -67,7 +70,12 @@ class Calibrator:
         return self.baseline_handler.start_calibrating(data)
 
     def _calibrating(self, data):
-        return self.baseline_handler.calibrating(data)
+        calibrated_data, stop_calibrating = self.baseline_handler.calibrating(data)
+
+        if stop_calibrating:
+            self._set_status_stop_calibrating()
+
+        return calibrated_data
 
     def _stop_calibrating(self, data):
         calibrated_data, is_ok = self.baseline_handler.stop_calibrating(data)
