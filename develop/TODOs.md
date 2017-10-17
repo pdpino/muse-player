@@ -2,13 +2,14 @@
 
 ## Next
 
+* Use formula of arousal, valence to calculate feelings
+
 * Check TODOs and REVIEWs in code
-* Create `MuseFaker` class to use in testing
-* Document engine and processors classes
 * Webpage changes y axis limits in function of new data
   - be careful to not be moving axis all the time: (something like) only every few times decrease limits, increase always, set a inferior limit
 
 * Change feeling name by something more precise
+* Document engine and processors classes
 
 
 * Order TODOs
