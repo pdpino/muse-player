@@ -2,6 +2,12 @@ import threading
 import numpy as np
 from time import sleep
 
+def random_float(min_num, max_num):
+    """Random float."""
+    dx = np.random.random()
+    dy_dx = (max_num - min_num)
+    return min_num + dy_dx * dx
+
 class MuseFaker:
     """Fake a muse device by streaming random data."""
 
@@ -47,12 +53,12 @@ class MuseFaker:
             sine_wave = np.zeros(n_points)
 
             # Amount of sines to sum up
-            n_sines = 3
+            n_sines = np.random.randint(2, 5)
 
             for sine_i in range(n_sines):
-                freq = 7
-                amp = 2
-                phase = 0.5
+                freq = random_float(4, 50)
+                amp = random_float(50, 100)
+                phase = random_float(0, 1)
 
                 # Add sine wave
                 sine_wave += np.sin(2*np.pi*freq*time_array + phase) * amp
