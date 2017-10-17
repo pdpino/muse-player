@@ -2,7 +2,22 @@
 
 ## Next
 
-## Client: Webpage
+* Check TODOs and REVIEWs in code
+* Create `MuseFaker` class to use in testing
+* Document engine and processors classes
+* Webpage changes y axis limits in function of new data
+  - be careful to not be moving axis all the time: (something like) only every few times decrease limits, increase always, set a inferior limit
+
+* Change feeling name by something more precise
+
+
+* Order TODOs
+
+
+
+## Others:
+
+### Client: Webpage
 * add axis labels
 * add marks in time (mark message)
 * Change variable names in `app.js` to CamelCase
@@ -10,8 +25,9 @@
 * `Graph` class should create html elements for the axis buttons
 * `Graph` class should listen to scrolling to change zoom in graph
 * Prettier header and footer
+*
 
-## Server: Python
+### Server: Python
 * Separate tf in submodules (convolution, sttft and common)
 * handle when muse turns off
 
