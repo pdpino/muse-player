@@ -17,6 +17,12 @@ class EEGBuffer:
             self._q_time.clear()
             self._q_data.clear()
 
+    def peek_last_time(self):
+        """Return the last timestamp received."""
+        with self._lock_q:
+            last_t = self._q_time[-1][-1]
+        return last_t
+
     def incoming(self, timestamp, new_data):
         """Store the incoming data into the buffer."""
         with self._lock_q:

@@ -1,4 +1,4 @@
-from time import time
+from time import sleep
 from . import collectors, buffers, processors
 
 class EEGEngine:
@@ -46,15 +46,16 @@ class EEGEngine:
         if self.generator.has_start_message():
             yield self.generator.start_message()
 
-        self.eeg_buffer.clear()
+        # Mark initial time
+        t_init = self.eeg_buffer.peek_last_time()
 
-        # Set an initial time as marker
-        t_init = time()
+        self.eeg_buffer.clear()
 
         while True:
             timestamp, new_data = self.eeg_buffer.outgoing()
 
             if timestamp is None or new_data is None:
+                sleep(0.1)
                 continue
 
             yield from self.generator.generate(t_init, timestamp, new_data)

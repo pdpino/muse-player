@@ -11,7 +11,7 @@ from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
 import basic
-from backend import parsers, data, engine, info, tf
+from backend import parsers, data, engine, info, tf, MuseFaker
 
 def parse_args():
     """Create a parser, get the args, return them preprocessed."""
@@ -23,6 +23,7 @@ def parse_args():
 
         parser.add_argument('-t', '--time', default=None, type=float,
                             help="Seconds to record data (aprox). If none, stop listening only when interrupted")
+        parser.add_argument('--faker', action="store_true", help="Simulate a fake muse. Used for testing")
         parser.add_argument('--save', action="store_true", help="Save a .csv with the raw data")
         parser.add_argument('--stream', action="store_true", help="Stream the data to a web client")
         parser.add_argument('--stream_type', choices=['eeg', 'waves', 'feel'], default='eeg',
@@ -133,11 +134,14 @@ def main():
     eeg_engine = engine.EEGEngine(name, eeg_buffer, generator)
 
     # Connect muse
-    muse = Muse(address=args.address,
-                callback=eeg_engine.incoming_data,
-                # callback_other=other_buffer.incoming_data, # DEBUG: see other data
-                push_info=True, # DEBUG: push info msgs from muse (to ask config, see battery percentage)
-                norm_factor=args.nfactor, norm_sub=args.nsub)
+    if args.faker:
+        muse = MuseFaker(callback=eeg_engine.incoming_data)
+    else:
+        muse = Muse(address=args.address,
+                    callback=eeg_engine.incoming_data,
+                    # callback_other=other_buffer.incoming_data, # DEBUG: see other data
+                    push_info=True, # DEBUG: push info msgs from muse (to ask config, see battery percentage)
+                    norm_factor=args.nfactor, norm_sub=args.nsub)
     muse.connect(interface=args.interface)
 
     # Init Flask
