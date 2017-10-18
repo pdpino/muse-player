@@ -1,45 +1,35 @@
 # TODOs
 
-## Next
+## Player
+* (1) REFACTOR: create signals object that handles calling an action, printing and returning a message for each action
+* handle when muse turns off
 
-* Add signal handling to be able to normalize
-
-* REFACTOR: create signals object that handles calling an action, printing and returning a message for each action
-
-* Add stream mode configuration for waves (select channel)
-* REFACTOR: arr_freqs is in many places in wave yielding
-
-* Define convention for valence-arousal or arousal-valence
-* Fix some HACKs about the feelings
-
+#### Refactors
+* arr_freqs is in many places in wave yielding
+* Check TODOs and REVIEWs in code
 * Move configuration of streaming to objects or functions
 
-* Check TODOs and REVIEWs in code
-* Webpage changes y axis limits in function of new data
+#### Enable more options
+* Add stream mode configuration for waves (select channel)
+
+## App.js
+* (1) Webpage changes y axis limits in function of new data
   - be careful to not be moving axis all the time: (something like) only every few times decrease limits, increase always, set a inferior limit
-
-* Change feeling name by something more precise
-* Document engine and processors classes
-
-
-* Order TODOs
-
-
-
-## Others:
-
-### Client: Webpage
-* add axis labels
-* add marks in time (mark message)
-* Change variable names in `app.js` to CamelCase
-* `Connection` class should create html elements for the conn status
+* Rename `Graph` to `TimeChart`
+* Separate in multiple files
 * `Graph` class should create html elements for the axis buttons
 * `Graph` class should listen to scrolling to change zoom in graph
-* Prettier header and footer
 
-### Server: Python
+* `Connection` class should create html elements for the conn status
+* add marks in time (mark message)
+
+## Conventions and documentation
+* Document engine and processors classes
+* Change feeling name by something more precise
+* Define convention for valence-arousal or arousal-valence
+
+## Backend
 * Separate tf in submodules (convolution, sttft and common)
-* handle when muse turns off
 
 #### In `backend.buffers`:
 * Evaluate changing deque to queue (used for messaging between threads)
@@ -70,10 +60,8 @@
 
 ### Learn
 * Watch laplacian video (to end chapter)
-* See links in mail (sent to yourself)
 
-
-### Not urgent
+### Other's others
 * add parse args to README
 * Order `develop/info`, section "headband en estado normal" and "en estado extraño"
 * Move parsers to `frontend/` ??
