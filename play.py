@@ -26,8 +26,8 @@ def parse_args():
         parser.add_argument('--faker', action="store_true", help="Simulate a fake muse. Used for testing")
         parser.add_argument('--save', action="store_true", help="Save a .csv with the raw data")
         parser.add_argument('--stream', action="store_true", help="Stream the data to a web client")
-        parser.add_argument('--stream_type', choices=['eeg', 'waves', 'feel'], default='eeg',
-                            help="Select what to stream") # REVIEW: use global list?
+        parser.add_argument('--stream_type', choices=['eeg', 'waves', 'feel', 'feel_val_aro'], default='eeg',
+                            help="Select what to stream") # TODO: use config dictionaries somewhere else
 
 
 
@@ -120,8 +120,28 @@ def main():
         # Create yielder for the feelings
         feeler = engine.feelers.FeelerRelaxConc()
 
-        # Feeling processor, that use the yielder
-        feel_processor = engine.FeelProcessor(feeler)
+        # Calibrator # TODO: select calibrator
+        # calibrator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
+        calibrator = engine.calibrators.NoCalibrator()
+
+        # Feeling processor, that use the feeler and the calibrator
+        feel_processor = engine.FeelProcessor(feeler, calibrator)
+
+        # Wave processor, that uses the feel processor
+        generator = engine.WaveProcessor(feel_processor)
+
+    elif args.stream_type == 'feel_val_aro':
+        # Use a window buffer
+        eeg_buffer = engine.buffers.EEGWindowBuffer()
+
+        # Create feeler
+        feeler = engine.feelers.FeelerValAro()
+
+        # Use no calibrator
+        calibrator = engine.calibrators.NoCalibrator()
+
+        # Feeling processor, that use the feeler and the calibrator
+        feel_processor = engine.FeelProcessor(feeler, calibrator)
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)

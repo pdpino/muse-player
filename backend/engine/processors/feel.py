@@ -1,5 +1,5 @@
 import numpy as np
-from .. import collectors, calibrators
+from .. import collectors
 from . import base
 
 class FeelProcessor(base.BaseProcessor):
@@ -7,13 +7,11 @@ class FeelProcessor(base.BaseProcessor):
 
     TODO"""
 
-    def __init__(self, feeler):
+    def __init__(self, feeler, calibrator):
         """Constructor."""
 
         # Calibrator
-        # TODO: select from outside
-        # self.calibrator = calibrators.Calibrator(calibrators.BaselineFeeling())
-        self.calibrator = calibrators.NoCalibrator()
+        self.calibrator = calibrator
 
         # Feeler, provides formula and yielding
         self.feeler = feeler

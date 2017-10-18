@@ -4,6 +4,8 @@
 
 * Use formula of arousal, valence to calculate feelings
 
+* Move configuration of streaming to objects or functions
+
 * Check TODOs and REVIEWs in code
 * Webpage changes y axis limits in function of new data
   - be careful to not be moving axis all the time: (something like) only every few times decrease limits, increase always, set a inferior limit

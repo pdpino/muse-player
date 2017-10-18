@@ -33,7 +33,7 @@ class EEGWindowBuffer():
 
     def peek_last_time(self):
         """Return the last timestamp received."""
-        with self._lock_q:
+        with self._lock_b:
             last_t = self._buffer[0, self._end - 1]
         return last_t
 

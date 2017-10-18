@@ -9,9 +9,13 @@ class FeelerRelaxConc(base.Feeler):
     beta from forehead channels is concentration"""
 
     def __init__(self, window=256, srate=256):
-        self.arr_freqs = tf.get_freqs_resolution(window, srate)
-
         self.config_data = "feel"
+
+        # Band filters
+        self.arr_freqs = tf.get_freqs_resolution(window, srate)
+        self._alpha_filter = info.get_freqs_filter(self.arr_freqs, 8, 13)
+        self._beta_filter = info.get_freqs_filter(self.arr_freqs, 13, 30)
+
 
         # HACK: use formatter
         self.yield_string = "data: {}, {}, {}\n\n"
@@ -20,10 +24,10 @@ class FeelerRelaxConc(base.Feeler):
         """Transform power into a relaxation and concentration status."""
 
         # Alpha for earback channels (TP9 and TP10)
-        flat_alpha = power[0::3, info.get_freqs_filter(self.arr_freqs, 8, 13)].flatten()
+        flat_alpha = power[0::3, self._alpha_filter].flatten()
 
         # Beta for forehead channels (AF7 and AF8)
-        flat_beta = power[1:3, info.get_freqs_filter(self.arr_freqs, 13, 30)].flatten()
+        flat_beta = power[1:3, self._beta_filter].flatten()
 
         # Average for both channels
         relaxation = np.mean(flat_alpha)

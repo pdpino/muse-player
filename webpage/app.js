@@ -271,7 +271,7 @@ class Graph {
    */
   _setAxisLabels(xAxisLabel, yAxisLabel){
     // TODO: delete previous labels
-    
+
     this.svg.append("text")
       // .attr("class", "y label")
       .attr("text-anchor", "middle")
@@ -601,6 +601,14 @@ $(document).ready( function() {
     yAxisLabel: 'Power (dB)',
   }
 
+  const feelGraphConfig2 = {
+    nChannels: 2,
+    channelNames: ["arousal", "valence"],
+    colors: ["blue", "red"],
+    title: 'State of mind',
+    yAxisLabel: 'Power (dB)',
+  }
+
   const graph = new Graph({
     container: "#graph_container",
     legend_container: '#legend_container',
@@ -651,6 +659,10 @@ $(document).ready( function() {
 
         case "feel":
           graphConfig = feelGraphConfig;
+          break;
+
+        case "feelValAro":
+          graphConfig = feelGraphConfig2;
           break;
 
         default:
