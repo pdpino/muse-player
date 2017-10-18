@@ -19,8 +19,8 @@ def get_regulator(selected, signals):
         regulator = engine.collectors.DataAccumulator(samples=10)
     elif selected == "calib":
         regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
-        signals["-1"] = regulator.signal_start_calibrating
-        signals["-2"] = regulator.signal_stop_calibrating
+        signals["-3"] = regulator.signal_start_calibrating
+        signals["-4"] = regulator.signal_stop_calibrating
     else:
         regulator = None
 
@@ -128,6 +128,9 @@ def main():
         # Wave processor that uses the wave yielder
         generator = engine.WaveProcessor(wave_yielder)
 
+        signals["-1"] = generator.signal_start_calibrating
+        signals["-2"] = generator.signal_stop_calibrating
+
     elif args.stream_type == 'feel':
         # Use a window buffer
         eeg_buffer = engine.buffers.EEGWindowBuffer()
@@ -144,6 +147,10 @@ def main():
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)
 
+        signals["-1"] = generator.signal_start_calibrating
+        signals["-2"] = generator.signal_stop_calibrating
+
+
     elif args.stream_type == 'feel_val_aro':
         # Use a window buffer
         eeg_buffer = engine.buffers.EEGWindowBuffer()
@@ -159,6 +166,9 @@ def main():
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)
+
+        signals["-1"] = generator.signal_start_calibrating
+        signals["-2"] = generator.signal_stop_calibrating
 
     else:
         raise("Stream type not recognized: {}".format(args.stream_type))

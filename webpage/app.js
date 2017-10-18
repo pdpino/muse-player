@@ -366,7 +366,7 @@ class Graph {
 
     // Safe to zoom in
     if(!out){
-      if(y_max_new - y_min_new < 10){
+      if(y_max_new - y_min_new < 1){
         return;
       }
     }
@@ -628,7 +628,7 @@ $(document).ready( function() {
     yTicks: 5,
     n_secs: 5,
     dx_zoom: 1, // FIXME: que clase calcule esto y vaya cambiando
-    dy_zoom: 10,
+    dy_zoom: 5,
     dy_move: 50
     });
 

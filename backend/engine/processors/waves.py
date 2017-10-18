@@ -12,6 +12,10 @@ class WaveProcessor(base.BaseProcessor):
         # Calibrator uses a wave divider to do the calculation
         self.calibrator = calibrators.Calibrator(calibrators.WaveDivider())
 
+        # Connect
+        self.signal_start_calibrating = self.calibrator.signal_start_calibrating
+        self.signal_stop_calibrating = self.calibrator.signal_stop_calibrating
+
         # To accumulate data in more than one instant
         self.accumulator = collectors.DataAccumulator(samples=accum_samples)
 
