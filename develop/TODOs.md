@@ -2,9 +2,12 @@
 
 ## Next
 
+* Add accumulation without calibration (how do you call the calibrator then?)
+* Add signal handling to be able to normalize
+
+
 * Define convention for valence-arousal or arousal-valence
 * Fix some HACKs about the feelings
-* Add signal handling to be able to normalize
 
 * Move configuration of streaming to objects or functions
 
