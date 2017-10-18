@@ -593,7 +593,7 @@ $(document).ready( function() {
     yAxisLabel: 'Power (dB)',
   }
 
-  const feelGraphConfig = {
+  const feelRelaxConcGraphConfig = {
     nChannels: 2,
     channelNames: ["relaxation", "concentration"],
     colors: ["blue", "red"],
@@ -601,7 +601,7 @@ $(document).ready( function() {
     yAxisLabel: 'Power (dB)',
   }
 
-  const feelGraphConfig2 = {
+  const feelValAroGraphConfig = {
     nChannels: 2,
     channelNames: ["arousal", "valence"],
     colors: ["blue", "red"],
@@ -658,11 +658,11 @@ $(document).ready( function() {
           break;
 
         case "feel":
-          graphConfig = feelGraphConfig;
+          graphConfig = feelRelaxConcGraphConfig;
           break;
 
         case "feelValAro":
-          graphConfig = feelGraphConfig2;
+          graphConfig = feelValAroGraphConfig;
           break;
 
         default:
