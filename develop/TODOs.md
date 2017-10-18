@@ -2,7 +2,9 @@
 
 ## Next
 
-* Use formula of arousal, valence to calculate feelings
+* Define convention for valence-arousal or arousal-valence
+* Fix some HACKs about the feelings
+* Add signal handling to be able to normalize
 
 * Move configuration of streaming to objects or functions
 
@@ -28,7 +30,6 @@
 * `Graph` class should create html elements for the axis buttons
 * `Graph` class should listen to scrolling to change zoom in graph
 * Prettier header and footer
-*
 
 ### Server: Python
 * Separate tf in submodules (convolution, sttft and common)
