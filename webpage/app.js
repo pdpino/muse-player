@@ -34,21 +34,19 @@ const feelValAroGraphConfig = {
   yAxisLabel: 'Power (dB)',
 }
 
-/**
- * Receive a stream of data from a muse server and plots it
- */
 $(document).ready( function() {
   let graphConfig = null;
 
   const graph = new TimeChart({
-    container: "#graph_container",
-    legendContainer: '#legend_container',
+    container: "#graph-container",
+    legendContainer: '#legend-container',
 
     // FIXME: que clase cree estos
     xZoomBtn: ["#btn-zoomXdec", "#btn-zoomXinc"],
     yZoomBtn: ["#btn-zoomYin", "#btn-zoomYout"],
     yMoveBtn: ["#btn-moveYdown", "#btn-moveYup"],
     yHomeBtn: "#btn-homeY",
+    yAutoUpdate: "#auto-update-y-axis",
     secondsIndicator: "#segX",
 
     width: 700,
@@ -57,7 +55,7 @@ $(document).ready( function() {
     yMax: 100,
     xTicks: 5,
     yTicks: 5,
-    secondsInScreen: 5,
+    secondsInScreen: 10,
     dxZoom: 1, // FIXME: que clase calcule esto y vaya cambiando
     dyZoom: 5,
     dyMove: 50

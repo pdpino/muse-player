@@ -16,11 +16,12 @@ class TimeChart {
 
     this.legendContainer = config.legendContainer;
     this.secondsIndicator = config.secondsIndicator;
-    this._updateXAxis(config.secondsInScreen);
     this.yMin = config.yMin;
     this.yMax = config.yMax;
     this.yMinHome = config.yMin;
     this.yMaxHome = config.yMax;
+    this._setCheckboxAutoUpdateY(config.yAutoUpdate);
+    this._updateXAxis(config.secondsInScreen);
 
     this._initEmptyTimeChart(config.container, config.width, config.height, config.xTicks, config.yTicks);
     this._initAxisParams(config.dxZoom, config.dyZoom, config.dyMove);
@@ -34,14 +35,10 @@ class TimeChart {
    * Receive a configuration object, if a value is missing fill it with default
    */
   _validateConstructorParams(config){
-    if(config.container === undefined){
-      console.log("ERROR: Missing graph container");
-      return false;
-    }
-    if(config.legendContainer === undefined){
-      console.log("ERROR: Missing legend container")
-      return false;
-    }
+    config.container = config.container || "#graph-container";
+    config.legendContainer = config.legendContainer || "#legend-container";
+    config.yAutoUpdate = config.yAutoUpdate || "#auto-update-y-axis";
+
     return true;
   }
 
@@ -153,8 +150,13 @@ class TimeChart {
    * Init an empty title
    */
   _initTitle(){
+    const oldTitle = this.svg.select("graph-title");
+    if (oldTitle) {
+      oldTitle.remove();
+    }
+
     this.title = this.svg.append("text")
-        .attr("id", "graph_title")
+        .attr("id", "graph-title")
         .attr("x", (this.width / 2))
         .attr("y", 0 - (this.margin.top / 2))
         .attr("text-anchor", "middle");
@@ -196,7 +198,6 @@ class TimeChart {
         .y(function(d){ return graph.yRange(d[i + 1]); });
     });
 
-
   }
 
   /**
@@ -208,10 +209,10 @@ class TimeChart {
     this.colorNames = colorNames.slice(); // copy by value
 
     this.paths = new Array(this.nChannels); // Lines in svg
-    this.plot_bools = new Array(this.nChannels); // Bools to show each line
+    this.enablePath = new Array(this.nChannels); // Bools to show each line
 
     for(let i = 0; i < this.nChannels; i++){
-      this.plot_bools[i] = true; // DEFAULT: By default show line
+      this.enablePath[i] = true; // DEFAULT: By default show line
       this.paths[i] = null;
     }
 
@@ -263,7 +264,7 @@ class TimeChart {
     // Show/hide events
     ticksID.forEach(function(t, i){
       $(t).click( function(){
-        graph.plot_bools[i] = this.checked;
+        graph.enablePath[i] = this.checked;
         graph.paths[i].style("opacity", this.checked ? 1 : 0);
       });
     });
@@ -273,17 +274,18 @@ class TimeChart {
    * @source: http://bl.ocks.org/phoebebright/3061203
    */
   _setAxisLabels(xAxisLabel, yAxisLabel){
-    // TODO: delete previous labels
+    // Delete previous labels
+    d3.selectAll("text.label").remove();
 
     this.svg.append("text")
-      // .attr("class", "y label")
+      .attr("class", "x label")
       .attr("text-anchor", "middle")
       .attr("x", this.width/2)
       .attr("y", this.height + this.labelPadding.bottom)
       .text(xAxisLabel);
 
     this.svg.append("text")
-      // .attr("class", "y label")
+      .attr("class", "y label")
       .attr("text-anchor", "middle")
       .attr("x", -this.height/2)
       .attr("y", -this.labelPadding.left)
@@ -308,6 +310,17 @@ class TimeChart {
     this.yMax = yMax;
     this.yRange.domain([yMin, yMax]);
     this.svg.select(".y.axis").call(this.yAxis); // update svg
+  }
+
+  /**
+   * Connect event to toggle auto update y axis
+   */
+  _setCheckboxAutoUpdateY(checkboxSelector){
+    const graph = this;
+    $(checkboxSelector).click( function(){
+      graph.autoUpdateYAxis = this.checked;
+    });
+    graph.autoUpdateYAxis = true; // DEFAULT: start enabled
   }
 
   /**
@@ -403,7 +416,7 @@ class TimeChart {
    */
   zoomXAxis(increase){
     const sign = increase ? 1 : -1;
-    this._updateXAxis(this.secondsInScreen + sign*this.dxZoom);
+    this._updateXAxis(this.secondsInScreen + sign * this.dxZoom);
   }
 
   /**
@@ -414,8 +427,7 @@ class TimeChart {
     this.data.push(newData);
 
     for(let channel = 0; channel < this.nChannels; channel++){
-      if(!this.plot_bools[channel])
-        continue;
+      if(!this.enablePath[channel]) continue;
 
       this.paths[channel].attr("d", this.lines[channel](this.data))
         .attr("transform", null)
@@ -424,14 +436,41 @@ class TimeChart {
         .ease("linear");
     }
 
-    let range = d3.extent(this.data, function(d) { return d[0]; });
-    // if(range[0] + this.secondsInScreen > range[1]){ range[1] = range[0] + this.secondsInScreen; } // Que el range minimo sea secondsInScreen
-    this.xRange.domain(range);
+    // Update Y Axis
+    // this.autoUpdateYAxis = false;
+    if(this.autoUpdateYAxis){
+      // NOTE: Something like this could be done (just with the newData), but instead is better to
+      // let yMin = d3.min(this.data, function(d) { return Math.min(...d.slice(1)); });
+      // let yMax = d3.max(this.data, function(d) { return Math.max(...d.slice(1)); });
+
+      let yMin = this.yMin;
+      let yMax = this.yMax;
+      for(let channel = 1; channel < this.nChannels + 1; channel++){
+        let value = newData[channel];
+
+        // Update min and max
+        if(value > yMax){
+          yMax = value;
+        } else if(value < yMin){
+          yMin = value;
+        }
+      }
+      // NOTE: instead of iterating only over the newData, it could be searched on all the data
+      // for(let i_time = 0; i_time < this.data.length; i_time ++) { let value = this.data[i_time][channel]; }
+
+      // TODO: decide when to update and when not to (in base on the values)
+      this._updateYAxis(yMin, yMax);
+    }
+
+    // Update X Axis
+    let xRange = d3.extent(this.data, function(d) { return d[0]; });
+    // if(xRange[1] - xRange[0] < this.secondsInScreen){ xRange[1] = xRange[0] + this.secondsInScreen; } // Que el xRange minimo sea secondsInScreen
+    this.xRange.domain(xRange);
 
     this.svg.select(".x.axis").call(this.xAxis);
 
     if(shift){
-      while(this.data[this.data.length-1][0] - this.data[0][0] > this.secondsInScreen){
+      while(this.data[this.data.length - 1][0] - this.data[0][0] > this.secondsInScreen){
         this.data.shift();
       }
     }

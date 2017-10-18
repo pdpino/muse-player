@@ -4,8 +4,8 @@
 * (1) REFACTOR: create signals object that handles calling an action, printing and returning a message for each action
 * handle when muse turns off
 
-#### Refactors
-* arr_freqs is in many places in wave yielding
+#### Refactors (1)
+* `arr_freqs` is in many places in wave yielding
 * Check TODOs and REVIEWs in code
 * Move configuration of streaming to objects or functions
 
@@ -13,8 +13,6 @@
 * Add stream mode configuration for waves (select channel)
 
 ## App.js
-* (1) Webpage changes y axis limits in function of new data
-  - be careful to not be moving axis all the time: (something like) only every few times decrease limits, increase always, set a inferior limit
 * `TimeChart` class should create html elements for the axis buttons
 * `TimeChart` class should listen to scrolling to change zoom in graph
 
