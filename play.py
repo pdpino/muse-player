@@ -11,7 +11,20 @@ from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
 import basic
-from backend import parsers, data, engine, info
+from backend import parsers, data, engine, info, tf, MuseFaker
+
+def get_regulator(selected, signals):
+    # REFACTOR: use better way of passing the configuration
+    if selected == "accum":
+        regulator = engine.collectors.DataAccumulator(samples=10)
+    elif selected == "calib":
+        regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
+        signals["-3"] = regulator.signal_start_calibrating
+        signals["-4"] = regulator.signal_stop_calibrating
+    else:
+        regulator = None
+
+    return regulator
 
 def parse_args():
     """Create a parser, get the args, return them preprocessed."""
@@ -23,10 +36,15 @@ def parse_args():
 
         parser.add_argument('-t', '--time', default=None, type=float,
                             help="Seconds to record data (aprox). If none, stop listening only when interrupted")
+        parser.add_argument('--faker', action="store_true", help="Simulate a fake muse. Used for testing")
         parser.add_argument('--save', action="store_true", help="Save a .csv with the raw data")
         parser.add_argument('--stream', action="store_true", help="Stream the data to a web client")
-        parser.add_argument('-w', '--stream_waves', action="store_true",
-                            help="Stream the wave data (instead of EEG) (beta)")
+        parser.add_argument('--stream_type', choices=['eeg', 'waves', 'feel', 'feel_val_aro'], default='eeg',
+                            help="Select what to stream") # TODO: use config dictionaries somewhere else
+
+        parser.add_argument('--regulator', choices=['accum', 'calib'],
+                            help="Select the type of regulator to use") # REFACTOR: this shouldnt be here
+
 
 
         group_bconn = parser.add_argument_group(title="Bluetooth connection")
@@ -84,20 +102,90 @@ def main():
     # Get arguments
     args = parse_args()
 
-    # Container for the incoming data
-    if args.stream_waves:
-        data_buffer = engine.WaveBuffer(name="waves", window=256, step=25, srate=256,
-                            test_population=args.test_population, feeling_interval=args.feel_interval)
-    else:
-        data_buffer = engine.EEGBuffer(name="eeg",
-                            yield_function=engine.EEGYielder.get_yielder(args.stream_mode))
+    # Dictionary for the signals
+    signals = dict()
 
-    # Conectar muse
-    muse = Muse(address=args.address,
-                callback=data_buffer.incoming_data,
-                # callback_other=other_buffer.incoming_data, # DEBUG: see other data
-                push_info=True, # DEBUG: push info msgs from muse (to ask config, see battery percentage)
-                norm_factor=args.nfactor, norm_sub=args.nsub)
+    # Select processor for the EEG data
+    name = args.stream_type
+    if args.stream_type == 'eeg':
+        # Use a normal buffer
+        eeg_buffer = engine.buffers.EEGBuffer()
+
+        # Generator yields raw EEG
+        generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
+
+    elif args.stream_type == 'waves':
+        # Use a window buffer
+        eeg_buffer = engine.buffers.EEGWindowBuffer()
+
+        # Create wave yielder
+        window = 256 # HACK: values for the yielder hardcoded
+        srate = 256
+        channel = 0
+        arr_freqs = tf.get_freqs_resolution(window, srate)
+        wave_yielder = engine.yielders.WaveYielder(arr_freqs, channel=channel)
+
+        # Wave processor that uses the wave yielder
+        generator = engine.WaveProcessor(wave_yielder)
+
+        signals["-1"] = generator.signal_start_calibrating
+        signals["-2"] = generator.signal_stop_calibrating
+
+    elif args.stream_type == 'feel':
+        # Use a window buffer
+        eeg_buffer = engine.buffers.EEGWindowBuffer()
+
+        # Create yielder for the feelings
+        feeler = engine.feelers.FeelerRelaxConc()
+
+        # Select regulator
+        regulator = get_regulator(args.regulator, signals)
+
+        # Feeling processor, that use the feeler and the regulator
+        feel_processor = engine.FeelProcessor(feeler, regulator)
+
+        # Wave processor, that uses the feel processor
+        generator = engine.WaveProcessor(feel_processor)
+
+        signals["-1"] = generator.signal_start_calibrating
+        signals["-2"] = generator.signal_stop_calibrating
+
+
+    elif args.stream_type == 'feel_val_aro':
+        # Use a window buffer
+        eeg_buffer = engine.buffers.EEGWindowBuffer()
+
+        # Create feeler
+        feeler = engine.feelers.FeelerValAro()
+
+        # Select regulator
+        regulator = get_regulator(args.regulator, signals)
+
+        # Feeling processor, that use the feeler and the regulator
+        feel_processor = engine.FeelProcessor(feeler, regulator)
+
+        # Wave processor, that uses the feel processor
+        generator = engine.WaveProcessor(feel_processor)
+
+        signals["-1"] = generator.signal_start_calibrating
+        signals["-2"] = generator.signal_stop_calibrating
+
+    else:
+        raise("Stream type not recognized: {}".format(args.stream_type))
+
+
+    # Engine that handles the incoming, processing and outgoing data
+    eeg_engine = engine.EEGEngine(name, eeg_buffer, generator)
+
+    # Connect muse
+    if args.faker:
+        muse = MuseFaker(callback=eeg_engine.incoming_data)
+    else:
+        muse = Muse(address=args.address,
+                    callback=eeg_engine.incoming_data,
+                    # callback_other=other_buffer.incoming_data, # DEBUG: see other data
+                    push_info=True, # DEBUG: push info msgs from muse (to ask config, see battery percentage)
+                    norm_factor=args.nfactor, norm_sub=args.nsub)
     muse.connect(interface=args.interface)
 
     # Init Flask
@@ -112,17 +200,11 @@ def main():
         stream = threading.Thread(target=app.run, kwargs={"host":args.ip, "port":args.port})
         stream.daemon = True
 
-        # Set args for the generator
-        if args.stream_waves:
-            gen_args = [] # No arguments
-        else:
-            gen_args = [args.stream_n]
-
         # Connect data to send
         @app.route(args.url)
         def stream_data():
             """Stream the eeg data."""
-            return Response(data_buffer.data_generator(*gen_args), mimetype="text/event-stream")
+            return Response(eeg_engine.outgoing_data(), mimetype="text/event-stream")
 
     ## Iniciar
     muse.start()
@@ -138,59 +220,32 @@ def main():
         # Wait for a buffer zone
         sleep(1)
 
-        def start_calib():
-            if not data_buffer.start_calibrating(): # Indicate if success
-                return None
-            print("started calibrating")
-            return info.start_calib_mark
-        def stop_calib():
-            if not data_buffer.stop_calibrating():
-                return None
-            print("stopped calibrating")
-            return info.stop_calib_mark
-        def start_collect():
-            if not data_buffer.start_collecting(): # Indicate if success
-                return None
-            print("started collecting")
-            return info.start_collect_mark
-        def stop_collect():
-            if not data_buffer.stop_collecting():
-                return None
-            print("stopped collecting")
-            return info.stop_collect_mark
         def ask_config():
             muse.ask_config() # only works if push_info was enabled
             sleep(0.5) # let it print
-            return None
+
         def toggle_save_opt():
             args.save = not args.save
             print("save status = {}".format(args.save))
-            return None
 
-        commands = {
-            "-c": ask_config, # DEBUG: you can input this to see what comes in config in muse
-            "-1": start_calib,
-            "-2": stop_calib,
-            "-3": start_collect,
-            "-4": stop_collect,
-            "--save": toggle_save_opt
-            }
+
+        signals["-c"] = ask_config # DEBUG: you can input this to see what comes in config in muse
+        signals["--save"] = toggle_save_opt
 
         try:
             print("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):")
             while True:
                 # Mark time
                 message = input("\tcmd: ")
-                t = data_buffer.get_last_timestamp()
+                timestamp = eeg_engine.get_last_timestamp()
 
                 # Special commands
-                if message in commands:
-                    message = commands[message]()
-                    if message is None:
-                        continue
+                if message in signals:
+                    signals[message]()
+                    continue
 
                 # Save
-                marks.append(t)
+                marks.append(timestamp)
                 messages.append(message.lower())
         except KeyboardInterrupt: # Ctrl-c
             print("Exiting")
@@ -201,10 +256,10 @@ def main():
         sleep(args.time) # HACK: its aprox time
 
     muse.stop()
-    print("Muse stopped") # DEBUG
+    # print("Muse stopped") # DEBUG
     muse.disconnect() # FIXME: sometimes a thread gets stuck here
-    print("Muse disconnected") # DEBUG
-    
+    # print("Muse disconnected") # DEBUG
+
     print("Stopped receiving muse data")
 
     # # DEBUG: save a file with the handles (debugging muse bluetooth)
@@ -215,21 +270,21 @@ def main():
     # df.to_csv("debug/debug2.csv", index=False, header=False) # Guardar a archivo
 
     # Print running time
-    basic.report("Received data for {}", data_buffer.get_running_time(), level=1)
+    basic.report("Received data for {}", eeg_engine.get_running_time(), level=1)
 
     if args.save:
         # Save eeg data
-        eeg = data_buffer.get_eeg()
+        eeg = eeg_engine.export()
         data.save_eeg(eeg, args.fname, args.subfolder)
 
-        # Save marks
-        marks = data_buffer.normalize_marks(marks)
-        data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
-
-        # Save feelings, if any
-        if type(data_buffer) is engine.WaveBuffer:
-            feelings = data_buffer.get_feelings()
-            data.save_feelings(feelings, args.fname, args.subfolder)
+        ## Save marks
+        # marks = data_buffer.normalize_marks(marks)
+        # data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
+        #
+        # # Save feelings, if any
+        # if type(data_buffer) is engine.WaveBuffer:
+        #     feelings = data_buffer.get_feelings()
+        #     data.save_feelings(feelings, args.fname, args.subfolder)
 
     return 0
 

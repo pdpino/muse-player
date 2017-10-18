@@ -2,7 +2,33 @@
 
 ## Next
 
-## Client: Webpage
+* Add signal handling to be able to normalize
+
+* REFACTOR: create signals object that handles calling an action, printing and returning a message for each action
+
+* Add stream mode configuration for waves (select channel)
+* REFACTOR: arr_freqs is in many places in wave yielding
+
+* Define convention for valence-arousal or arousal-valence
+* Fix some HACKs about the feelings
+
+* Move configuration of streaming to objects or functions
+
+* Check TODOs and REVIEWs in code
+* Webpage changes y axis limits in function of new data
+  - be careful to not be moving axis all the time: (something like) only every few times decrease limits, increase always, set a inferior limit
+
+* Change feeling name by something more precise
+* Document engine and processors classes
+
+
+* Order TODOs
+
+
+
+## Others:
+
+### Client: Webpage
 * add axis labels
 * add marks in time (mark message)
 * Change variable names in `app.js` to CamelCase
@@ -11,7 +37,7 @@
 * `Graph` class should listen to scrolling to change zoom in graph
 * Prettier header and footer
 
-## Server: Python
+### Server: Python
 * Separate tf in submodules (convolution, sttft and common)
 * handle when muse turns off
 

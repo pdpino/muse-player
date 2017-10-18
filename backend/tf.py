@@ -96,7 +96,7 @@ def apply_fft(eeg_data_win):
     PSD = 2*np.abs(Y) # Obtain amplitude
     return PSD**2 # Return power
 
-def get_arr_freqs(window, srate):
+def get_freqs_resolution(window, srate):
     """Return the array of frequencies for stfft."""
     n_freqs = _get_n_freqs(window)
     # NOTE:
@@ -130,7 +130,7 @@ def stfft(times, eeg_data, baseline=None, norm=True, window=None, step=None, sra
         basic.perror("stfft(): Length of times and data don't match: {} vs {}".format(n_times, n_data))
 
     # Arrays
-    arr_freqs = get_arr_freqs(window, srate)
+    arr_freqs = get_freqs_resolution(window, srate)
     arr_times = []
 
     # Empty matrix # will be filled with arrays of len=n_freqs
