@@ -1,3 +1,5 @@
+### DEPRECATED!!!
+
 class NoCalibrator:
     """Empty calibrator (does nothing)."""
 

@@ -5,18 +5,19 @@ from . import base
 class FeelProcessor(base.BaseProcessor):
     """Provides a feeling processor.
 
-    TODO"""
+    TODO
+    """
 
-    def __init__(self, feeler, calibrator):
+    def __init__(self, feeler, regulator):
         """Constructor."""
 
-        # Calibrator
-        self.calibrator = calibrator
+        # Regulator
+        self.regulator = regulator
 
         # Feeler, provides formula and yielding
         self.feeler = feeler
 
-        # Different name for the feeler
+        # Different name for the feeler, so the BaseProcessor can use it
         self.generator = self.feeler # The generator is the feeler
 
         # Collection of feelings
@@ -26,12 +27,13 @@ class FeelProcessor(base.BaseProcessor):
         """Generator of feelings."""
 
         # Apply feeling formula
-        raw_feeling = self.feeler.calculate(power)
+        feeling = self.feeler.calculate(power)
 
-        # Normalize by baseline
-        feeling = self.calibrator.calibrate(raw_feeling)
-        if feeling is None:
-            return
+        # Regulate with baseline and/or accumulation
+        if self.regulator:
+            feeling = self.regulator.regulate(feeling)
+            if feeling is None:
+                return
 
         # Collect processed feeling
         self.collector.collect(timestamp, feeling)

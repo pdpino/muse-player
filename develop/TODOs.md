@@ -2,9 +2,10 @@
 
 ## Next
 
-* Add accumulation without calibration (how do you call the calibrator then?)
 * Add signal handling to be able to normalize
 
+* Add stream mode configuration for waves (select channel)
+* REFACTOR: arr_freqs is in many places in wave yielding
 
 * Define convention for valence-arousal or arousal-valence
 * Fix some HACKs about the feelings

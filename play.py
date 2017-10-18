@@ -29,6 +29,9 @@ def parse_args():
         parser.add_argument('--stream_type', choices=['eeg', 'waves', 'feel', 'feel_val_aro'], default='eeg',
                             help="Select what to stream") # TODO: use config dictionaries somewhere else
 
+        parser.add_argument('--regulator', choices=['accum', 'calib'],
+                            help="Select the type of regulator to use") # REFACTOR: this shouldnt be here
+
 
 
         group_bconn = parser.add_argument_group(title="Bluetooth connection")
@@ -96,7 +99,6 @@ def main():
         eeg_buffer = engine.buffers.EEGBuffer()
 
         # Generator yields raw EEG
-        # yielder_args = (args.stream_n,) if args.stream_mode == "n" else []
         generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
 
     elif args.stream_type == 'waves':
@@ -120,12 +122,16 @@ def main():
         # Create yielder for the feelings
         feeler = engine.feelers.FeelerRelaxConc()
 
-        # Calibrator # TODO: select calibrator
-        # calibrator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
-        calibrator = engine.calibrators.NoCalibrator()
+        # Calibrator # REFACTOR: select regulator in a better way
+        if args.regulator == "accum":
+            regulator = engine.collectors.DataAccumulator(samples=10)
+        elif args.regulator == "calib":
+            regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
+        else:
+            regulator = None
 
-        # Feeling processor, that use the feeler and the calibrator
-        feel_processor = engine.FeelProcessor(feeler, calibrator)
+        # Feeling processor, that use the feeler and the regulator
+        feel_processor = engine.FeelProcessor(feeler, regulator)
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)
@@ -137,11 +143,16 @@ def main():
         # Create feeler
         feeler = engine.feelers.FeelerValAro()
 
-        # Use no calibrator
-        calibrator = engine.calibrators.NoCalibrator()
+        # Select regulator
+        if args.regulator == "accum":
+            regulator = engine.collectors.DataAccumulator(samples=10)
+        elif args.regulator == "calib":
+            regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
+        else:
+            regulator = None
 
-        # Feeling processor, that use the feeler and the calibrator
-        feel_processor = engine.FeelProcessor(feeler, calibrator)
+        # Feeling processor, that use the feeler and the regulator
+        feel_processor = engine.FeelProcessor(feeler, regulator)
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)

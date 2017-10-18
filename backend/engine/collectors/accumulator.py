@@ -1,7 +1,9 @@
 import numpy as np
 
 class DataAccumulator:
-    """Accumulates data (power, feeling, etc)."""
+    """Accumulates data (power, feeling, etc).
+
+    Implements IRegulator"""
 
     def __init__(self, samples=10):
         """Constructor."""
@@ -15,6 +17,9 @@ class DataAccumulator:
             self._accumulate_function = self._dont_accumulate
 
         self._reset_cumulator()
+
+        # Implement regulator interface
+        self.regulate = self.accumulate
 
     def _reset_cumulator(self):
         self._accumulated = []

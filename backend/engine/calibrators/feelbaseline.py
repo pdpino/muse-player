@@ -123,7 +123,6 @@ import numpy as np
 #     statistic = numerator / denominator
 #     return statistic
 
-
 class BaselineFeeling:
     """Implements IBaselineHandler.
 

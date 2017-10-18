@@ -12,6 +12,8 @@ class CalibrationStatus(Enum):
 class Calibrator:
     """Provides an object that can calibrate data in time.
 
+    Implements IRegulator
+
     The calibrator can be in one of 5 status:
         non-calibrated, started-calibrating, calibrating, stopped-calibrating, calibrated
     In each iteration of your program call:
@@ -38,6 +40,9 @@ class Calibrator:
 
         # Baseline handler
         self.baseline_handler = baseline_handler
+
+        # Implement regulator interface
+        self.regulate = self.calibrate
 
     def _set_status(self, new_status):
         """Wrapper to change the status of the calibrator."""
