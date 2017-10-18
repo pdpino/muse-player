@@ -40,7 +40,7 @@ const feelValAroGraphConfig = {
 $(document).ready( function() {
   let graphConfig = null;
 
-  const graph = new Graph({
+  const graph = new TimeChart({
     container: "#graph_container",
     legendContainer: '#legend_container',
 

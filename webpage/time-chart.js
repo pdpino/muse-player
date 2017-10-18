@@ -1,6 +1,6 @@
 "use strict"
 
-class Graph {
+class TimeChart {
   /**
    * Create an empty graph
    */
@@ -22,7 +22,7 @@ class Graph {
     this.yMinHome = config.yMin;
     this.yMaxHome = config.yMax;
 
-    this._initEmptyGraph(config.container, config.width, config.height, config.xTicks, config.yTicks);
+    this._initEmptyTimeChart(config.container, config.width, config.height, config.xTicks, config.yTicks);
     this._initAxisParams(config.dxZoom, config.dyZoom, config.dyMove);
     this._addEventsXAxis(config.xZoomBtn[0], config.xZoomBtn[1]);
     this._addEventsYAxis(config.yZoomBtn, config.yMoveBtn, config.yHomeBtn);
@@ -62,7 +62,7 @@ class Graph {
       }
     }
 
-    config.title = config.title || "Graph";
+    config.title = config.title || "TimeChart";
     config.colors = config.colors || generateRandomColors(config.nChannels);
 
     config.xAxisLabel = config.xAxisLabel || "Time (s)";
@@ -79,7 +79,7 @@ class Graph {
    * @param {Number} xTicks
    * @param {Number} yTicks
    */
-  _initEmptyGraph(containerID, width, height, xTicks, yTicks){
+  _initEmptyTimeChart(containerID, width, height, xTicks, yTicks){
     this.margin = {top: 40, right: 10, bottom: 50, left: 60};
     this.labelPadding = {bottom: 40, left: 40};
     this.width = width - this.margin.left - this.margin.right;

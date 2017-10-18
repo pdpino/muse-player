@@ -15,9 +15,8 @@
 ## App.js
 * (1) Webpage changes y axis limits in function of new data
   - be careful to not be moving axis all the time: (something like) only every few times decrease limits, increase always, set a inferior limit
-* Rename `Graph` to `TimeChart`
-* `Graph` class should create html elements for the axis buttons
-* `Graph` class should listen to scrolling to change zoom in graph
+* `TimeChart` class should create html elements for the axis buttons
+* `TimeChart` class should listen to scrolling to change zoom in graph
 
 * `Connection` class should create html elements for the conn status
 * add marks in time (mark message)
