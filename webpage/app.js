@@ -5,24 +5,27 @@ class Graph {
    * Create an empty graph
    */
   constructor(config) {
+    // Some constants
+    this.MIN_Y_AXIS_RANGE = 1;
+
     // Assure that the config object is correct
     if(!this._validateConstructorParams(config)) return;
 
     this.data = null;
-    this.isSet = false;
+    this.isReady = false;
 
-    this.legend_container = config.legend_container;
-    this.secs_indicator = config.sec_x;
-    this._updateXAxis(config.n_secs);
-    this.y_min = config.y_min;
-    this.y_max = config.y_max;
-    this.y_min_home = config.y_min;
-    this.y_max_home = config.y_max;
+    this.legendContainer = config.legendContainer;
+    this.secondsIndicator = config.secondsIndicator;
+    this._updateXAxis(config.secondsInScreen);
+    this.yMin = config.yMin;
+    this.yMax = config.yMax;
+    this.yMinHome = config.yMin;
+    this.yMaxHome = config.yMax;
 
     this._initEmptyGraph(config.container, config.width, config.height, config.xTicks, config.yTicks);
-    this._initAxisParams(config.dx_zoom, config.dy_zoom, config.dy_move);
-    this._addEventsXAxis(config.x_zoom_btn[0], config.x_zoom_btn[1]);
-    this._addEventsYAxis(config.y_zoom_btn, config.y_move_btn, config.y_home_btn);
+    this._initAxisParams(config.dxZoom, config.dyZoom, config.dyMove);
+    this._addEventsXAxis(config.xZoomBtn[0], config.xZoomBtn[1]);
+    this._addEventsYAxis(config.yZoomBtn, config.yMoveBtn, config.yHomeBtn);
     this._initLegend();
     this._initTitle();
   }
@@ -35,7 +38,7 @@ class Graph {
       console.log("ERROR: Missing graph container");
       return false;
     }
-    if(config.legend_container === undefined){
+    if(config.legendContainer === undefined){
       console.log("ERROR: Missing legend container")
       return false;
     }
@@ -95,28 +98,28 @@ class Graph {
         .attr("width", this.width)
         .attr("height", this.height);
 
-    this.x_range = d3.scale.linear().domain([0, this.n_secs]).range([0, this.width]);
-    this.y_range = d3.scale.linear().domain([this.y_min, this.y_max]).range([this.height, 0]);
+    this.xRange = d3.scale.linear().domain([0, this.secondsInScreen]).range([0, this.width]);
+    this.yRange = d3.scale.linear().domain([this.yMin, this.yMax]).range([this.height, 0]);
 
-    this.x_axis = d3.svg.axis().scale(this.x_range).orient("bottom").ticks(xTicks);
+    this.xAxis = d3.svg.axis().scale(this.xRange).orient("bottom").ticks(xTicks);
     this.svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + this.height + ")")
-        .call(this.x_axis);
+        .call(this.xAxis);
 
-    this.y_axis = d3.svg.axis().scale(this.y_range).orient("left").ticks(yTicks);
+    this.yAxis = d3.svg.axis().scale(this.yRange).orient("left").ticks(yTicks);
     this.svg.append("g")
         .attr("class", "y axis")
-        .call(this.y_axis);
+        .call(this.yAxis);
   }
 
   /**
    * Set amounts to update the axis
    */
-  _initAxisParams(dx_zoom, dy_zoom, dy_move){
-    this.dx_zoom = dx_zoom;
-    this.dy_zoom = dy_zoom;
-    this.dy_move = dy_move;
+  _initAxisParams(dxZoom, dyZoom, dyMove){
+    this.dxZoom = dxZoom;
+    this.dyZoom = dyZoom;
+    this.dyMove = dyMove;
   }
 
   /**
@@ -124,7 +127,7 @@ class Graph {
    */
   _initLegend(){
     // Create panel for the legend
-    $(this.legend_container).append(
+    $(this.legendContainer).append(
       $('<div>', {
         'id':'legend-panel',
         'class':'panel panel-primary',
@@ -160,20 +163,20 @@ class Graph {
   /**
    * Connect the x axis buttons with the corresponding events
    */
-  _addEventsXAxis(btn_dec, btn_inc){
-    $(btn_dec).click(() => { this.zoomXAxis(false); });
-    $(btn_inc).click(() => { this.zoomXAxis(true); });
+  _addEventsXAxis(btnDecrease, btnIncrease){
+    $(btnDecrease).click(() => { this.zoomXAxis(false); });
+    $(btnIncrease).click(() => { this.zoomXAxis(true); });
   }
 
   /**
    * Connect the y axis buttons with the corresponding events
    */
-  _addEventsYAxis(btns_zoom, btns_move, btn_home){
-    $(btns_zoom[0]).click(() => { this.zoomYAxis(false); });
-    $(btns_zoom[1]).click(() => { this.zoomYAxis(true); });
-    $(btns_move[0]).click(() => { this.moveYAxis(false); });
-    $(btns_move[1]).click(() => { this.moveYAxis(true); });
-    $(btn_home).click(() => { this.homeYAxis(); });
+  _addEventsYAxis(btnsZoom, btnsMove, btnHome){
+    $(btnsZoom[0]).click(() => { this.zoomYAxis(false); });
+    $(btnsZoom[1]).click(() => { this.zoomYAxis(true); });
+    $(btnsMove[0]).click(() => { this.moveYAxis(false); });
+    $(btnsMove[1]).click(() => { this.moveYAxis(true); });
+    $(btnHome).click(() => { this.homeYAxis(); });
   }
 
   /**
@@ -189,8 +192,8 @@ class Graph {
     let graph = this; // NOTE: using arrow functions to call graphs won't work, because of nested functions
     this.lines.forEach((l, i) => {
       this.lines[i] = d3.svg.line()
-        .x(function(d){ return graph.x_range(d[0]); })
-        .y(function(d){ return graph.y_range(d[i + 1]); });
+        .x(function(d){ return graph.xRange(d[0]); })
+        .y(function(d){ return graph.yRange(d[i + 1]); });
     });
 
 
@@ -298,13 +301,13 @@ class Graph {
   /**
    * Update the y axis
    */
-  _updateYAxis(y1, y2){
-    if(y1 >= y2) return;
+  _updateYAxis(yMin, yMax){
+    if(yMin >= yMax) return;
 
-    this.y_min = y1;
-    this.y_max = y2;
-    this.y_range.domain([y1, y2]);
-    this.svg.select(".y.axis").call(this.y_axis); // update svg
+    this.yMin = yMin;
+    this.yMax = yMax;
+    this.yRange.domain([yMin, yMax]);
+    this.svg.select(".y.axis").call(this.yAxis); // update svg
   }
 
   /**
@@ -313,8 +316,8 @@ class Graph {
   _updateXAxis(seconds){
     if(seconds <= 1) return;
 
-    this.n_secs = seconds;
-    $(this.secs_indicator).text(this.n_secs.toFixed(0));
+    this.secondsInScreen = seconds;
+    $(this.secondsIndicator).text(this.secondsInScreen.toFixed(0));
   }
 
   /**
@@ -329,7 +332,7 @@ class Graph {
     this._setTitle(config.title);
     this._setAxisLabels(config.xAxisLabel, config.yAxisLabel);
 
-    this.isSet = true;
+    this.isReady = true;
   }
 
   /**
@@ -339,8 +342,8 @@ class Graph {
     this.data = new Array(1);
     this.data[0] = new Array(this.nChannels + 1);
 
-    for(let i = 0; i <= this.nChannels; i++){
-      this.data[0][i] = 0;
+    for(let channel = 0; channel <= this.nChannels; channel++){
+      this.data[0][channel] = 0;
     }
   }
 
@@ -349,36 +352,36 @@ class Graph {
    * @param {bool} out Direction of the zoom
    */
   zoomYAxis(out){
-    let sign_min;
-    let sign_max;
+    let signMin;
+    let signMax;
 
     if(out){
-      sign_min = -1; // decrease y_min
-      sign_max = 1; // increase y_max
+      signMin = -1; // decrease yMin
+      signMax = 1; // increase yMax
     }
     else{
-      sign_min = 1; // increase y_min
-      sign_max = -1; // decrease y_max
+      signMin = 1; // increase yMin
+      signMax = -1; // decrease yMax
     }
 
-    let y_min_new = this.y_min + sign_min*this.dy_zoom;
-    let y_max_new = this.y_max + sign_max*this.dy_zoom;
+    let yMinNew = this.yMin + signMin*this.dyZoom;
+    let yMaxNew = this.yMax + signMax*this.dyZoom;
 
-    // Safe to zoom in
+    // Safe when zooming in
     if(!out){
-      if(y_max_new - y_min_new < 1){
+      if(yMaxNew - yMinNew < this.MIN_Y_AXIS_RANGE){
         return;
       }
     }
 
-    this._updateYAxis(y_min_new, y_max_new);
+    this._updateYAxis(yMinNew, yMaxNew);
   };
 
   /**
    * Set the y axis to the original values
    */
   homeYAxis(){
-    this._updateYAxis(this.y_min_home, this.y_max_home);
+    this._updateYAxis(this.yMinHome, this.yMaxHome);
   }
 
   /**
@@ -388,8 +391,8 @@ class Graph {
   moveYAxis(up){
     const sign = up ? 1 : -1;
 
-    let y_min_new = this.y_min + sign*this.dy_move;
-    let y_max_new = this.y_max + sign*this.dy_move;
+    let y_min_new = this.yMin + sign*this.dyMove;
+    let y_max_new = this.yMax + sign*this.dyMove;
 
     this._updateYAxis(y_min_new, y_max_new);
   }
@@ -400,19 +403,21 @@ class Graph {
    */
   zoomXAxis(increase){
     const sign = increase ? 1 : -1;
-    this._updateXAxis(this.n_secs + sign*this.dx_zoom);
+    this._updateXAxis(this.secondsInScreen + sign*this.dxZoom);
   }
 
   /**
    * Update all the lines in the graph
    * @param {Boolean} shift
    */
-  update(new_data, shift=true) {
-    this.data.push(new_data);
-    for(let i = 0; i < this.nChannels; i++){
-      if(!this.plot_bools[i]) continue;
+  update(newData, shift=true) {
+    this.data.push(newData);
 
-      this.paths[i].attr("d", this.lines[i](this.data))
+    for(let channel = 0; channel < this.nChannels; channel++){
+      if(!this.plot_bools[channel])
+        continue;
+
+      this.paths[channel].attr("d", this.lines[channel](this.data))
         .attr("transform", null)
         .transition()
         .duration(1000)
@@ -420,13 +425,13 @@ class Graph {
     }
 
     let range = d3.extent(this.data, function(d) { return d[0]; });
-    // if(range[0] + this.n_secs > range[1]){ range[1] = range[0] + this.n_secs; } // Que el range minimo sea n_secs
-    this.x_range.domain(range);
+    // if(range[0] + this.secondsInScreen > range[1]){ range[1] = range[0] + this.secondsInScreen; } // Que el range minimo sea secondsInScreen
+    this.xRange.domain(range);
 
-    this.svg.select(".x.axis").call(this.x_axis);
+    this.svg.select(".x.axis").call(this.xAxis);
 
     if(shift){
-      while(this.data[this.data.length-1][0] - this.data[0][0] > this.n_secs){
+      while(this.data[this.data.length-1][0] - this.data[0][0] > this.secondsInScreen){
         this.data.shift();
       }
     }
@@ -611,29 +616,29 @@ $(document).ready( function() {
 
   const graph = new Graph({
     container: "#graph_container",
-    legend_container: '#legend_container',
+    legendContainer: '#legend_container',
 
     // FIXME: que clase cree estos
-    x_zoom_btn: ["#btn-zoomXdec", "#btn-zoomXinc"],
-    y_zoom_btn: ["#btn-zoomYin", "#btn-zoomYout"],
-    y_move_btn: ["#btn-moveYdown", "#btn-moveYup"],
-    y_home_btn: "#btn-homeY",
-    sec_x: "#segX",
+    xZoomBtn: ["#btn-zoomXdec", "#btn-zoomXinc"],
+    yZoomBtn: ["#btn-zoomYin", "#btn-zoomYout"],
+    yMoveBtn: ["#btn-moveYdown", "#btn-moveYup"],
+    yHomeBtn: "#btn-homeY",
+    secondsIndicator: "#segX",
 
     width: 700,
     height: 400,
-    y_min: -100,
-    y_max: 100,
+    yMin: -100,
+    yMax: 100,
     xTicks: 5,
     yTicks: 5,
-    n_secs: 5,
-    dx_zoom: 1, // FIXME: que clase calcule esto y vaya cambiando
-    dy_zoom: 5,
-    dy_move: 50
+    secondsInScreen: 5,
+    dxZoom: 1, // FIXME: que clase calcule esto y vaya cambiando
+    dyZoom: 5,
+    dyMove: 50
     });
 
   const recvMsg = function(e){
-    if(!graph.isSet) return;
+    if(!graph.isReady) return;
 
     let arr = e.data.split(",").map(parseFloat);
 
@@ -686,7 +691,7 @@ $(document).ready( function() {
   });
 
   $("#btn-close-conn").click( function(){
-    if(!graph.isSet) return;
+    if(!graph.isReady) return;
     stream.close();
     graph.initEmptyData();
   });
@@ -713,8 +718,8 @@ function generateRandomColors(nColors){
   }
   let colorArr = new Array(nColors);
 
-  for(let i = 0; i < nColors; i++){
-    colorArr[i] = genRandColor();
+  for(let color = 0; color < nColors; color++){
+    colorArr[color] = genRandColor();
   }
 
   return colorArr;
