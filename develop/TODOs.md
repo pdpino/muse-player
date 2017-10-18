@@ -16,7 +16,6 @@
 * (1) Webpage changes y axis limits in function of new data
   - be careful to not be moving axis all the time: (something like) only every few times decrease limits, increase always, set a inferior limit
 * Rename `Graph` to `TimeChart`
-* Separate in multiple files
 * `Graph` class should create html elements for the axis buttons
 * `Graph` class should listen to scrolling to change zoom in graph
 
