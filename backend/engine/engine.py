@@ -18,21 +18,12 @@ class EEGEngine:
 
         # REVIEW: use property getter?
         self.get_running_time = self.eeg_collector.get_running_time
+        self.get_last_timestamp = self.eeg_collector.get_last_timestamp
         self.export = self.eeg_collector.export
 
         self.eeg_buffer = eeg_buffer
 
         self.generator = generator
-
-    ## FUTURE:
-    # def send_signal_calibrator(sent_signal):
-    #     """Send a signal to the calibrator. Return the status of the proccessing of the signal."""
-    #     if self.calibrator:
-    #         return self.calibrator.signal(sent_signal)
-    # def send_signal_collector(sent_signal):
-    #     """Send a signal to the collector. Return the status of the proccessing of the signal."""
-    #     if self.collector:
-    #         return self.collector.signal(sent_signal)
 
     def incoming_data(self, timestamps, new_data):
         """Proccess the incoming data."""

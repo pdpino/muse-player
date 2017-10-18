@@ -168,7 +168,7 @@ class BaselineFeeling:
             # data as array, shape: (time, n_feelings)
             baseline_data = np.array(self.baseline_data)
 
-            n_times, self.n_feelings = self.baseline_data.shape
+            n_times, self.n_feelings = baseline_data.shape
 
             # Save baseline gaussian data
             self.fit_mu = []

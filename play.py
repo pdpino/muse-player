@@ -13,6 +13,19 @@ from muse import Muse
 import basic
 from backend import parsers, data, engine, info, tf, MuseFaker
 
+def get_regulator(selected, signals):
+    # REFACTOR: use better way of passing the configuration
+    if selected == "accum":
+        regulator = engine.collectors.DataAccumulator(samples=10)
+    elif selected == "calib":
+        regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
+        signals["-1"] = regulator.signal_start_calibrating
+        signals["-2"] = regulator.signal_stop_calibrating
+    else:
+        regulator = None
+
+    return regulator
+
 def parse_args():
     """Create a parser, get the args, return them preprocessed."""
     def create_parser():
@@ -89,8 +102,8 @@ def main():
     # Get arguments
     args = parse_args()
 
-    # FUTURE: Dictionary for the signals
-    # signals = dict()
+    # Dictionary for the signals
+    signals = dict()
 
     # Select processor for the EEG data
     name = args.stream_type
@@ -122,13 +135,8 @@ def main():
         # Create yielder for the feelings
         feeler = engine.feelers.FeelerRelaxConc()
 
-        # Calibrator # REFACTOR: select regulator in a better way
-        if args.regulator == "accum":
-            regulator = engine.collectors.DataAccumulator(samples=10)
-        elif args.regulator == "calib":
-            regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
-        else:
-            regulator = None
+        # Select regulator
+        regulator = get_regulator(args.regulator, signals)
 
         # Feeling processor, that use the feeler and the regulator
         feel_processor = engine.FeelProcessor(feeler, regulator)
@@ -144,12 +152,7 @@ def main():
         feeler = engine.feelers.FeelerValAro()
 
         # Select regulator
-        if args.regulator == "accum":
-            regulator = engine.collectors.DataAccumulator(samples=10)
-        elif args.regulator == "calib":
-            regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
-        else:
-            regulator = None
+        regulator = get_regulator(args.regulator, signals)
 
         # Feeling processor, that use the feeler and the regulator
         feel_processor = engine.FeelProcessor(feeler, regulator)
@@ -204,71 +207,39 @@ def main():
 
     print("Started receiving data")
     if args.time is None:
-        try:
-            while True:
-                sleep(1)
-        except KeyboardInterrupt:
-            pass
-
         # Wait for a buffer zone
-        # sleep(1)
-        # def start_calib():
-        #     if not data_buffer.start_calibrating(): # Indicate if success
-        #         return None
-        #     print("started calibrating")
-        #     return info.start_calib_mark
-        # def stop_calib():
-        #     if not data_buffer.stop_calibrating():
-        #         return None
-        #     print("stopped calibrating")
-        #     return info.stop_calib_mark
-        # def start_collect():
-        #     if not data_buffer.start_collecting(): # Indicate if success
-        #         return None
-        #     print("started collecting")
-        #     return info.start_collect_mark
-        # def stop_collect():
-        #     if not data_buffer.stop_collecting():
-        #         return None
-        #     print("stopped collecting")
-        #     return info.stop_collect_mark
-        # def ask_config():
-        #     muse.ask_config() # only works if push_info was enabled
-        #     sleep(0.5) # let it print
-        #     return None
-        # def toggle_save_opt():
-        #     args.save = not args.save
-        #     print("save status = {}".format(args.save))
-        #     return None
-        #
-        # commands = {
-        #     "-c": ask_config, # DEBUG: you can input this to see what comes in config in muse
-        #     "-1": start_calib,
-        #     "-2": stop_calib,
-        #     "-3": start_collect,
-        #     "-4": stop_collect,
-        #     "--save": toggle_save_opt
-        #     }
-        #
-        # try:
-        #     print("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):")
-        #     while True:
-        #         # Mark time
-        #         message = input("\tcmd: ")
-        #         t = data_buffer.get_last_timestamp()
-        #
-        #         # Special commands
-        #         if message in commands:
-        #             message = commands[message]()
-        #             if message is None:
-        #                 continue
-        #
-        #         # Save
-        #         marks.append(t)
-        #         messages.append(message.lower())
-        # except KeyboardInterrupt: # Ctrl-c
-        #     print("Exiting")
-        #     basic.mute_ctrlc() # So the finishing process isn't interrupted
+        sleep(1)
+
+        def ask_config():
+            muse.ask_config() # only works if push_info was enabled
+            sleep(0.5) # let it print
+
+        def toggle_save_opt():
+            args.save = not args.save
+            print("save status = {}".format(args.save))
+
+
+        signals["-c"] = ask_config # DEBUG: you can input this to see what comes in config in muse
+        signals["--save"] = toggle_save_opt
+
+        try:
+            print("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):")
+            while True:
+                # Mark time
+                message = input("\tcmd: ")
+                timestamp = eeg_engine.get_last_timestamp()
+
+                # Special commands
+                if message in signals:
+                    signals[message]()
+                    continue
+
+                # Save
+                marks.append(timestamp)
+                messages.append(message.lower())
+        except KeyboardInterrupt: # Ctrl-c
+            print("Exiting")
+            basic.mute_ctrlc() # So the finishing process isn't interrupted
     else:
         basic.mute_ctrlc()
         print("\tfor (aprox) {} seconds".format(args.time))

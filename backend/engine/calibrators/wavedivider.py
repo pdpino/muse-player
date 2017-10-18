@@ -5,7 +5,6 @@ class WaveDivider:
     """
 
     def __init__(self):
-        # Empty calibration objects
         self.baseline = None
         self.counter = 0
 

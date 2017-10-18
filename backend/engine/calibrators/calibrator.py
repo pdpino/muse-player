@@ -49,17 +49,26 @@ class Calibrator:
         with self._lock_s:
             self._status = new_status
 
-    def _set_status_calibrating(self):
-        self._set_status(self, CalibrationStatus.Calibrating)
+    def _signal_calibrating(self):
+        # NOTE: some signals are private. If (because of a change) they should be public just make them public
+        print("\tCalibrating")
+        self._set_status(CalibrationStatus.Calibrating)
 
-    def _set_status_non_calibrated(self):
-        self._set_status(self, CalibrationStatus.NonCalibrated)
+    def _signal_non_calibrated(self):
+        print("\tNot calibrating")
+        self._set_status(CalibrationStatus.NonCalibrated)
 
-    def _set_status_stop_calibrating(self):
-        self._set_status(self, CalibrationStatus.Stop)
+    def _signal_calibrated(self):
+        print("\tCalibrated")
+        self._set_status(CalibrationStatus.Calibrated)
 
-    def _set_status_calibrated(self):
-        self._set_status(self, CalibrationStatus.Calibrated)
+    def signal_stop_calibrating(self):
+        print("\tStopped calibrating")
+        self._set_status(CalibrationStatus.Stop)
+
+    def signal_start_calibrating(self):
+        print("\tStarted calibrating")
+        self._set_status(CalibrationStatus.Start)
 
     def _get_status(self):
         """Wrapper to get the status."""
@@ -70,7 +79,7 @@ class Calibrator:
 
     def _start_calibrating(self, data):
         # Move to calibrating
-        self._set_status_calibrating()
+        self._signal_calibrating()
 
         return self.baseline_handler.start_calibrating(data)
 
@@ -78,7 +87,7 @@ class Calibrator:
         calibrated_data, stop_calibrating = self.baseline_handler.calibrating(data)
 
         if stop_calibrating:
-            self._set_status_stop_calibrating()
+            self.signal_stop_calibrating()
 
         return calibrated_data
 
@@ -86,11 +95,11 @@ class Calibrator:
         calibrated_data, is_ok = self.baseline_handler.stop_calibrating(data)
 
         if is_ok:
-            self._set_status_calibrated()
+            self._signal_calibrated()
             return calibrated_data
         else:
             # REVIEW: error msg
-            self._set_status_non_calibrated()
+            self._signal_non_calibrated()
             return None
 
     def _calibrated(self, data):

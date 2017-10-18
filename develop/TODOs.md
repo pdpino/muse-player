@@ -4,6 +4,8 @@
 
 * Add signal handling to be able to normalize
 
+* REFACTOR: create signals object that handles calling an action, printing and returning a message for each action
+
 * Add stream mode configuration for waves (select channel)
 * REFACTOR: arr_freqs is in many places in wave yielding
 
