@@ -2,7 +2,7 @@
 """Script to plot data."""
 
 import argparse
-from backend import data as filesys, plots, parsers
+from backend import filesystem, plots, parsers
 
 def create_parser():
     """Create the console arguments parser."""
@@ -29,11 +29,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Read marks in time
-    marks_time, marks_msg = filesys.load_marks(args.fname, args.subfolder)
+    marks_time, marks_msg = filesystem.load_marks(args.fname, args.subfolder)
 
     if args.option == 'eeg':
-        times, df, channels = filesys.load_eeg(args.channels, args.fname, args.subfolder)
+        times, df, channels = filesystem.load_eeg(args.channels, args.fname, args.subfolder)
         plots.plot_eeg(times, df, channels, args.fname, marks_t=marks_time, marks_m=marks_msg, subplots=args.subplot)
     elif args.option == 'feel':
-        times, df = filesys.load_feelings(args.fname, args.subfolder)
+        times, df = filesystem.load_feelings(args.fname, args.subfolder)
         plots.plot_feelings(times, df, args.fname, marks_t=marks_time, marks_m=marks_msg, lines=args.lines)

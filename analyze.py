@@ -4,7 +4,7 @@
 import argparse
 import pandas as pd
 import numpy as np
-from backend import data, tf, plots, parsers, info, signals
+from backend import filesystem, tf, plots, parsers, info, signals
 import basic
 
 def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=None, marks_m=None, testing=False, filtering=False, normalize=True, baseline=None, overwrite=True, window=None, step=None, n_cycles=None):
@@ -69,7 +69,7 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
 
     for ch in channels:
         if not testing and not overwrite:
-            if data.exist_waves(fsave, ch):
+            if filesystem.exist_waves(fsave, ch):
                 continue
 
         # Grab data
@@ -84,7 +84,7 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
         power = method_function(times, eeg_data, baseline=baseline, norm=normalize, **method_kwargs)
 
         # Save to file
-        data.save_waves(power, fsave, ch)
+        filesystem.save_waves(power, fsave, ch)
 
 def show_tf_analysis(channels, fname, marks_t=None, marks_m=None, testing=False, show_contour=False, show_waves=False, show_marks_waves=False, choose_waves=None, n_samples=None, min_freq=None, max_freq=None):
     """Show TF analysis loaded from file.
@@ -109,10 +109,10 @@ def show_tf_analysis(channels, fname, marks_t=None, marks_m=None, testing=False,
     powers = []
 
     for ch in channels:
-        if not data.exist_waves(fname, ch):
+        if not filesystem.exist_waves(fname, ch):
             basic.perror("No waves file found for: {}, {}".format(fname, ch), force_continue=True)
             continue
-        power = data.load_waves(fname, ch)
+        power = filesystem.load_waves(fname, ch)
         powers.append(power)
 
     if len(powers) == 0:
@@ -286,13 +286,13 @@ if __name__ == "__main__":
             marks_msg = None
         else: # read real data
             # Read dataframe and channels
-            times, df, channels = data.load_eeg(args.channels, args.fname, args.subfolder)
+            times, df, channels = filesystem.load_eeg(args.channels, args.fname, args.subfolder)
 
             if not args.fsave is None: # HACK copy marks file
-                data.copy_marks(args.fname, args.fsave)
+                filesystem.copy_marks(args.fname, args.fsave)
 
             # Read marks in time
-            marks_time, marks_msg = data.load_marks(args.fname, args.subfolder)
+            marks_time, marks_msg = filesystem.load_marks(args.fname, args.subfolder)
 
         # Analyze
         calc_tf_analysis(times, df, channels, args.fname, args.method,
@@ -309,7 +309,7 @@ if __name__ == "__main__":
 
     elif args.option == "show":
         # Read marks in time
-        marks_time, marks_msg = data.load_marks(args.fname, args.subfolder)
+        marks_time, marks_msg = filesystem.load_marks(args.fname, args.subfolder)
 
         # Plot
         show_tf_analysis(args.channels, args.fname,

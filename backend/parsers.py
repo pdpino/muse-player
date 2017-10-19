@@ -1,6 +1,6 @@
 """Module that stores parser common arguments."""
 import argparse
-from backend import data, info
+from backend import info
 
 # REVIEW: esto no es backend!
 
