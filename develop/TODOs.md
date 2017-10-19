@@ -2,6 +2,7 @@
 
 ## Player
 * (1) REFACTOR: create signals object that handles calling an action, printing and returning a message for each action
+* (1) (Depends on moodplay) use Formatter to yield things, comply with moodplay standards to send JSON
 * handle when muse turns off
 
 #### Refactors (1)
@@ -20,7 +21,7 @@
 * add marks in time (mark message)
 
 ## Conventions and documentation
-* Document engine and processors classes
+* Document engine and processors classes (and interfaces?)
 * Change feeling name by something more precise
 * Define convention for valence-arousal or arousal-valence
 

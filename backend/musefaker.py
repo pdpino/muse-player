@@ -15,7 +15,7 @@ class MuseFaker:
         self.callback = config['callback']
         self._is_running = False
 
-        # HACK: values hardcoded
+        # values hardcoded, they are from the muse configuration
         srate = 256
         self.n_samples = 12
         self.n_channels = 5
@@ -34,7 +34,7 @@ class MuseFaker:
 
     def stop(self):
         self._is_running = False
-        self.generate_thread.join() # REVIEW: wait for it?
+        self.generate_thread.join()
 
     def ask_config(self):
         print("This is a Fake muse!")

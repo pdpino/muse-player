@@ -46,7 +46,6 @@ def get_freqs_filter(freqs, min_freq, max_freq):
 def get_wave_color(wave):
     """Given a wave_name, get the color."""
     if wave in _waves:
-        # REVIEW: check if color exist? a wave may not have a color
         return _waves[wave][2]
 
     return None

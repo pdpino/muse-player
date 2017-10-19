@@ -12,7 +12,7 @@ class EEGWindowBuffer():
         n_chs = 6 # 5chs + time
 
         # Buffer
-        self._size_buffer = n_samples * 1000 # HACK: define adecuate value (instead of 1000)
+        self._size_buffer = n_samples * 1000 # REVIEW: define adecuate value (instead of 1000)
         self._buffer = np.zeros((n_chs, self._size_buffer))
 
         # Pointers to the buffer

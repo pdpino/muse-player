@@ -1,28 +1,19 @@
 from time import sleep
-from . import collectors, buffers, processors
 
 class EEGEngine:
     """Engine to handle the receiving of EEG and streaming different kinds of data, according to its processor."""
 
-    def __init__(self, name, eeg_buffer, generator):
+    def __init__(self, name, eeg_collector, eeg_buffer, generator):
         """Initialize.
 
         name -- string identifier
-        buffer -- implements interface IBuffer
+        eeg_collector -- implements interface ICollector
+        eeg_buffer -- implements interface IBuffer
         generator -- implements interface IGenerator"""
-        # TODO: do interfaces (abstract classes)
 
         self.name = name
-
-        self.eeg_collector = collectors.EEGCollector()
-
-        # REVIEW: use property getter?
-        self.get_running_time = self.eeg_collector.get_running_time
-        self.get_last_timestamp = self.eeg_collector.get_last_timestamp
-        self.export = self.eeg_collector.export
-
+        self.eeg_collector = eeg_collector
         self.eeg_buffer = eeg_buffer
-
         self.generator = generator
 
     def incoming_data(self, timestamps, new_data):

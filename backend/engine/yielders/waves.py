@@ -6,9 +6,9 @@ class WaveYielder(base.BaseYielder):
 
     # TODO: be able to yield one channel, mean of channels, max of channels, etc
 
-    def __init__(self, arr_freqs, channel=0):
+    def __init__(self, arr_freqs, channel=0, waves=None):
         self.config_data = "waves"
-        
+
         # Array of frequencies to order the fft
         self.arr_freqs = arr_freqs
 
@@ -16,7 +16,8 @@ class WaveYielder(base.BaseYielder):
         self.channel = channel
 
         # Waves
-        self.waves_names = info.get_waves_names(['delta', 'theta', 'alpha', 'beta', 'gamma']) # HACK: waves hardcoded
+        waves = waves or ['delta', 'theta', 'alpha', 'beta', 'gamma'] # DEFAULT to all std waves
+        self.waves_names = info.get_waves_names(waves)
 
         # String to yield
         self.str_format = "data: {}" # One more for the time

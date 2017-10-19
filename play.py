@@ -27,6 +27,10 @@ def get_regulator(selected, commands):
 
     return regulator
 
+def set_signal_commands_generator(generator, commands):
+    commands.add_command("-1", generator.signal_start_calibrating, "started calibrating", "notification")
+    commands.add_command("-2", generator.signal_stop_calibrating, "stop calibrating", "notification")
+
 def parse_args():
     """Create a parser, get the args, return them preprocessed."""
     def create_parser():
@@ -38,15 +42,14 @@ def parse_args():
         parser.add_argument('-t', '--time', default=None, type=float,
                             help="Seconds to record data (aprox). If none, stop listening only when interrupted")
         parser.add_argument('--faker', action="store_true", help="Simulate a fake muse. Used for testing")
-        parser.add_argument('--save', action="store_true", help="Save a .csv with the raw data")
+        parser.add_argument('--save', action="store_true", help="Save a .csv with the raw eeg data")
+
         parser.add_argument('--stream', action="store_true", help="Stream the data to a web client")
         parser.add_argument('--stream_type', choices=['eeg', 'waves', 'feel', 'feel_val_aro'], default='eeg',
-                            help="Select what to stream") # TODO: use config dictionaries somewhere else
+                            help="Select what to stream") # REFACTOR: use config dictionaries somewhere else
 
         parser.add_argument('--regulator', choices=['accum', 'calib'],
                             help="Select the type of regulator to use") # REFACTOR: this shouldnt be here
-
-
 
         group_bconn = parser.add_argument_group(title="Bluetooth connection")
         group_bconn.add_argument('-i', '--interface', default=None, type=str,
@@ -68,18 +71,17 @@ def parse_args():
         group_proc_data.add_argument('--nfactor', default=None, type=int,
                             help="Normalize factor. Number to multiply the raw data when incoming. If None, it will use the muse module default value")
 
-        group_stream_data = parser.add_argument_group(title="Streamed Data")
+        group_stream_data = parser.add_argument_group(title="Streamed Data", description="Only useful when streaming eeg")
         group_stream_data.add_argument('--stream_mode', choices=["mean", "n", "max", "min"], type=str, default="n",
                             help="Choose what part of the data to yield to the client. If 'n' is selected consider providing a --stream_n argument as well")
         group_stream_data.add_argument('--stream_n', default=1, type=int,
                             help="If --stream_mode n is selected, define the amount of data to yield")
 
-        group_feeling = parser.add_argument_group(title="Feeling calculation")
-        group_feeling.add_argument('--test_population', action='store_true',
-                            help="If present, use a populations test instead of a simple hypothesis test")
-        group_feeling.add_argument('--feel_interval', type=float, default=1,
-                            help="Interval in seconds to grab feeling data")
-
+        # group_feeling = parser.add_argument_group(title="Feeling calculation")
+        # group_feeling.add_argument('--test_population', action='store_true',
+        #                     help="If present, use a populations test instead of a simple hypothesis test")
+        # group_feeling.add_argument('--feel_interval', type=float, default=1,
+        #                     help="Interval in seconds to grab feeling data")
 
         parsers.add_file_args(parser) # File arguments
         return parser
@@ -128,9 +130,7 @@ def main():
 
         # Wave processor that uses the wave yielder
         generator = engine.WaveProcessor(wave_yielder)
-
-        commands.add_command("-1", generator.signal_start_calibrating, "started calibrating", "notification")
-        commands.add_command("-2", generator.signal_stop_calibrating, "stop calibrating", "notification")
+        set_signal_commands_generator(generator, commands)
 
     elif args.stream_type == 'feel':
         # Use a window buffer
@@ -147,10 +147,7 @@ def main():
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)
-
-        commands.add_command("-1", generator.signal_start_calibrating, "started calibrating", "notification")
-        commands.add_command("-2", generator.signal_stop_calibrating, "stop calibrating", "notification")
-
+        set_signal_commands_generator(generator, commands)
 
     elif args.stream_type == 'feel_val_aro':
         # Use a window buffer
@@ -167,16 +164,14 @@ def main():
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)
-
-        commands.add_command("-1", generator.signal_start_calibrating, "started calibrating", "notification")
-        commands.add_command("-2", generator.signal_stop_calibrating, "stop calibrating", "notification")
+        set_signal_commands_generator(generator, commands)
 
     else:
         raise("Stream type not recognized: {}".format(args.stream_type))
 
-
     # Engine that handles the incoming, processing and outgoing data
-    eeg_engine = engine.EEGEngine(name, eeg_buffer, generator)
+    eeg_collector = engine.collectors.EEGCollector()
+    eeg_engine = engine.EEGEngine(name, eeg_collector, eeg_buffer, generator)
 
     # Connect muse
     if args.faker:
@@ -237,7 +232,7 @@ def main():
             while True:
                 # Mark time
                 message = input("\tcmd: ")
-                timestamp = eeg_engine.get_last_timestamp()
+                timestamp = eeg_collector.get_last_timestamp()
 
                 # Special commands
                 if commands.exist_command(message):
@@ -269,11 +264,11 @@ def main():
     # df.to_csv("debug/debug2.csv", index=False, header=False) # Guardar a archivo
 
     # Print running time
-    basic.report("Received data for {}", eeg_engine.get_running_time(), level=1)
+    basic.report("Received data for {}", eeg_collector.get_running_time(), level=1)
 
     if args.save:
         # Save eeg data
-        eeg = eeg_engine.export()
+        eeg = eeg_collector.export()
         filesystem.save_eeg(eeg, args.fname, args.subfolder)
 
         ## Save marks
