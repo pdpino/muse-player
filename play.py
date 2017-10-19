@@ -11,16 +11,17 @@ from flask import Response, Flask   # Stream data to client
 from flask_cors import CORS
 from muse import Muse
 import basic
-from backend import parsers, data, engine, info, tf, MuseFaker
+from backend import parsers, filesystem, engine, info, tf, MuseFaker
+from player import CommandHandler
 
-def get_regulator(selected, signals):
+def get_regulator(selected, commands):
     # REFACTOR: use better way of passing the configuration
     if selected == "accum":
         regulator = engine.collectors.DataAccumulator(samples=10)
     elif selected == "calib":
         regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
-        signals["-3"] = regulator.signal_start_calibrating
-        signals["-4"] = regulator.signal_stop_calibrating
+        commands.add_command("-3", regulator.signal_start_calibrating, "start baseline feeling", 'notification')
+        commands.add_command("-4", regulator.signal_stop_calibrating, "stop baseline feeling", 'notification')
     else:
         regulator = None
 
@@ -102,8 +103,8 @@ def main():
     # Get arguments
     args = parse_args()
 
-    # Dictionary for the signals
-    signals = dict()
+    # Dictionary for the commands
+    commands = CommandHandler()
 
     # Select processor for the EEG data
     name = args.stream_type
@@ -128,8 +129,8 @@ def main():
         # Wave processor that uses the wave yielder
         generator = engine.WaveProcessor(wave_yielder)
 
-        signals["-1"] = generator.signal_start_calibrating
-        signals["-2"] = generator.signal_stop_calibrating
+        commands.add_command("-1", generator.signal_start_calibrating, "started calibrating", "notification")
+        commands.add_command("-2", generator.signal_stop_calibrating, "stop calibrating", "notification")
 
     elif args.stream_type == 'feel':
         # Use a window buffer
@@ -139,7 +140,7 @@ def main():
         feeler = engine.feelers.FeelerRelaxConc()
 
         # Select regulator
-        regulator = get_regulator(args.regulator, signals)
+        regulator = get_regulator(args.regulator, commands)
 
         # Feeling processor, that use the feeler and the regulator
         feel_processor = engine.FeelProcessor(feeler, regulator)
@@ -147,8 +148,8 @@ def main():
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)
 
-        signals["-1"] = generator.signal_start_calibrating
-        signals["-2"] = generator.signal_stop_calibrating
+        commands.add_command("-1", generator.signal_start_calibrating, "started calibrating", "notification")
+        commands.add_command("-2", generator.signal_stop_calibrating, "stop calibrating", "notification")
 
 
     elif args.stream_type == 'feel_val_aro':
@@ -159,7 +160,7 @@ def main():
         feeler = engine.feelers.FeelerValAro()
 
         # Select regulator
-        regulator = get_regulator(args.regulator, signals)
+        regulator = get_regulator(args.regulator, commands)
 
         # Feeling processor, that use the feeler and the regulator
         feel_processor = engine.FeelProcessor(feeler, regulator)
@@ -167,8 +168,8 @@ def main():
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)
 
-        signals["-1"] = generator.signal_start_calibrating
-        signals["-2"] = generator.signal_stop_calibrating
+        commands.add_command("-1", generator.signal_start_calibrating, "started calibrating", "notification")
+        commands.add_command("-2", generator.signal_stop_calibrating, "stop calibrating", "notification")
 
     else:
         raise("Stream type not recognized: {}".format(args.stream_type))
@@ -228,21 +229,21 @@ def main():
             args.save = not args.save
             print("save status = {}".format(args.save))
 
-
-        signals["-c"] = ask_config # DEBUG: you can input this to see what comes in config in muse
-        signals["--save"] = toggle_save_opt
+        commands.add_command("-c", ask_config, None, None)
+        commands.add_command("--save", toggle_save_opt, None, None)
 
         try:
-            print("Input (special commands start with '-'; any other string mark the time with a message; ctrl-c to exit):")
+            print("Input:")
             while True:
                 # Mark time
                 message = input("\tcmd: ")
                 timestamp = eeg_engine.get_last_timestamp()
 
                 # Special commands
-                if message in signals:
-                    signals[message]()
-                    continue
+                if commands.exist_command(message):
+                    message = commands.apply_command(message)
+                    if message is None:
+                        continue
 
                 # Save
                 marks.append(timestamp)
@@ -256,9 +257,7 @@ def main():
         sleep(args.time) # HACK: its aprox time
 
     muse.stop()
-    # print("Muse stopped") # DEBUG
     muse.disconnect() # FIXME: sometimes a thread gets stuck here
-    # print("Muse disconnected") # DEBUG
 
     print("Stopped receiving muse data")
 
@@ -275,16 +274,16 @@ def main():
     if args.save:
         # Save eeg data
         eeg = eeg_engine.export()
-        data.save_eeg(eeg, args.fname, args.subfolder)
+        filesystem.save_eeg(eeg, args.fname, args.subfolder)
 
         ## Save marks
         # marks = data_buffer.normalize_marks(marks)
-        # data.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
+        # filesystem.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
         #
         # # Save feelings, if any
         # if type(data_buffer) is engine.WaveBuffer:
         #     feelings = data_buffer.get_feelings()
-        #     data.save_feelings(feelings, args.fname, args.subfolder)
+        #     filesystem.save_feelings(feelings, args.fname, args.subfolder)
 
     return 0
 

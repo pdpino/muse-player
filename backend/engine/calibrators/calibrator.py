@@ -51,23 +51,18 @@ class Calibrator:
 
     def _signal_calibrating(self):
         # NOTE: some signals are private. If (because of a change) they should be public just make them public
-        print("\tCalibrating")
         self._set_status(CalibrationStatus.Calibrating)
 
     def _signal_non_calibrated(self):
-        print("\tNot calibrating")
         self._set_status(CalibrationStatus.NonCalibrated)
 
     def _signal_calibrated(self):
-        print("\tCalibrated")
         self._set_status(CalibrationStatus.Calibrated)
 
     def signal_stop_calibrating(self):
-        print("\tStopped calibrating")
         self._set_status(CalibrationStatus.Stop)
 
     def signal_start_calibrating(self):
-        print("\tStarted calibrating")
         self._set_status(CalibrationStatus.Start)
 
     def _get_status(self):
