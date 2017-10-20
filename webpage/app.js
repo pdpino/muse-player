@@ -23,15 +23,15 @@ const feelRelaxConcGraphConfig = {
   channelNames: ["relaxation", "concentration"],
   colors: ["blue", "red"],
   title: 'State of mind',
-  yAxisLabel: 'Power (dB)',
+  yAxisLabel: 'Measure of state',
 }
 
 const feelValAroGraphConfig = {
   nChannels: 2,
   channelNames: ["arousal", "valence"],
   colors: ["blue", "red"],
-  title: 'State of mind',
-  yAxisLabel: 'Power (dB)',
+  title: 'Emotion',
+  yAxisLabel: 'Measure of emotion',
 }
 
 $(document).ready( function() {
