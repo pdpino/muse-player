@@ -2,7 +2,7 @@
 import pandas as pd
 from backend import info
 import basic
-from . import filehandler as fh
+from . import filehandler as fh, util
 
 def load_eeg(channels, name, subfolder=None, suffix=None):
     """Read the data from csv, assure the channels and return the dataframe"""

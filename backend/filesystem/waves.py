@@ -2,10 +2,11 @@
 import os
 import pandas as pd
 import basic
+from . import filehandler as fh
 
 def load_waves(name, channel, subfolder=None):
     """Read a waves file."""
-    fname = DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=FileType.waves)
+    fname = fh.DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=fh.FileType.waves)
 
     try:
         df = pd.read_csv(fname, index_col=0)
@@ -17,12 +18,12 @@ def load_waves(name, channel, subfolder=None):
 
 def save_waves(power, name, channel, subfolder=None):
     """Save waves to a file."""
-    DumpFileHandler.assure_folder(subfolder, FileType.waves)
-    fname = DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=FileType.waves)
+    fh.DumpFileHandler.assure_folder(subfolder, fh.FileType.waves)
+    fname = fh.DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=fh.FileType.waves)
 
     power.to_csv(fname)
     basic.report("Waves saved to file: {}".format(fname))
 
 def exist_waves(name, channel, subfolder=None):
     """Boolean indicating if waves file exists."""
-    return os.path.isfile(DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=FileType.waves))
+    return os.path.isfile(fh.DumpFileHandler.get_fname(name, subfolder, suffix=channel, tipo=fh.FileType.waves))

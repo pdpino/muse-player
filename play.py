@@ -20,8 +20,8 @@ def get_regulator(selected, commands):
         regulator = engine.collectors.DataAccumulator(samples=10)
     elif selected == "calib":
         regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
-        commands.add_command("-3", regulator.signal_start_calibrating, "start baseline feeling", 'notification')
-        commands.add_command("-4", regulator.signal_stop_calibrating, "stop baseline feeling", 'notification')
+        commands.add_command("-3", regulator.signal_start_calibrating, info.start_collect_mark, 'notification')
+        commands.add_command("-4", regulator.signal_stop_calibrating, info.stop_collect_mark, 'notification')
     else:
         regulator = None
 
@@ -29,8 +29,8 @@ def get_regulator(selected, commands):
 
 def set_signal_commands_generator(generator, commands):
     # REFACTOR this
-    commands.add_command("-1", generator.signal_start_calibrating, "started calibrating", "notification")
-    commands.add_command("-2", generator.signal_stop_calibrating, "stop calibrating", "notification")
+    commands.add_command("-1", generator.signal_start_calibrating, info.start_calib_mark, "notification")
+    commands.add_command("-2", generator.signal_stop_calibrating, info.stop_calib_mark, "notification")
 
 def parse_args():
     """Create a parser, get the args, return them preprocessed."""
