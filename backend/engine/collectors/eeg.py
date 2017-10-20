@@ -41,7 +41,8 @@ class EEGCollector:
     def normalize_marks(self, marks):
         """Receive a marks list (timestamps), normalize the time."""
         ## REFACTOR:
-        ## change this function by:
+        ## idea:
+        # change this function by:
         # def get_first_timestamp(self):
         #     pass
         return np.array(marks) - self._full_time[0][0]

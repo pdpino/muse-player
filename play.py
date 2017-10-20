@@ -28,6 +28,7 @@ def get_regulator(selected, commands):
     return regulator
 
 def set_signal_commands_generator(generator, commands):
+    # REFACTOR this
     commands.add_command("-1", generator.signal_start_calibrating, "started calibrating", "notification")
     commands.add_command("-2", generator.signal_stop_calibrating, "stop calibrating", "notification")
 
@@ -271,11 +272,11 @@ def main():
         eeg = eeg_collector.export()
         filesystem.save_eeg(eeg, args.fname, args.subfolder)
 
-        ## Save marks
-        # marks = data_buffer.normalize_marks(marks)
-        # filesystem.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
-        #
-        # # Save feelings, if any
+        # Save marks
+        marks = eeg_collector.normalize_marks(marks)
+        filesystem.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
+
+        # Save feelings, if any
         # if type(data_buffer) is engine.WaveBuffer:
         #     feelings = data_buffer.get_feelings()
         #     filesystem.save_feelings(feelings, args.fname, args.subfolder)
