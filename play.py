@@ -167,8 +167,12 @@ def main():
         generator = engine.WaveProcessor(feel_processor)
         set_signal_commands_generator(generator, commands)
 
+    elif args.stream is None:
+        eeg_buffer = engine.buffers.EEGBuffer()
+        
+        generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
     else:
-        raise("Stream type not recognized: {}".format(args.stream))
+        basic.perror("Stream type not recognized: {}".format(args.stream))
 
     # Engine that handles the incoming, processing and outgoing data
     eeg_collector = engine.collectors.EEGCollector()
