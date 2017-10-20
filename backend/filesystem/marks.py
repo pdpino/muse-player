@@ -3,10 +3,11 @@ import shutil
 import pandas as pd
 from backend import info
 import basic
+from . import filehandler as fh
 
 def load_marks(name, subfolder=None):
     """Read a marks file."""
-    fname = DumpFileHandler.get_fname(name, subfolder, tipo=FileType.marks)
+    fname = fh.DumpFileHandler.get_fname(name, subfolder, tipo=fh.FileType.marks)
 
     try:
         df = pd.read_csv(fname)
@@ -24,8 +25,8 @@ def save_marks(times, messages, name, subfolder=None):
     if len(times) == 0 or len(messages) == 0: # No marks provided
         return
 
-    DumpFileHandler.assure_folder(subfolder, FileType.marks)
-    fname = DumpFileHandler.get_fname(name, subfolder, tipo=FileType.marks)
+    fh.DumpFileHandler.assure_folder(subfolder, fh.FileType.marks)
+    fname = fh.DumpFileHandler.get_fname(name, subfolder, tipo=fh.FileType.marks)
 
     df = pd.DataFrame()
     df[info.times_column] = times
@@ -36,8 +37,8 @@ def save_marks(times, messages, name, subfolder=None):
 
 def copy_marks(name1, name2):
     """Copy a marks file."""
-    DumpFileHandler.assure_folder(None, FileType.marks)
-    fname1 = DumpFileHandler.get_fname(name1, None, tipo=FileType.marks)
-    fname2 = DumpFileHandler.get_fname(name2, None, tipo=FileType.marks)
+    fh.DumpFileHandler.assure_folder(None, fh.FileType.marks)
+    fname1 = fh.DumpFileHandler.get_fname(name1, None, tipo=fh.FileType.marks)
+    fname2 = fh.DumpFileHandler.get_fname(name2, None, tipo=fh.FileType.marks)
 
     shutil.copyfile(fname1, fname2)

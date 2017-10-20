@@ -223,16 +223,15 @@ def main():
 
         def toggle_save_opt():
             args.save = not args.save
-            print("save status = {}".format(args.save))
+            print("\tsave status = {}".format(args.save))
 
         commands.add_command("-c", ask_config, None, None)
         commands.add_command("--save", toggle_save_opt, None, None)
 
         try:
-            print("Input:")
             while True:
                 # Mark time
-                message = input("\tcmd: ")
+                message = input("cmd: ")
                 timestamp = eeg_collector.get_last_timestamp()
 
                 # Special commands
