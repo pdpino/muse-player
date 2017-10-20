@@ -336,6 +336,10 @@ class TimeChart {
     let yMin = newData[1]; // REVIEW: This is a bit ugly
     let yMax = yMin;
     for(let channel = 1; channel < this.nChannels + 1; channel++){
+      if (!this.enablePath[channel-1]) {
+        continue;
+      }
+      
       let value = newData[channel];
 
       // Update min and max
@@ -355,6 +359,10 @@ class TimeChart {
     let yMax = yMin;
     for(let i_time = 0; i_time < this.data.length; i_time ++) {
       for(let channel = 1; channel < this.nChannels + 1; channel++){
+        if (!this.enablePath[channel-1]) {
+          continue;
+        }
+
         let value = this.data[i_time][channel];
 
         // Update min and max
