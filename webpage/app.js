@@ -57,7 +57,6 @@ $(document).ready( function() {
     yTicks: 5,
     secondsInScreen: 10,
     dxZoom: 1,
-    dyMove: 50
     });
 
   const recvMsg = function(e){

@@ -1,7 +1,6 @@
 # TODOs
 
 ## Player
-* (1) REFACTOR: create signals object that handles calling an action, printing and returning a message for each action
 * (1) (Depends on moodplay) use Formatter to yield things, comply with moodplay standards to send JSON
 * handle when muse turns off
 

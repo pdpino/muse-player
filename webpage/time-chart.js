@@ -8,6 +8,7 @@ class TimeChart {
     // Some constants
     this.MIN_Y_AXIS_RANGE = 1;
     this.ZOOM_Y_PERCENTAGE = 0.1; // Zoom 10% of Y axis
+    this.MOVE_Y_PERCENTAGE = 0.2; // Move 20% of Y axis
     this.UPDATE_Y_USE_ALL_DATA = true; // update y axis using all the data
 
     // Assure that the config object is correct
@@ -26,7 +27,7 @@ class TimeChart {
     this._updateXAxis(config.secondsInScreen);
 
     this._initEmptyTimeChart(config.container, config.width, config.height, config.xTicks, config.yTicks);
-    this._initAxisParams(config.dxZoom, config.dyMove);
+    this._initAxisParams(config.dxZoom);
     this._addEventsXAxis(config.xZoomBtn[0], config.xZoomBtn[1]);
     this._addEventsYAxis(config.yZoomBtn, config.yMoveBtn, config.yHomeBtn);
     this._initLegend();
@@ -121,10 +122,9 @@ class TimeChart {
   /**
    * Set amounts to update the axis
    */
-  _initAxisParams(dxZoom, dyMove){
+  _initAxisParams(dxZoom){
     this.dxZoom = dxZoom;
-    this.dyMove = dyMove;
-    this._recalculateDyZoom();
+    this._recalculateDyValues();
   }
 
   /**
@@ -320,8 +320,10 @@ class TimeChart {
   }
 
   /** Recalculate dyZoom value based on the current window size **/
-  _recalculateDyZoom(){
-    this.dyZoom = (this.yMax - this.yMin) * this.ZOOM_Y_PERCENTAGE;
+  _recalculateDyValues(){
+    const windowSize = this.yMax - this.yMin;
+    this.dyZoom = windowSize * this.ZOOM_Y_PERCENTAGE;
+    this.dyMove = windowSize * this.MOVE_Y_PERCENTAGE;
   }
 
   /** AutoUpdateYAxis using only new data **/
@@ -330,8 +332,8 @@ class TimeChart {
     // let yMin = d3.min(this.data, function(d) { return Math.min(...d.slice(1)); });
     // let yMax = d3.max(this.data, function(d) { return Math.max(...d.slice(1)); });
 
-    let yMin = this.yMin;
-    let yMax = this.yMax;
+    let yMin = newData[0]; // REVIEW: This is a bit ugly
+    let yMax = yMin;
     for(let channel = 1; channel < this.nChannels + 1; channel++){
       let value = newData[channel];
 
@@ -343,13 +345,13 @@ class TimeChart {
       }
     }
 
-    this._updateYAxis(yMin, yMax);
+    return { yMin, yMax };
   }
 
   /** AutoUpdateYAxis using all the data **/
   _autoUpdateYAxisFull(){
-    let yMin = this.yMin;
-    let yMax = this.yMax;
+    let yMin = this.data[0][0]; // REVIEW: This is a bit ugly
+    let yMax = yMin;
     for(let i_time = 0; i_time < this.data.length; i_time ++) {
       for(let channel = 1; channel < this.nChannels + 1; channel++){
         let value = this.data[i_time][channel];
@@ -363,7 +365,7 @@ class TimeChart {
       }
     }
 
-    this._updateYAxis(yMin, yMax);
+    return { yMin, yMax };
   }
 
   /**
@@ -377,7 +379,7 @@ class TimeChart {
     this.yRange.domain([yMin, yMax]);
     this.svg.select(".y.axis").call(this.yAxis); // update svg
 
-    this._recalculateDyZoom();
+    this._recalculateDyValues();
   }
 
   /**
@@ -496,8 +498,14 @@ class TimeChart {
     // Update Y Axis
     // this.autoUpdateYAxis = false;
     if(this.autoUpdateYAxis){
-      // REVIEW: decide when to update and when not to (in base on the values)??
-      this.autoUpdateYAxisFunction(newData);
+      let { yMin, yMax } = this.autoUpdateYAxisFunction(newData);
+
+      // Give some air (this is a bit ugly)
+      let windowSize = this.yMax - this.yMin;
+      yMin -= windowSize * 0.05;
+      yMax += windowSize * 0.05;
+
+      this._updateYAxis(yMin, yMax);
     }
 
     // Update X Axis
