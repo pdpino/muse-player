@@ -8,6 +8,7 @@ class TimeChart {
     // Some constants
     this.MIN_Y_AXIS_RANGE = 1;
     this.ZOOM_Y_PERCENTAGE = 0.1; // Zoom 10% of Y axis
+    this.UPDATE_Y_USE_ALL_DATA = true; // update y axis using all the data
 
     // Assure that the config object is correct
     if(!this._validateConstructorParams(config)) return;
@@ -19,7 +20,6 @@ class TimeChart {
     this.secondsIndicator = config.secondsIndicator;
     this.yMin = config.yMin;
     this.yMax = config.yMax;
-    this._recalculateDyZoom();
     this.yMinHome = config.yMin;
     this.yMaxHome = config.yMax;
     this._setCheckboxAutoUpdateY(config.yAutoUpdate);
@@ -31,6 +31,12 @@ class TimeChart {
     this._addEventsYAxis(config.yZoomBtn, config.yMoveBtn, config.yHomeBtn);
     this._initLegend();
     this._initTitle();
+
+    // Select autoUpdateYAxisFunction
+    this.autoUpdateYAxisFunction = (this.UPDATE_Y_USE_ALL_DATA) ?
+      this._autoUpdateYAxisFull : this._autoUpdateYAxisIncoming;
+    // NOTE: assigning functions like this is dangerous without bind,
+    // although in this case should work
   }
 
   /**
@@ -118,6 +124,7 @@ class TimeChart {
   _initAxisParams(dxZoom, dyMove){
     this.dxZoom = dxZoom;
     this.dyMove = dyMove;
+    this._recalculateDyZoom();
   }
 
   /**
@@ -312,8 +319,51 @@ class TimeChart {
     graph.autoUpdateYAxis = true; // DEFAULT: start enabled
   }
 
+  /** Recalculate dyZoom value based on the current window size **/
   _recalculateDyZoom(){
     this.dyZoom = (this.yMax - this.yMin) * this.ZOOM_Y_PERCENTAGE;
+  }
+
+  /** AutoUpdateYAxis using only new data **/
+  _autoUpdateYAxisIncoming(newData){
+    // NOTE: Something like this could be done (just with the newData), but instead is better to
+    // let yMin = d3.min(this.data, function(d) { return Math.min(...d.slice(1)); });
+    // let yMax = d3.max(this.data, function(d) { return Math.max(...d.slice(1)); });
+
+    let yMin = this.yMin;
+    let yMax = this.yMax;
+    for(let channel = 1; channel < this.nChannels + 1; channel++){
+      let value = newData[channel];
+
+      // Update min and max
+      if(value > yMax){
+        yMax = value;
+      } else if(value < yMin){
+        yMin = value;
+      }
+    }
+
+    this._updateYAxis(yMin, yMax);
+  }
+
+  /** AutoUpdateYAxis using all the data **/
+  _autoUpdateYAxisFull(){
+    let yMin = this.yMin;
+    let yMax = this.yMax;
+    for(let i_time = 0; i_time < this.data.length; i_time ++) {
+      for(let channel = 1; channel < this.nChannels + 1; channel++){
+        let value = this.data[i_time][channel];
+
+        // Update min and max
+        if(value > yMax){
+          yMax = value;
+        } else if(value < yMin){
+          yMin = value;
+        }
+      }
+    }
+
+    this._updateYAxis(yMin, yMax);
   }
 
   /**
@@ -446,27 +496,8 @@ class TimeChart {
     // Update Y Axis
     // this.autoUpdateYAxis = false;
     if(this.autoUpdateYAxis){
-      // NOTE: Something like this could be done (just with the newData), but instead is better to
-      // let yMin = d3.min(this.data, function(d) { return Math.min(...d.slice(1)); });
-      // let yMax = d3.max(this.data, function(d) { return Math.max(...d.slice(1)); });
-
-      let yMin = this.yMin;
-      let yMax = this.yMax;
-      for(let channel = 1; channel < this.nChannels + 1; channel++){
-        let value = newData[channel];
-
-        // Update min and max
-        if(value > yMax){
-          yMax = value;
-        } else if(value < yMin){
-          yMin = value;
-        }
-      }
-      // NOTE: instead of iterating only over the newData, it could be searched on all the data
-      // for(let i_time = 0; i_time < this.data.length; i_time ++) { let value = this.data[i_time][channel]; }
-
-      // TODO: decide when to update and when not to (in base on the values)
-      this._updateYAxis(yMin, yMax);
+      // REVIEW: decide when to update and when not to (in base on the values)??
+      this.autoUpdateYAxisFunction(newData);
     }
 
     // Update X Axis
