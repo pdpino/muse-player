@@ -56,8 +56,7 @@ $(document).ready( function() {
     xTicks: 5,
     yTicks: 5,
     secondsInScreen: 10,
-    dxZoom: 1, // FIXME: que clase calcule esto y vaya cambiando
-    dyZoom: 5,
+    dxZoom: 1,
     dyMove: 50
     });
 

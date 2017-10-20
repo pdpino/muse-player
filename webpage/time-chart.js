@@ -7,6 +7,7 @@ class TimeChart {
   constructor(config) {
     // Some constants
     this.MIN_Y_AXIS_RANGE = 1;
+    this.ZOOM_Y_PERCENTAGE = 0.1; // Zoom 10% of Y axis
 
     // Assure that the config object is correct
     if(!this._validateConstructorParams(config)) return;
@@ -18,13 +19,14 @@ class TimeChart {
     this.secondsIndicator = config.secondsIndicator;
     this.yMin = config.yMin;
     this.yMax = config.yMax;
+    this._recalculateDyZoom();
     this.yMinHome = config.yMin;
     this.yMaxHome = config.yMax;
     this._setCheckboxAutoUpdateY(config.yAutoUpdate);
     this._updateXAxis(config.secondsInScreen);
 
     this._initEmptyTimeChart(config.container, config.width, config.height, config.xTicks, config.yTicks);
-    this._initAxisParams(config.dxZoom, config.dyZoom, config.dyMove);
+    this._initAxisParams(config.dxZoom, config.dyMove);
     this._addEventsXAxis(config.xZoomBtn[0], config.xZoomBtn[1]);
     this._addEventsYAxis(config.yZoomBtn, config.yMoveBtn, config.yHomeBtn);
     this._initLegend();
@@ -113,9 +115,8 @@ class TimeChart {
   /**
    * Set amounts to update the axis
    */
-  _initAxisParams(dxZoom, dyZoom, dyMove){
+  _initAxisParams(dxZoom, dyMove){
     this.dxZoom = dxZoom;
-    this.dyZoom = dyZoom;
     this.dyMove = dyMove;
   }
 
@@ -301,6 +302,21 @@ class TimeChart {
   }
 
   /**
+   * Connect event to toggle auto update y axis
+   */
+  _setCheckboxAutoUpdateY(checkboxSelector){
+    const graph = this;
+    $(checkboxSelector).click( function(){
+      graph.autoUpdateYAxis = this.checked;
+    });
+    graph.autoUpdateYAxis = true; // DEFAULT: start enabled
+  }
+
+  _recalculateDyZoom(){
+    this.dyZoom = (this.yMax - this.yMin) * this.ZOOM_Y_PERCENTAGE;
+  }
+
+  /**
    * Update the y axis
    */
   _updateYAxis(yMin, yMax){
@@ -310,17 +326,8 @@ class TimeChart {
     this.yMax = yMax;
     this.yRange.domain([yMin, yMax]);
     this.svg.select(".y.axis").call(this.yAxis); // update svg
-  }
 
-  /**
-   * Connect event to toggle auto update y axis
-   */
-  _setCheckboxAutoUpdateY(checkboxSelector){
-    const graph = this;
-    $(checkboxSelector).click( function(){
-      graph.autoUpdateYAxis = this.checked;
-    });
-    graph.autoUpdateYAxis = true; // DEFAULT: start enabled
+    this._recalculateDyZoom();
   }
 
   /**
@@ -377,8 +384,8 @@ class TimeChart {
       signMax = -1; // decrease yMax
     }
 
-    let yMinNew = this.yMin + signMin*this.dyZoom;
-    let yMaxNew = this.yMax + signMax*this.dyZoom;
+    let yMinNew = this.yMin + signMin * this.dyZoom;
+    let yMaxNew = this.yMax + signMax * this.dyZoom;
 
     // Safe when zooming in
     if(!out){
