@@ -10,6 +10,7 @@ class TimeChart {
     this.ZOOM_Y_PERCENTAGE = 0.1; // Zoom 10% of Y axis
     this.MOVE_Y_PERCENTAGE = 0.2; // Move 20% of Y axis
     this.UPDATE_Y_USE_ALL_DATA = true; // update y axis using all the data
+    this.Y_PADDING = 0.05; // 5% of air up and down when updating the axis
 
     // Assure that the config object is correct
     if(!this._validateConstructorParams(config)) return;
@@ -332,7 +333,7 @@ class TimeChart {
     // let yMin = d3.min(this.data, function(d) { return Math.min(...d.slice(1)); });
     // let yMax = d3.max(this.data, function(d) { return Math.max(...d.slice(1)); });
 
-    let yMin = newData[0]; // REVIEW: This is a bit ugly
+    let yMin = newData[1]; // REVIEW: This is a bit ugly
     let yMax = yMin;
     for(let channel = 1; channel < this.nChannels + 1; channel++){
       let value = newData[channel];
@@ -350,7 +351,7 @@ class TimeChart {
 
   /** AutoUpdateYAxis using all the data **/
   _autoUpdateYAxisFull(){
-    let yMin = this.data[0][0]; // REVIEW: This is a bit ugly
+    let yMin = this.data[0][1]; // REVIEW: This is a bit ugly
     let yMax = yMin;
     for(let i_time = 0; i_time < this.data.length; i_time ++) {
       for(let channel = 1; channel < this.nChannels + 1; channel++){
@@ -502,8 +503,10 @@ class TimeChart {
 
       // Give some air (this is a bit ugly)
       let windowSize = this.yMax - this.yMin;
-      yMin -= windowSize * 0.05;
-      yMax += windowSize * 0.05;
+      yMin -= windowSize * this.Y_PADDING;
+      yMax += windowSize * this.Y_PADDING;
+
+      console.log("DATA: ", newData, yMin, yMax);
 
       this._updateYAxis(yMin, yMax);
     }

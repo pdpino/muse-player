@@ -11,7 +11,7 @@ class EEGEngine:
         eeg_buffer -- implements interface IBuffer
         generator -- implements interface IGenerator"""
 
-        self.name = name
+        self.name = name or "Muse Player"
         self.eeg_collector = eeg_collector
         self.eeg_buffer = eeg_buffer
         self.generator = generator

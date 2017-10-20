@@ -116,15 +116,15 @@ class Connection{
     this.stream.addEventListener('open', (e) => {
       this._setStatus(StatusEnum.CONNECTED);
       console.log("Connected to the server");
-    }, false);
+    });
 
     this.stream.addEventListener('config', (e) => {
       this.recvConfig(e);
-    }, false);
+    });
 
     this.stream.addEventListener('message', (e) => {
       this.recvMsg(e);
-    }, false);
+    });
 
     this.stream.addEventListener('error', (e) => {
       // TODO: send alert to the user
@@ -132,7 +132,7 @@ class Connection{
       else console.log("Error in the connection with the server");
 
       this.close();
-    }, false);
+    });
 
   }
 

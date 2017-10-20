@@ -45,9 +45,7 @@ def parse_args():
         parser.add_argument('--faker', action="store_true", help="Simulate a fake muse. Used for testing")
         parser.add_argument('--save', action="store_true", help="Save a .csv with the raw eeg data")
 
-        parser.add_argument('--stream', action="store_true", help="Stream the data to a web client")
-        parser.add_argument('--stream_type', choices=['eeg', 'waves', 'feel', 'feel_val_aro'], default='eeg',
-                            help="Select what to stream") # REFACTOR: use config dictionaries somewhere else
+        parser.add_argument('--stream', nargs='?', choices=['eeg', 'waves', 'feel', 'feel_val_aro'], const='eeg', help="Stream data to a client") # REFACTOR: use config dictionaries somewhere else
 
         parser.add_argument('--regulator', choices=['accum', 'calib'],
                             help="Select the type of regulator to use") # REFACTOR: this shouldnt be here
@@ -110,15 +108,15 @@ def main():
     commands = CommandHandler()
 
     # Select processor for the EEG data
-    name = args.stream_type
-    if args.stream_type == 'eeg':
+    stream_enabled = not args.stream is None
+    if args.stream == 'eeg':
         # Use a normal buffer
         eeg_buffer = engine.buffers.EEGBuffer()
 
         # Generator yields raw EEG
         generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
 
-    elif args.stream_type == 'waves':
+    elif args.stream == 'waves':
         # Use a window buffer
         eeg_buffer = engine.buffers.EEGWindowBuffer()
 
@@ -133,7 +131,7 @@ def main():
         generator = engine.WaveProcessor(wave_yielder)
         set_signal_commands_generator(generator, commands)
 
-    elif args.stream_type == 'feel':
+    elif args.stream == 'feel':
         # Use a window buffer
         eeg_buffer = engine.buffers.EEGWindowBuffer()
 
@@ -150,7 +148,7 @@ def main():
         generator = engine.WaveProcessor(feel_processor)
         set_signal_commands_generator(generator, commands)
 
-    elif args.stream_type == 'feel_val_aro':
+    elif args.stream == 'feel_val_aro':
         # Use a window buffer
         eeg_buffer = engine.buffers.EEGWindowBuffer()
 
@@ -168,11 +166,11 @@ def main():
         set_signal_commands_generator(generator, commands)
 
     else:
-        raise("Stream type not recognized: {}".format(args.stream_type))
+        raise("Stream type not recognized: {}".format(args.stream))
 
     # Engine that handles the incoming, processing and outgoing data
     eeg_collector = engine.collectors.EEGCollector()
-    eeg_engine = engine.EEGEngine(name, eeg_collector, eeg_buffer, generator)
+    eeg_engine = engine.EEGEngine(args.stream, eeg_collector, eeg_buffer, generator)
 
     # Connect muse
     if args.faker:
@@ -186,7 +184,7 @@ def main():
     muse.connect(interface=args.interface)
 
     # Init Flask
-    if args.stream:
+    if stream_enabled:
         basic.report("Streaming enabled", level=0)
 
         # Flask app
@@ -205,7 +203,7 @@ def main():
 
     ## Iniciar
     muse.start()
-    if args.stream:
+    if stream_enabled:
         stream.start()
 
     # To save marks in time
