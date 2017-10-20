@@ -2,10 +2,14 @@
 import pandas as pd
 from backend import info
 import basic
+from . import filehandler as fh
 
 def load_feelings(name, subfolder=None, suffix=None):
     """Read feelings data from csv, assure the channels and return the dataframe"""
-    fname = DumpFileHandler.get_fname(name, subfolder, suffix, tipo=FileType.feelings)
+
+    basic.perror("Load feelings hasn't been correctly updated, you can't load valence arousal files just yet", force_continue=True)
+
+    fname = fh.DumpFileHandler.get_fname(name, subfolder, suffix, tipo=fh.FileType.feelings)
 
     try:
         df = pd.read_csv(fname, index_col=0)
@@ -26,8 +30,8 @@ def save_feelings(df, name, subfolder=None, suffix=None):
     if df is None:
         return
 
-    DumpFileHandler.assure_folder(subfolder, FileType.feelings)
-    fname = DumpFileHandler.get_fname(name, subfolder, suffix, tipo=FileType.feelings)
+    fh.DumpFileHandler.assure_folder(subfolder, fh.FileType.feelings)
+    fname = fh.DumpFileHandler.get_fname(name, subfolder, suffix, tipo=fh.FileType.feelings)
 
     df.to_csv(fname, float_format='%f')
     basic.report("Feelings saved to file: {}".format(fname))

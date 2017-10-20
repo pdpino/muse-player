@@ -1,8 +1,12 @@
 # TODOs
 
+* REVIEW !!:
+  - the server should work without the need of a client making a request (to activate the generator)
+
 ## Player
 * (1) (Depends on moodplay) use Formatter to yield things, comply with moodplay standards to send JSON
 * handle when muse turns off
+* Consider moving the time normalization to the engine, so no one else has to handle it
 
 #### Refactors (1)
 * `arr_freqs` is in many places in wave yielding

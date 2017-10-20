@@ -142,7 +142,8 @@ def main():
         regulator = get_regulator(args.regulator, commands)
 
         # Feeling processor, that use the feeler and the regulator
-        feel_processor = engine.FeelProcessor(feeler, regulator)
+        feel_processor = engine.FeelProcessor(feeler, regulator,
+            [info.colname_relaxation, info.colname_concentration])
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)
@@ -159,7 +160,8 @@ def main():
         regulator = get_regulator(args.regulator, commands)
 
         # Feeling processor, that use the feeler and the regulator
-        feel_processor = engine.FeelProcessor(feeler, regulator)
+        feel_processor = engine.FeelProcessor(feeler, regulator,
+            [info.colname_arousal, info.colname_valence])
 
         # Wave processor, that uses the feel processor
         generator = engine.WaveProcessor(feel_processor)
@@ -274,9 +276,12 @@ def main():
         filesystem.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
 
         # Save feelings, if any
-        # if type(data_buffer) is engine.WaveBuffer:
-        #     feelings = data_buffer.get_feelings()
-        #     filesystem.save_feelings(feelings, args.fname, args.subfolder)
+        try: # HACK: use something more elegant than try catch
+            feelings = feel_processor.export()
+            if not feelings is None:
+                filesystem.save_feelings(feelings, args.fname, args.subfolder)
+        except UnboundLocalError as e:
+            pass
 
     return 0
 

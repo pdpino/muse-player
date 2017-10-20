@@ -1,28 +1,29 @@
 from backend import info
+import pandas as pd
+import numpy as np
+import basic
 
 class FeelCollector:
     """Collect feelings calculated in time."""
 
-    def __init__(self):
-        self.levels_times = []
-        self.levels_relaxation = []
-        self.levels_concentration = []
+    def __init__(self, feeling_names):
+        self.timestamps = []
+        self.feelings = []
+
+        self.feeling_names = feeling_names
 
     def collect(self, timestamp, feeling):
-        self.levels_times.append(timestamp)
-        self.levels_relaxation.append(feeling[0])
-        self.levels_concentration.append(feeling[1])
+        self.timestamps.append(timestamp)
+        self.feelings.append(feeling)
 
     def export(self):
         """Return a pd.DataFrame with the feelings. Not thread safe"""
-        if len(self.levels_times) == 0:
-            basic.perror("get_feelings(), No feelings found")
 
-        timestamps = np.array(self.levels_times) - self._full_time[0][0]
+        if len(self.timestamps) == 0:
+            basic.perror("FeelCollector.export(), No feelings found", force_continue=True)
+            return None
 
-        feelings_df = pd.DataFrame()
-        feelings_df[info.colname_timestamps] = timestamps
-        feelings_df[info.colname_relaxation] = self.levels_relaxation
-        feelings_df[info.colname_concentration] = self.levels_concentration
+        feelings_df = pd.DataFrame(self.feelings, columns=self.feeling_names)
+        feelings_df[info.colname_timestamps] = np.array(self.timestamps)
 
         return feelings_df
