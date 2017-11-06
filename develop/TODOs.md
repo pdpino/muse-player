@@ -23,6 +23,7 @@ Usual subsections for code:
 * Lookup muse-direct
 * Order offline tools, prepare pipeline to receive data, apply formulas, show results
 * Prepare user protocol
+* Update README with current tools
 
 ## Software
 
