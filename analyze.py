@@ -4,7 +4,7 @@
 import argparse
 import pandas as pd
 import numpy as np
-from backend import filesystem, tf, plots, parsers, info, signals
+from backend import filesystem, tf, parsers, info, signals
 import basic
 
 def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=None, marks_m=None, testing=False, filtering=False, normalize=True, baseline=None, overwrite=True, window=None, step=None, n_cycles=None):
@@ -69,7 +69,7 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
 
     for ch in channels:
         if not testing and not overwrite:
-            if filesystem.exist_waves(fsave, ch):
+            if filesystem.exist_tf(fsave, ch):
                 continue
 
         # Grab data
@@ -84,56 +84,7 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
         power = method_function(times, eeg_data, baseline=baseline, norm=normalize, **method_kwargs)
 
         # Save to file
-        filesystem.save_waves(power, fsave, ch)
-
-def show_tf_analysis(channels, fname, marks_t=None, marks_m=None, testing=False, show_contour=False, show_waves=False, show_marks_waves=False, choose_waves=None, n_samples=None, min_freq=None, max_freq=None):
-    """Show TF analysis loaded from file.
-
-    channels -- name of the chosen channels. Each must have a column in the dataframe
-    fname -- name of the run used
-    marks_t -- list of times of the marks
-    marks_m -- list of messages of the marks
-    show_contour -- boolean indicating if plot the contour
-    show_waves -- boolean indicating if plot the waves
-    show_marks_waves -- boolean indicating if plot the waves averaged between marks
-    choose_waves -- list of waves chosen
-    n_samples -- parameter passed to the tsplot
-    min_freq -- minimum frequency to plot in the contour plot
-    max_freq -- maximum frequency to plot in the contour plot"""
-
-    # Order channels in plot order
-    if not testing:
-        channels = info.get_chs_plot(channels)
-
-    # Save all powers
-    powers = []
-
-    for ch in channels:
-        if not filesystem.exist_waves(fname, ch):
-            basic.perror("No waves file found for: {}, {}".format(fname, ch), force_continue=True)
-            continue
-        power = filesystem.load_waves(fname, ch)
-        powers.append(power)
-
-    if len(powers) == 0:
-        basic.perror("No wave to show")
-
-    # Plot as contour
-    if show_contour:
-        plots.plot_tf_contour(powers, channels, fname,
-                        marks_t=marks_t, marks_m=marks_m,
-                        min_freq=min_freq, max_freq=max_freq)
-
-    # Get and plot waves
-    if show_waves:
-        waves = tf.get_waves(powers)
-        plots.plot_waves(waves, channels, fname, marks_t=marks_t, marks_m=marks_m,
-                        choose_waves=choose_waves, n_samples=n_samples)
-
-    # Get and plot waves in intervals
-    if show_marks_waves:
-        mw = tf.get_marks_waves(powers, marks_t, marks_m)
-        plots.plot_marks_waves(mw, channels, fname, choose_waves=choose_waves)
+        filesystem.save_tf(power, fsave, ch)
 
 def create_sine_wave(time, srate, freqs, amps, phases):
     """Create a sine wave."""
@@ -219,103 +170,48 @@ def parse_args():
         group_test.add_argument('--amps', nargs='+', type=float, default=[1], help='Amplitudes')
         group_test.add_argument('--phases', nargs='+', type=float, default=[0], help='Phase angles')
 
-
-
-
-
-        #### Show parser
-        parser_show = subparser.add_parser('show')
-
-        parser_show.add_argument('-t', '--test', action='store_true',
-                        help='Test with a simulated wave instead of real data (see testing group)')
-
-        # Hide/show arguments
-        parser_show.add_argument('-c', '--show_contour', action='store_true', help='Plot result of convolution and stfft')
-        parser_show.add_argument('-w', '--show_waves', action='store_true', help='Plot alpha, beta, etc waves')
-        parser_show.add_argument('-m', '--show_marks_waves', action='store_true',
-                        help='Plot alpha, beta, etc waves in each mark interval')
-
-        # Standard arguments
-        parsers.add_ch_args(parser_show)
-        parsers.add_file_args(parser_show)
-
-        # Waves arguments
-        group_waves = parser_show.add_argument_group(title="Waves options")
-        possible_waves = info.get_waves_names()
-        group_waves.add_argument('--waves', nargs='+', choices=possible_waves, default=possible_waves,
-                        help='Choose the waves to plot. Only valid for -w and/or -m')
-        group_waves.add_argument('--n_samples', type=int,
-                        help='In -w option, select a value to plot the waves by groups of n_samples')
-        group_waves.add_argument('--range_freq', nargs=2, type=float, help='min and max frequency to plot')
-
         return parser
 
     parser = create_parser()
     args = parser.parse_args()
 
-    if args.option == "show":
-        if args.range_freq is None:
-            args.min_freq = None
-            args.max_freq = None
-        else:
-            args.min_freq, args.max_freq = args.range_freq
-
-        if args.test:
-            args.channels = ['sinewave'] # HACK: hardcoded
-
     return args
 
 if __name__ == "__main__":
-    # Parse args
     args = parse_args()
 
+    if args.test: # Use simulated data
+        # Simulate sine wave
+        times, wave = create_sine_wave(args.time, args.srate, args.freqs, args.amps, args.phases)
 
-    if args.option == "calc":
-        if args.test: # Use simulated data
-            # Simulate sine wave
-            times, wave = create_sine_wave(args.time, args.srate, args.freqs, args.amps, args.phases)
+        # Prepare format (pd.DataFrame)
+        sine_name = 'sinewave'
+        channels = [sine_name]
+        df = pd.DataFrame(columns=channels)
+        df[sine_name] = wave
 
-            # Prepare format (pd.DataFrame)
-            sine_name = 'sinewave'
-            channels = [sine_name]
-            df = pd.DataFrame(columns=channels)
-            df[sine_name] = wave
+        # No marks
+        marks_time = None
+        marks_msg = None
+    else: # read real data
+        # Read dataframe and channels
+        times, df, channels = filesystem.load_eeg(args.channels, args.fname, args.subfolder)
 
-            # No marks
-            marks_time = None
-            marks_msg = None
-        else: # read real data
-            # Read dataframe and channels
-            times, df, channels = filesystem.load_eeg(args.channels, args.fname, args.subfolder)
+        if not args.fsave is None: # HACK copy marks file
+            filesystem.copy_marks(args.fname, args.fsave)
 
-            if not args.fsave is None: # HACK copy marks file
-                filesystem.copy_marks(args.fname, args.fsave)
-
-            # Read marks in time
-            marks_time, marks_msg = filesystem.load_marks(args.fname, args.subfolder)
-
-        # Analyze
-        calc_tf_analysis(times, df, channels, args.fname, args.method,
-                fsave=args.fsave,
-                marks_t=marks_time, marks_m=marks_msg,
-                testing=args.test,
-                filtering=args.filtering,
-                overwrite=args.overwrite,
-                normalize=args.norm,
-                baseline=args.baseline,
-                window=args.window,
-                step=args.step,
-                n_cycles=args.cycles)
-
-    elif args.option == "show":
         # Read marks in time
         marks_time, marks_msg = filesystem.load_marks(args.fname, args.subfolder)
 
-        # Plot
-        show_tf_analysis(args.channels, args.fname,
-                marks_t=marks_time, marks_m=marks_msg,
-                testing=args.test,
-                show_contour=args.show_contour, show_waves=args.show_waves, show_marks_waves=args.show_marks_waves,
-                choose_waves=args.waves, n_samples=args.n_samples,
-                min_freq=args.min_freq,
-                max_freq=args.max_freq)
+    # Analyze
+    calc_tf_analysis(times, df, channels, args.fname, args.method,
+            fsave=args.fsave,
+            marks_t=marks_time, marks_m=marks_msg,
+            testing=args.test,
+            filtering=args.filtering,
+            overwrite=args.overwrite,
+            normalize=args.norm,
+            baseline=args.baseline,
+            window=args.window,
+            step=args.step,
+            n_cycles=args.cycles)
