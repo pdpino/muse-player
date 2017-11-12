@@ -35,6 +35,7 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
         start = info.start_calib_mark
         stop = info.stop_calib_mark
 
+        # OPTIMIZE: use only one query to the list (index != -1, or the like)
         if start in marks_messages and stop in marks_messages:
             i1 = marks_messages.index(start)
             i2 = marks_messages.index(stop)
@@ -126,42 +127,36 @@ def parse_args():
         """Create the console arguments parser."""
         parser = argparse.ArgumentParser(description='Analyze the collected eeg data in the Time-Frequency domain',
                                          usage='%(prog)s [options]')
-        subparser = parser.add_subparsers(dest='option')
-
-        #### Calculate parser
-        parser_calc = subparser.add_parser('calc')
-
-        # Choose method
-        methods = ['stfft', 'conv'] # First is default # REVIEW: move names to backend?
-        parser_calc.add_argument('--method', type=str, choices=methods, default=methods[0],
-                        help='Method to perform the TF analysis')
 
         # Other arguments
-        parser_calc.add_argument('-t', '--test', action='store_true',
+        parser.add_argument('-t', '--test', action='store_true',
                         help='Test with a simulated wave instead of real data (see testing group)')
-        parser_calc.add_argument('-o', '--overwrite', action='store_true', help='Overwrite existing wave data')
-        parser_calc.add_argument('--filtering', action='store_true',
+        parser.add_argument('-o', '--overwrite', action='store_true', help='Overwrite existing wave data')
+        parser.add_argument('--filtering', action='store_true',
                         help='Use a notch filter (50hz) and a high-pass filter (1hz)')
 
         # Standard arguments
-        parsers.add_ch_args(parser_calc)
-        parsers.add_file_args(parser_calc, fsave=True)
+        parsers.add_ch_args(parser)
+        parsers.add_file_args(parser, fsave=True)
 
         # TF arguments
-        group_tf = parser_calc.add_argument_group(title="TF general options")
+        group_tf = parser.add_argument_group(title="TF general options")
+        methods = ['stfft', 'conv'] # First is default # REVIEW: move names to backend?
+        group_tf.add_argument('--method', type=str, choices=methods, default=methods[0],
+                        help='Method to perform the TF analysis')
         group_tf.add_argument('--norm', action='store_true', help='If present, normalize the TF')
         group_tf.add_argument('--baseline', nargs=2, help='Range of seconds to normalize the TF')
 
         # Methods arguments
-        group_conv = parser_calc.add_argument_group(title="Morlet wavelet convolution")
+        group_conv = parser.add_argument_group(title="Morlet wavelet convolution")
         group_conv.add_argument('--cycles', type=int, help='Amount of cycles')
 
-        group_stfft = parser_calc.add_argument_group(title="STFFT")
+        group_stfft = parser.add_argument_group(title="STFFT")
         group_stfft.add_argument('--window', type=int, help='Window size')
         group_stfft.add_argument('--step', type=int, help='Step to slide the window')
 
         # Testing
-        group_test = parser_calc.add_argument_group(title='Testing',
+        group_test = parser.add_argument_group(title='Testing',
                                 description='Use a sine wave (may be a sum of multiple sine waves) to test the TF analysis')
         group_test.add_argument('--time', type=float, default=1, help='Time to simulate')
         group_test.add_argument('--srate', type=int, default=256, help='Sampling rate')

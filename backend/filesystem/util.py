@@ -1,7 +1,7 @@
 """Utility functions for this module."""
 import basic
 
-def _cmp_chs(real_chs, wanted_chs):
+def _compare_channels(real_chs, wanted_chs):
     """Compare the existing channels with the wanted ones, return the intersection and notifies the difference."""
     # Make sets
     real_chs = set(real_chs)

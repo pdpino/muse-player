@@ -19,7 +19,7 @@ def load_feelings(name, subfolder=None, suffix=None):
 
     # Assure channels in columns
     channels = info.get_feelings_colnames()
-    channels = _cmp_chs(df.columns, channels)
+    channels = _compare_channels(df.columns, channels)
     times = df[info.colname_timestamps]
     df = df[channels]
 
