@@ -54,32 +54,44 @@ class FeelerRelaxConc(base.Feeler):
 
     def normalize_range(self, value):
         """Move the values to between 0 and 1"""
-        return (value - self.min_feeling) / (self.max_feeling - self.min_feeling)
+        # return (value - self.min_feeling) / (self.max_feeling - self.min_feeling)
+        min_value = -5
+        max_value = 5
+        return (value - min_value) / (max_value - min_value)
 
     def pack_data(self, timestamp, feeling):
         """Pack concentration and relaxation data."""
         print(feeling)
 
         # Save first normalization
-        if self.max_feeling is None or self.min_feeling is None:
-            self.max_feeling = feeling[0]
-            self.min_feeling = feeling[0]
+        # if self.max_feeling is None or self.min_feeling is None:
+        #     self.max_feeling = feeling[0]
+        #     self.min_feeling = feeling[0]
 
         # Update normalization values
-        for feel in feeling:
-            if feel > self.max_feeling:
-                self.max_feeling = feel
-            elif feel < self.min_feeling:
-                self.min_feeling = feel
+        # for feel in feeling:
+        #     if feel > self.max_feeling:
+        #         self.max_feeling = feel
+        #     elif feel < self.min_feeling:
+        #         self.min_feeling = feel
 
         # Normalize between 0 and 1
         relaxation = self.normalize_range(feeling[0])
         concentration = self.normalize_range(feeling[1])
 
+        if relaxation > 2 or concentration > 2 or relaxation < 0 or concentration < 0:
+            return None
+
+        # Square to accentuate
+        relaxation = relaxation ** 2
+        concentration = concentration ** 2
+
         # Normalize to add up to 1
         total = relaxation + concentration
         relaxation /= total
         concentration /= total
+
+        print(relaxation, concentration)
 
         return [{
             'name': 'Concentration',

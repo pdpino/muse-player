@@ -21,14 +21,16 @@ class BaseYielder:
     def generate(self, timestamp, data):
         """Template method."""
         packed_data = self.pack_data(timestamp, data)
-        a = self.json_to_string(packed_data)
+        if packed_data is None:
+            return
 
-        print(a)
-        yield a
+        yield self.json_to_string(packed_data)
 
     def pack_data(self, timestamp, data):
         """Override this method to pack your data into a dict accordingly.
 
         The method must receive a timestamp and data,
-        and must return a json-dumpable object"""
+        and must return a json-dumpable object
+
+        If returns None there is no yielding in that step"""
         raise(BaseException("Abstract method to pack the data"))
