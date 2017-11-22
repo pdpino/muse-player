@@ -26,7 +26,6 @@ class WaveYielder(base.BaseYielder):
             self.str_format += ", {}"
         self.str_format += "\n\n"
 
-
     def generate(self, t, power):
         all_waves = []
 
