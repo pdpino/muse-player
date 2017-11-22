@@ -20,8 +20,9 @@ class Feeler(base.BaseYielder):
 
         return [feeling1, feeling2] # could be more than 2
 
-    def generate(self, timestamp, feeling):
-        """Yields the feeling
-
-        feeling -- same type that the return type of calculate()"""
-        yield "data: {}, {}, {}\n\n".format(timestamp, *feeling)
+    # DEPRECATED
+    # def generate(self, timestamp, feeling):
+    #     """Yields the feeling
+    #
+    #     feeling -- same type that the return type of calculate()"""
+    #     yield "data: {}, {}, {}\n\n".format(timestamp, *feeling)
