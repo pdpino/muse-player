@@ -14,10 +14,10 @@ import basic
 from backend import parsers, filesystem, engine, info, tf, MuseFaker
 from player import CommandHandler
 
-def get_regulator(selected, commands):
+def get_regulator(selected, commands, accum_samples=10):
     # REFACTOR: use better way of passing the configuration
     if selected == "accum":
-        regulator = engine.collectors.DataAccumulator(samples=10)
+        regulator = engine.collectors.DataAccumulator(samples=accum_samples)
     elif selected == "calib":
         regulator = engine.calibrators.Calibrator(engine.calibrators.BaselineFeeling())
         commands.add_command("-3", regulator.signal_start_calibrating, info.start_collect_mark, 'notification')
@@ -47,8 +47,11 @@ def parse_args():
 
         parser.add_argument('--stream', nargs='?', choices=['eeg', 'waves', 'feel', 'feel_val_aro'], const='eeg', help="Stream data to a client") # REFACTOR: use config dictionaries somewhere else
 
+        # REFACTOR: this shouldnt be here
         parser.add_argument('--regulator', choices=['accum', 'calib'],
-                            help="Select the type of regulator to use") # REFACTOR: this shouldnt be here
+                            help="Select the type of regulator to use")
+        parser.add_argument('--accum_samples', type=int, default=10,
+                            help="Choose amount of samples to accumulate")
 
         group_bconn = parser.add_argument_group(title="Bluetooth connection")
         group_bconn.add_argument('-i', '--interface', default=None, type=str,
@@ -139,7 +142,7 @@ def main():
         feeler = engine.feelers.FeelerRelaxConc()
 
         # Select regulator
-        regulator = get_regulator(args.regulator, commands)
+        regulator = get_regulator(args.regulator, commands, args.accum_samples)
 
         # Feeling processor, that use the feeler and the regulator
         feel_processor = engine.FeelProcessor(feeler, regulator,
@@ -157,7 +160,7 @@ def main():
         feeler = engine.feelers.FeelerValAro()
 
         # Select regulator
-        regulator = get_regulator(args.regulator, commands)
+        regulator = get_regulator(args.regulator, commands, args.accum_samples)
 
         # Feeling processor, that use the feeler and the regulator
         feel_processor = engine.FeelProcessor(feeler, regulator,
@@ -169,7 +172,7 @@ def main():
 
     elif args.stream is None:
         eeg_buffer = engine.buffers.EEGBuffer()
-        
+
         generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
     else:
         basic.perror("Stream type not recognized: {}".format(args.stream))
