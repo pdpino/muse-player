@@ -24,6 +24,7 @@ Usual subsections for code:
 * Refactor filesys
 * Refactor yielders?
 * Comply with moodplay format in yielders
+* Refactor src/ to fix relative imports
 
 ### Pending
 * Improve Muse module + PR barachant repo
