@@ -2,7 +2,7 @@
 
 Sections:
 * Whole project
-* Code
+* Software/Code
   - Streamer server (`play.py`)
   - Javascript client (`app.js`)
   - Offline analysis
@@ -20,6 +20,20 @@ Usual subsections for code:
 ***
 
 ## Project
+### Refactors
+* Refactor filesys
+* Refactor yielders?
+* Comply with moodplay format in yielders
+
+### Pending
+* Improve Muse module + PR barachant repo
+
+### Next
+* Artifact removal in real time
+  - search/read papers
+* Email evic people
+
+### Others (old)
 * Order offline tools, prepare pipeline to receive data, apply formulas, show results
 * Prepare user protocol
 * Update README with current tools
