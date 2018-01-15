@@ -60,12 +60,13 @@ class BaseFileHandler():
         return os.path.join(cls.root_folder, cls.base_folder, cls.main_folder, *folders)
 
     @classmethod
-    def get_fname(cls, name, folder=None, suffix=None, extension=None):
+    def get_fname(cls, name, folder=None, suffix=None, extension=None, **kwargs):
         """Return the full filename, in the form: root/base/folders/name_suffix.ext
 
+        folder -- subfolder(s) to add to the main folder
         suffix -- string or list of suffixes
         extension -- if provided, overrides the class extension
-        folder -- subfolder(s) to add to the main folder
+        kwargs -- ignored kwargs
         """
 
         if type(folder) is list:
@@ -82,29 +83,29 @@ class BaseFileHandler():
         return fname
 
     @classmethod
-    def save(cls, filename, *data_args, ret_fname=False, **fname_kwargs):
+    def save(cls, filename, *data_args, **kwargs):
         """Save data.
 
         data_args -- given to save_data
-        fname_kwargs -- given to get_fname
+        kwargs -- given to get_fname
         """
         cls.assure_folder()
-        full_filename = cls.get_fname(filename, **fname_kwargs)
+        full_filename = cls.get_fname(filename, **kwargs)
         cls.save_data(full_filename, *data_args)
 
         print("{} file saved to {}".format(cls.name, full_filename))
 
-        if ret_fname:
+        if kwargs.get("ret_fname", False):
             return full_filename
 
     @classmethod
-    def load(cls, filename, *data_args, **fname_kwargs):
+    def load(cls, filename, *data_args, **kwargs):
         """Load data.
 
         data_args -- given to load_data
-        fname_kwargs -- given to get_fname
+        kwargs -- given to get_fname
         """
-        filename = cls.get_fname(filename, **fname_kwargs)
+        filename = cls.get_fname(filename, **kwargs)
 
         try:
             result = cls.load_data(filename, *data_args)
@@ -115,9 +116,9 @@ class BaseFileHandler():
         return result
 
     @classmethod
-    def exist(cls, filename, **fname_kwargs):
+    def exist(cls, filename, **kwargs):
         """Boolean indicating if a file exist."""
-        return os.path.isfile(cls.get_fname(filename, **fname_kwargs))
+        return os.path.isfile(cls.get_fname(filename, **kwargs))
 
     @classmethod
     def save_data(cls, filename, *data_args):

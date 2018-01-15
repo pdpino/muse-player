@@ -3,7 +3,7 @@ import pandas as pd
 from backend import info
 from . import base
 
-class FeelFilesystem(base.BaseFileHandler):
+class FeelFileHandler(base.BaseFileHandler):
     """Handle feeling files."""
 
     name = "feeling"

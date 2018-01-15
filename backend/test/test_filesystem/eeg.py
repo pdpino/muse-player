@@ -4,13 +4,13 @@ import pandas as pd
 import os
 import backend.filesystem as fs
 
-class TestEEGFilesystem(unittest.TestCase):
+class TestEEGFileHandler(unittest.TestCase):
 
     def test_load(self):
         # Fake data
         channels = ["TP9", "TP10"]
 
-        timestamps, df, channels = fs.EEGFilesystem.load("data", channels)
+        timestamps, df, channels = fs.EEGFileHandler.load("data", channels)
 
         self.assertIsInstance(timestamps, pd.Series, "'timestamps' returned is not Series")
         self.assertIsInstance(df, pd.DataFrame, "'df' returned is not DataFrame")
@@ -24,7 +24,7 @@ class TestEEGFilesystem(unittest.TestCase):
         name = "testing_save"
 
         # Test
-        full_filename = fs.EEGFilesystem.save(name, df, ret_fname=True)
+        full_filename = fs.EEGFileHandler.save(name, df, ret_fname=True)
         self.assertTrue(os.path.isfile(full_filename), "File was not saved correctly")
         os.remove(full_filename)
 

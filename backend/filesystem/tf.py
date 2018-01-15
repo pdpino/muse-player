@@ -2,23 +2,25 @@
 import pandas as pd
 from . import base
 
-class TFFiles(base.BaseFileHandler):
-    """Handle TimeFrequencyAnalysis (TF) files."""
+class TFFileHandler(base.BaseFileHandler):
+    """Handle TimeFrequency Analysis (TF) files."""
 
     name = "TF-analysis"
-    folder = "tf"
+    main_folder = "tf"
     extension = "csv"
 
     @classmethod
-    def get_fname(cls, filename, channel, **fname_kwargs):
-        return super().get_fname(filename, subfolder, suffix=channel, ext=cls.extension)
+    def get_fname(cls, name, **kwargs):
+        """Override get_fname() to decorate standard behavior"""
+        kwargs["suffix"] = kwargs.get("channel")
+        return super().get_fname(name, **kwargs)
 
     @classmethod
     def save_data(cls, filename, power_df):
         """Save a tf file."""
-        power.to_csv(filename)
+        power_df.to_csv(filename)
 
     @classmethod
     def load_data(cls, filename):
         """Read the TF-power-dataframe from csv."""
-        return pd.read_csv(fname, index_col=0)
+        return pd.read_csv(filename, index_col=0)

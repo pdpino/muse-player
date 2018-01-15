@@ -3,7 +3,7 @@ import pandas as pd
 from backend import info
 from . import util, base
 
-class EEGFilesystem(base.BaseFileHandler):
+class EEGFileHandler(base.BaseFileHandler):
     """Handle EEG files."""
 
     name = "eeg"

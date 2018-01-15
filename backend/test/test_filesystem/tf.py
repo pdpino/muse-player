@@ -1,15 +1,14 @@
-"""Test feeling filesystem."""
+"""Test tf filesystem."""
 import unittest
 import pandas as pd
 import os
 import backend.filesystem as fs
 
-class TestFeelFileHandler(unittest.TestCase):
+class TestTFFileHandler(unittest.TestCase):
 
     def test_load(self):
-        timestamps, df = fs.FeelFileHandler.load("data")
+        df = fs.TFFileHandler.load("data", channel="TP9")
 
-        self.assertIsInstance(timestamps, pd.Series, "'timestamps' returned is not Series")
         self.assertIsInstance(df, pd.DataFrame, "'df' returned is not DataFrame")
 
     def test_save(self):
@@ -18,7 +17,7 @@ class TestFeelFileHandler(unittest.TestCase):
         name = "testing_save"
 
         # Test
-        full_filename = fs.FeelFileHandler.save(name, df, ret_fname=True)
+        full_filename = fs.TFFileHandler.save(name, df, channel="TP9", ret_fname=True)
         self.assertTrue(os.path.isfile(full_filename), "File was not saved correctly")
         os.remove(full_filename)
 
