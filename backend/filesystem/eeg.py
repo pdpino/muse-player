@@ -3,11 +3,11 @@ import pandas as pd
 from backend import info
 from . import util, base
 
-class EEGFiles(base.BaseFileHandler):
+class EEGFilesystem(base.BaseFileHandler):
     """Handle EEG files."""
 
     name = "eeg"
-    folder = "eeg"
+    main_folder = "eeg"
     extension = "csv"
 
     @classmethod
@@ -17,9 +17,12 @@ class EEGFiles(base.BaseFileHandler):
         eeg_df.to_csv(filename, float_format='%f')
 
     @classmethod
-    def load_data(cls, filename):
-        """Read the eeg from csv, assure the channels and return the dataframe"""
-        df = pd.read_csv(fname, index_col=0)
+    def load_data(cls, filename, channels):
+        """Read the eeg from csv, assure the channels and return the dataframe.
+
+        filename -- full filename to load the csv
+        channels -- list of channels to load"""
+        df = pd.read_csv(filename, index_col=0)
 
         if channels is None:
             # Get all channels

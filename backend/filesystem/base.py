@@ -1,5 +1,6 @@
 """Module that provides functionality to manage the data"""
 import basic
+import os
 
 def _smart_concat(base, something, separator):
     """Concatenates base separator and something smartly (without repeating the separator)."""
@@ -9,25 +10,25 @@ def _smart_concat(base, something, separator):
         something = something[1:]
     if base.endswith(separator):
         base = base[:-1]
-    return separator.join(base, suffix)
+    return separator.join([base, something])
 
-class BaseFileHandler(basic.FileHandler):
+class BaseFileHandler():
     """Base static class to handle load and save of files.
 
-    The base directory tree is:
+    The base directory is:
         root/base/main/
     Usually you will use:
         - root: ./
         - base: a folder to separate with the rest of your files
         - main: will be overriden by the specific classes that inherit from this one
 
-    Only the methods save_data and load_data will be tipically override.
+    Tipically, only the methods save_data() and load_data() will be overriden.
     """
 
-    name = "base"
+    name = "base" # just a tag
     root_folder = ""
     base_folder = "data"
-    main_folder = "base"
+    main_folder = "main"
     suffix_separator = "_"
     extension = "csv"
 
@@ -54,7 +55,7 @@ class BaseFileHandler(basic.FileHandler):
                 print("Assure {}-files created: {}".format(cls.name, folder))
 
     @classmethod
-    def get_folder(cls, *folder):
+    def get_folder(cls, *folders):
         """Return the full folder, in the form: root/base/main/folders."""
         return os.path.join(cls.root_folder, cls.base_folder, cls.main_folder, *folders)
 
@@ -81,28 +82,32 @@ class BaseFileHandler(basic.FileHandler):
         return fname
 
     @classmethod
-    def save(cls, filename, *data_args, **fname_kwargs):
+    def save(cls, filename, *data_args, ret_fname=False, **fname_kwargs):
         """Save data.
 
         data_args -- given to save_data
         fname_kwargs -- given to get_fname
         """
         cls.assure_folder()
-        filename = cls.get_fname(filename, **fname_kwargs)
-        cls.save_data(filename, *data_args)
+        full_filename = cls.get_fname(filename, **fname_kwargs)
+        cls.save_data(full_filename, *data_args)
 
-        print("{} file saved to".format(cls.name, filename))
+        print("{} file saved to {}".format(cls.name, full_filename))
+
+        if ret_fname:
+            return full_filename
 
     @classmethod
-    def load(cls, filename, **fname_kwargs):
+    def load(cls, filename, *data_args, **fname_kwargs):
         """Load data.
 
+        data_args -- given to load_data
         fname_kwargs -- given to get_fname
         """
         filename = cls.get_fname(filename, **fname_kwargs)
 
         try:
-            result = cls.load_data(filename)
+            result = cls.load_data(filename, *data_args)
             print("{} loaded from file: {}".format(cls.name, filename))
         except FileNotFoundError:
             basic.perror("{} file not found: {}".format(cls.name, filename))
