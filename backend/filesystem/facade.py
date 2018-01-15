@@ -19,10 +19,13 @@ def load_feelings(filename, **fname_kwargs):
     return timestamps, df
 
 def save_tf(filename, dataframe, channel, **fname_kwargs):
-    FeelFileHandler.save(filename, dataframe, channel=channel, **fname_kwargs)
+    TFFileHandler.save(filename, dataframe, channel=channel, **fname_kwargs)
 
 def load_tf(filename, channel, **fname_kwargs):
-    return FeelFileHandler.load(filename, channel=channel, **fname_kwargs)
+    return TFFileHandler.load(filename, channel=channel, **fname_kwargs)
+
+def exist_tf(filename, channel):
+    return TFFileHandler.exist(filename, channel=channel)
 
 def save_marks(filename, timestamps, messages, **fname_kwargs):
     MarksFileHandler.save(filename, timestamps, messages, **fname_kwargs)

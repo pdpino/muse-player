@@ -63,7 +63,7 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
         if not baseline is None:
             basic.report("Found a baseline in the marks")
         else:
-            basic.report("No baseline found")
+            basic.report("No baseline found in the marks")
 
     # Name to save
     fsave = fsave or fname

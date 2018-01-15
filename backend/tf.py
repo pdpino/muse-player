@@ -15,7 +15,7 @@ def _normalize_tf_df(times, power, norm=False, baseline=None):
     """Receive a matrix of power (columns are frequencies and row are times) and returns it normalized."""
 
     if not norm or baseline is None: # Only change scale
-        print("not normalizing: {}, {}".format(norm, baseline))
+        # print("not normalizing: {}, {}".format(norm, baseline))
         return np.log10(power)
 
     # Baseline times # parameters
