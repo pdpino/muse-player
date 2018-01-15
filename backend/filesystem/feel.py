@@ -1,37 +1,34 @@
 """Handle feeling files."""
 import pandas as pd
 from backend import info
-import basic
-from . import filehandler as fh
+from . import base
 
-def load_feelings(name, subfolder=None, suffix=None):
-    """Read feelings data from csv, assure the channels and return the dataframe"""
+class FeelFilesystem(base.BaseFileHandler):
+    """Handle feeling files."""
 
-    basic.perror("Load feelings hasn't been correctly updated, you can't load valence arousal files just yet", force_continue=True)
+    name = "feeling"
+    main_folder = "feelings"
+    extension = "csv"
 
-    fname = fh.DumpFileHandler.get_fname(name, subfolder, suffix, tipo=fh.FileType.feelings)
+    @classmethod
+    def save_data(cls, filename, df):
+        """Save a feelings dataframe to a .csv"""
+        if df is None: # REVIEW: necessary?
+            return
 
-    try:
-        df = pd.read_csv(fname, index_col=0)
-        basic.report("Feelings loaded from file: {}".format(fname))
-    except FileNotFoundError:
-        basic.perror("The file {} wasn't found".format(fname))
+        df.to_csv(filename, float_format='%f')
 
-    # Assure channels in columns
-    channels = info.get_feelings_colnames()
-    channels = _compare_channels(df.columns, channels)
-    times = df[info.colname_timestamps]
-    df = df[channels]
+    @classmethod
+    def load_data(cls, filename):
+        """Read the feelings from csv."""
 
-    return times, df
+        df = pd.read_csv(filename, index_col=0)
+        timestamps = df[info.colname_timestamps]
+        df.drop(info.colname_timestamps, axis=1)
 
-def save_feelings(df, name, subfolder=None, suffix=None):
-    """Save a feelings dataframe to a .csv"""
-    if df is None:
-        return
+        # TODO: assure feelings names??
+        # # Assure channels in columns
+        # channels = info.get_feelings_colnames()
+        # channels = _compare_channels(df.columns, channels)
 
-    fh.DumpFileHandler.assure_folder(subfolder, fh.FileType.feelings)
-    fname = fh.DumpFileHandler.get_fname(name, subfolder, suffix, tipo=fh.FileType.feelings)
-
-    df.to_csv(fname, float_format='%f')
-    basic.report("Feelings saved to file: {}".format(fname))
+        return timestamps, df
