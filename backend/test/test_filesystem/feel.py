@@ -1,22 +1,16 @@
-"""Test eeg filesystem."""
+"""Test feeling filesystem."""
 import unittest
 import pandas as pd
 import os
 import backend.filesystem as fs
 
-class TestEEGFilesystem(unittest.TestCase):
+class TestFeelFilesystem(unittest.TestCase):
 
     def test_load(self):
-        # Fake data
-        channels = ["TP9", "TP10"]
-
-        timestamps, df, channels = fs.EEGFilesystem.load("data", channels)
+        timestamps, df = fs.FeelFilesystem.load("data")
 
         self.assertIsInstance(timestamps, pd.Series, "'timestamps' returned is not Series")
         self.assertIsInstance(df, pd.DataFrame, "'df' returned is not DataFrame")
-        self.assertIsInstance(channels, list, "'channels' returned is not list")
-
-        self.assertTrue(set(df.columns) <= set(channels), "Columns are not correctly loaded")
 
     def test_save(self):
         # Fake data
@@ -24,7 +18,7 @@ class TestEEGFilesystem(unittest.TestCase):
         name = "testing_save"
 
         # Test
-        full_filename = fs.EEGFilesystem.save(name, df, ret_fname=True)
+        full_filename = fs.FeelFilesystem.save(name, df, ret_fname=True)
         self.assertTrue(os.path.isfile(full_filename), "File was not saved correctly")
         os.remove(full_filename)
 
