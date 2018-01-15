@@ -85,7 +85,7 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
         power = method_function(times, eeg_data, baseline=baseline, norm=normalize, **method_kwargs)
 
         # Save to file
-        filesystem.save_tf(power, fsave, ch)
+        filesystem.save_tf(fsave, power, ch)
 
 def create_sine_wave(time, srate, freqs, amps, phases):
     """Create a sine wave."""
@@ -190,13 +190,13 @@ if __name__ == "__main__":
         marks_msg = None
     else: # read real data
         # Read dataframe and channels
-        times, df, channels = filesystem.load_eeg(args.channels, args.fname, args.subfolder)
+        times, df, channels = filesystem.load_eeg(args.fname, args.channels, folder=args.subfolder)
 
         if not args.fsave is None: # HACK copy marks file
             filesystem.copy_marks(args.fname, args.fsave)
 
         # Read marks in time
-        marks_time, marks_msg = filesystem.load_marks(args.fname, args.subfolder)
+        marks_time, marks_msg = filesystem.load_marks(args.fname, folder=args.subfolder)
 
     # Analyze
     calc_tf_analysis(times, df, channels, args.fname, args.method,

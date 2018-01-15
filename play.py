@@ -169,7 +169,7 @@ def main():
 
     elif args.stream is None:
         eeg_buffer = engine.buffers.EEGBuffer()
-        
+
         generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
     else:
         basic.perror("Stream type not recognized: {}".format(args.stream))
@@ -273,17 +273,17 @@ def main():
     if args.save:
         # Save eeg data
         eeg = eeg_collector.export()
-        filesystem.save_eeg(eeg, args.fname, args.subfolder)
+        filesystem.save_eeg(args.fname, eeg, folder=args.subfolder)
 
         # Save marks
         marks = eeg_collector.normalize_marks(marks)
-        filesystem.save_marks(marks, messages, args.fname, subfolder=args.subfolder)
+        filesystem.save_marks(args.fname, marks, messages, folder=args.subfolder)
 
         # Save feelings, if any
         try: # HACK: use something more elegant than try catch
             feelings = feel_processor.export()
             if not feelings is None:
-                filesystem.save_feelings(feelings, args.fname, args.subfolder)
+                filesystem.save_feelings(args.fname, feelings, folder=args.subfolder)
         except UnboundLocalError as e:
             pass
 
