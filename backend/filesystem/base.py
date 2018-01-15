@@ -1,6 +1,7 @@
 """Module that provides functionality to manage the data"""
 import basic
 import os
+import shutil
 
 def _smart_concat(base, something, separator):
     """Concatenates base separator and something smartly (without repeating the separator)."""
@@ -119,6 +120,16 @@ class BaseFileHandler():
     def exist(cls, filename, **kwargs):
         """Boolean indicating if a file exist."""
         return os.path.isfile(cls.get_fname(filename, **kwargs))
+
+    @classmethod
+    def copy(cls, name1, name2):
+        """Copy a file."""
+        cls.assure_folder()
+        filename1 = cls.get_fname(name1)
+        filename2 = cls.get_fname(name2)
+
+        shutil.copyfile(filename1, filename2)
+
 
     @classmethod
     def save_data(cls, filename, *data_args):
