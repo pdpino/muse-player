@@ -1,15 +1,24 @@
 "use strict"
 
+/*
+Config example:
+{"categories": [{"name": "Concentration", "color": "#a50f15"}, {"name": "Relaxation", "color": "#3690c0"}], "yAxisLabel": "Measure of state", "title": "State of mind"}
+
+
+Data example:
+[{"name": "Concentration", "value": 0.0002518353113177174}, {"name": "Relaxation", "value": 0.9997481646886823}]
+*/
+
 class TimeChart {
   /**
    * Create an empty graph
    */
   constructor(config) {
-    // Some constants
+    // Constants
     this.MIN_Y_AXIS_RANGE = 1;
     this.ZOOM_Y_PERCENTAGE = 0.1; // Zoom 10% of Y axis
     this.MOVE_Y_PERCENTAGE = 0.2; // Move 20% of Y axis
-    this.UPDATE_Y_USE_ALL_DATA = true; // update y axis using all the data
+    this.UPDATE_Y_USE_ALL_DATA = true; // update y axis using all the data or just the incoming
     this.Y_PADDING = 0.05; // 5% of air up and down when updating the axis
 
     // Assure that the config object is correct
@@ -31,12 +40,12 @@ class TimeChart {
     this._initAxisParams(config.dxZoom);
     this._addEventsXAxis(config.xZoomBtn[0], config.xZoomBtn[1]);
     this._addEventsYAxis(config.yZoomBtn, config.yMoveBtn, config.yHomeBtn);
-    this._initLegend();
-    this._initTitle();
+    this._initEmptyLegend();
+    this._initEmptyTitle();
 
-    // Select autoUpdateYAxisFunction
-    this.autoUpdateYAxisFunction = (this.UPDATE_Y_USE_ALL_DATA) ?
-      this._autoUpdateYAxisFull : this._autoUpdateYAxisIncoming;
+    // Select recalculateYAxisFunction
+    this.recalculateYAxisFunction = (this.UPDATE_Y_USE_ALL_DATA) ?
+      this._recalculateYAxisFull : this._recalculateYAxisIncoming;
     // NOTE: assigning functions like this is dangerous without bind,
     // although in this case should work
   }
@@ -53,24 +62,21 @@ class TimeChart {
   }
 
   /**
-   * Validate a config object given to the selectType method
+   * Validate a config object given to the setGraphType method
    */
   _validateSelectParams(config){
-    if(config.nChannels === undefined){
-      console.log("ERROR: Declaring a graph without the number of channels");
+    if(config.categories === undefined || config.categories.length === 0){
+      console.log("No categories found in configuration for time-chart");
       return false;
     }
 
-    if(config.channelNames === undefined){
-      config.channelNames = new Array(config.nChannels);
+    config.title = config.title || "TimeChart";
 
-      for(let i = 0; i < config.nChannels; i++){
-        config.channelNames[i] = "ch".concat(i);
+    for(let i=0; i < config.categories.length; i++){
+      if (config.categories[i].color === undefined){
+        config.categories[i].color = generateRandomColor();
       }
     }
-
-    config.title = config.title || "TimeChart";
-    config.colors = config.colors || generateRandomColors(config.nChannels);
 
     config.xAxisLabel = config.xAxisLabel || "Time (s)";
     config.yAxisLabel = config.yAxisLabel || "Value";
@@ -131,7 +137,7 @@ class TimeChart {
   /**
    * Init an empty legend container
    */
-  _initLegend(){
+  _initEmptyLegend(){
     // Create panel for the legend
     $(this.legendContainer).append(
       $('<div>', {
@@ -158,17 +164,17 @@ class TimeChart {
   /**
    * Init an empty title
    */
-  _initTitle(){
+  _initEmptyTitle(){
     const oldTitle = this.svg.select("graph-title");
     if (oldTitle) {
       oldTitle.remove();
     }
 
-    this.title = this.svg.append("text")
-        .attr("id", "graph-title")
-        .attr("x", (this.width / 2))
-        .attr("y", 0 - (this.margin.top / 2))
-        .attr("text-anchor", "middle");
+    this.titleSVG = this.svg.append("text")
+      .attr("id", "graph-title")
+      .attr("x", (this.width / 2))
+      .attr("y", 0 - (this.margin.top / 2))
+      .attr("text-anchor", "middle");
   }
 
   /**
@@ -194,17 +200,13 @@ class TimeChart {
    * Initialize the d3 functions that return the channels in the data
    */
   _setLineFunctions(){
-    this.lines = new Array(this.nChannels);
+    this.lines = {};
+    let graph = this; // needed for nested functions
 
-    for(let i = 0; i < this.nChannels; i++){
-      this.lines[i] = null; // HACK: start as null so actual assign below wont throw error
-    }
-
-    let graph = this; // NOTE: using arrow functions to call graphs won't work, because of nested functions
-    this.lines.forEach((l, i) => {
-      this.lines[i] = d3.svg.line()
-        .x(function(d){ return graph.xRange(d[0]); })
-        .y(function(d){ return graph.yRange(d[i + 1]); });
+    this.categories.forEach((category) => {
+      this.lines[category.name] = d3.svg.line()
+        .x(function(d){ return graph.xRange(d.timestamp); })
+        .y(function(d){ return graph.yRange(d[category.name]); });
     });
 
   }
@@ -214,41 +216,37 @@ class TimeChart {
    * @param {Array} data
    * @param {Array} colorNames
    */
-  _initChannels(colorNames){
-    this.colorNames = colorNames.slice(); // copy by value
+  _initChannels(){
+    this.paths = {}; // Lines in svg
+    this.enablePath = {}; // Bools to show each line
 
-    this.paths = new Array(this.nChannels); // Lines in svg
-    this.enablePath = new Array(this.nChannels); // Bools to show each line
+    this.categories.forEach((category) => {
+      this.enablePath[category.name] = true; // DEFAULT: By default show line
+      this.paths[category.name] = null;
+    });
 
-    for(let i = 0; i < this.nChannels; i++){
-      this.enablePath[i] = true; // DEFAULT: By default show line
-      this.paths[i] = null;
-    }
+    d3.selectAll("path.line").remove(); // previous lines, if any
 
-    d3.selectAll("path.line").remove();
-
-    this.paths.forEach((p, i) => {
-      this.paths[i] = this.svg.append("g")
+    this.categories.forEach((category) => {
+      this.paths[category.name] = this.svg.append("g")
         .attr("clip-path", "url(#clip)")
         .append("path")
         .attr("class", "line")
-        .style("stroke", colorNames[i]);
+        .style("stroke", category.color);
     });
   }
 
   /**
    * Set the tickboxes and names for the legend, given the channel names
    */
-  _setLegend(channelNames){
-    let graph = this; // NOTE: this is needed because there are calls to nested functions
-
-    $("#legend-form").empty(); // NOTE: drop old controllers
+  _setLegend(){
+    $("#legend-form").empty(); // drop old controllers
 
     // Add checkbox for each channel
-    let ticksID = new Array(this.nChannels);
-    for(let i = 0; i < this.nChannels; i++){
-      ticksID[i] = "ch".concat(String(i)).concat("-tick");
-      const inputTag = "<input id='".concat(ticksID[i]).concat("' type='checkbox' checked/>");
+    let ticksID = {};
+    this.categories.forEach((category) => {
+      ticksID[category.name] = category.name.concat("-tick");
+      const inputTag = "<input id='".concat(ticksID[category.name]).concat("' type='checkbox' checked/>");
 
       // Add square with color
       $("#legend-form").append(
@@ -257,24 +255,27 @@ class TimeChart {
           .append(
             $('<rect>')
               .attr('class','legend-rect')
-              .css("fill", graph.colorNames[i])
+              .css("fill", category.color)
             )
       );
 
       // Add input
-      $("#legend-form").append(' ', inputTag, ' ', channelNames[i], '<br>');
+      $("#legend-form").append(' ', inputTag, ' ', category.name, '<br>');
 
-      ticksID[i] = "#".concat(ticksID[i]); // Generate id-like tag
-    }
+      ticksID[category.name] = "#".concat(ticksID[category.name]); // Generate id-like tag
+    });
 
     // HACK: Refresh svg
     $("#legend-form").html($("#legend-form").html());
 
+
     // Show/hide events
-    ticksID.forEach(function(t, i){
-      $(t).click( function(){
-        graph.enablePath[i] = this.checked;
-        graph.paths[i].style("opacity", this.checked ? 1 : 0);
+    let graph = this; // this is needed to call nested functions
+    this.categories.forEach((category) => {
+      let tickID = ticksID[category.name];
+      $(tickID).click(function() {
+        graph.enablePath[category.name] = this.checked;
+        graph.paths[category.name].style("opacity", this.checked ? 1 : 0);
       });
     });
   }
@@ -305,8 +306,8 @@ class TimeChart {
   /**
    * Set the title for the graph
    */
-  _setTitle(title){
-    this.title.text(title);
+  _setTitleText(title){
+    this.titleSVG.text(title);
   }
 
   /**
@@ -314,7 +315,7 @@ class TimeChart {
    */
   _setCheckboxAutoUpdateY(checkboxSelector){
     const graph = this;
-    $(checkboxSelector).click( function(){
+    $(checkboxSelector).click(function(){
       graph.autoUpdateYAxis = this.checked;
     });
     graph.autoUpdateYAxis = true; // DEFAULT: start enabled
@@ -328,19 +329,19 @@ class TimeChart {
   }
 
   /** AutoUpdateYAxis using only new data **/
-  _autoUpdateYAxisIncoming(newData){
+  _recalculateYAxisIncoming(newData){
     // NOTE: Something like this could be done (just with the newData), but instead is better to
     // let yMin = d3.min(this.data, function(d) { return Math.min(...d.slice(1)); });
     // let yMax = d3.max(this.data, function(d) { return Math.max(...d.slice(1)); });
 
     let yMin = newData[1]; // REVIEW: This is a bit ugly
     let yMax = yMin;
-    for(let channel = 1; channel < this.nChannels + 1; channel++){
-      if (!this.enablePath[channel-1]) {
-        continue;
+    this.categories.forEach((category) => {
+      if (!this.enablePath[category.name]) {
+        return;
       }
-      
-      let value = newData[channel];
+
+      let value = newData[category.name];
 
       // Update min and max
       if(value > yMax){
@@ -348,22 +349,22 @@ class TimeChart {
       } else if(value < yMin){
         yMin = value;
       }
-    }
+    });
 
     return { yMin, yMax };
   }
 
   /** AutoUpdateYAxis using all the data **/
-  _autoUpdateYAxisFull(){
-    let yMin = this.data[0][1]; // REVIEW: This is a bit ugly
+  _recalculateYAxisFull(){
+    let yMin = this.data[0][this.categories[0].name]; // HACKy way
     let yMax = yMin;
-    for(let i_time = 0; i_time < this.data.length; i_time ++) {
-      for(let channel = 1; channel < this.nChannels + 1; channel++){
-        if (!this.enablePath[channel-1]) {
-          continue;
+    for(let i_time = 0; i_time < this.data.length; i_time++) {
+      this.categories.forEach((category) => {
+        if (!this.enablePath[category.name]) {
+          return;
         }
 
-        let value = this.data[i_time][channel];
+        let value = this.data[i_time][category.name];
 
         // Update min and max
         if(value > yMax){
@@ -371,7 +372,7 @@ class TimeChart {
         } else if(value < yMin){
           yMin = value;
         }
-      }
+      });
     }
 
     return { yMin, yMax };
@@ -404,28 +405,29 @@ class TimeChart {
   /**
    * Select the type of the graph
    */
-  selectType(config){
-    this._validateSelectParams(config);
-    this.nChannels = config.nChannels;
-    this._initChannels(config.colors);
-    this._setLegend(config.channelNames);
+  setGraphType(config){
+    if(!this._validateSelectParams(config)){
+      console.log("VALIDATION OF CONFIG FAILED");
+      return;
+    }
+
+    this.categories = config.categories.slice();
+    this.nChannels = config.categories.length;
+
+    this._initChannels();
+    this._setLegend();
     this._setLineFunctions();
-    this._setTitle(config.title);
+    this._setTitleText(config.title);
     this._setAxisLabels(config.xAxisLabel, config.yAxisLabel);
 
     this.isReady = true;
   }
 
   /**
-   * Initialize the data as an empty array. shape: (n_points, nChannels + 1)
+   * Initialize the data as an empty array of objects
    */
-  initEmptyData(nChannels){
-    this.data = new Array(1);
-    this.data[0] = new Array(this.nChannels + 1);
-
-    for(let channel = 0; channel <= this.nChannels; channel++){
-      this.data[0][channel] = 0;
-    }
+  initEmptyData(){
+    this.data = new Array();
   }
 
   /**
@@ -488,46 +490,59 @@ class TimeChart {
   }
 
   /**
+   * Parse incoming data
+   * Input example: [{'name': 'ch1', 'value': 3}, ...]
+   * Output example: { 'ch1': 3, ... }
+   */
+  _parseData(newData){
+    let parsedData = {};
+    newData.forEach((category) => {
+      parsedData[category.name] = category.value;
+    });
+    return parsedData;
+  }
+
+  /**
    * Update all the lines in the graph
    * @param {Boolean} shift
    */
   update(newData, shift=true) {
-    this.data.push(newData);
+    let parsedData = this._parseData(newData);
 
-    for(let channel = 0; channel < this.nChannels; channel++){
-      if(!this.enablePath[channel]) continue;
+    this.data.push(parsedData);
 
-      this.paths[channel].attr("d", this.lines[channel](this.data))
+    this.categories.forEach((category) => {
+      if(!this.enablePath[category.name]) return;
+
+      this.paths[category.name].attr("d", this.lines[category.name](this.data))
         .attr("transform", null)
         .transition()
         .duration(1000)
         .ease("linear");
-    }
+    });
 
     // Update Y Axis
     // this.autoUpdateYAxis = false;
     if(this.autoUpdateYAxis){
-      let { yMin, yMax } = this.autoUpdateYAxisFunction(newData);
+      let { yMin, yMax } = this.recalculateYAxisFunction(newData);
 
       // Give some air (this is a bit ugly)
       let windowSize = this.yMax - this.yMin;
       yMin -= windowSize * this.Y_PADDING;
       yMax += windowSize * this.Y_PADDING;
 
-      console.log("DATA: ", newData, yMin, yMax);
-
       this._updateYAxis(yMin, yMax);
     }
 
     // Update X Axis
-    let xRange = d3.extent(this.data, function(d) { return d[0]; });
+    let xRange = d3.extent(this.data, function(d) { return d.timestamp; });
     // if(xRange[1] - xRange[0] < this.secondsInScreen){ xRange[1] = xRange[0] + this.secondsInScreen; } // Que el xRange minimo sea secondsInScreen
     this.xRange.domain(xRange);
 
     this.svg.select(".x.axis").call(this.xAxis);
 
     if(shift){
-      while(this.data[this.data.length - 1][0] - this.data[0][0] > this.secondsInScreen){
+      while(this.data[this.data.length - 1].timestamp - this.data[0].timestamp > this.secondsInScreen){
         this.data.shift();
       }
     }

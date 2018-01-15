@@ -1,38 +1,35 @@
 "use strict"
 
-const DATA_URL = "http://localhost:8889/data/muse";
+const DATA_URL = "http://localhost:8001/stream";
 
-const eegGraphConfig = {
-  nChannels: 5,
-  channelNames: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
-  colors: ["black", "red", "blue", "green", "cyan"],
-  title: 'EEG electrodes',
-  yAxisLabel: 'Raw signal (mV)',
-}
-
-const wavesGraphConfig = {
-  nChannels: 5,
-  channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
-  colors: ["blue", "orange", "red", "green", "magenta"],
-  title: 'Waves',
-  yAxisLabel: 'Power (dB)',
-}
-
-const feelRelaxConcGraphConfig = {
-  nChannels: 2,
-  channelNames: ["relaxation", "concentration"],
-  colors: ["blue", "red"],
-  title: 'State of mind',
-  yAxisLabel: 'Measure of state',
-}
-
-const feelValAroGraphConfig = {
-  nChannels: 2,
-  channelNames: ["arousal", "valence"],
-  colors: ["blue", "red"],
-  title: 'Emotion',
-  yAxisLabel: 'Measure of emotion',
-}
+// DEPRECATED: TODO: pass them to server available configurations
+// const eegGraphConfig = {
+//   channelNames: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
+//   colors: ["black", "red", "blue", "green", "cyan"],
+//   title: 'EEG electrodes',
+//   yAxisLabel: 'Raw signal (mV)',
+// }
+//
+// const wavesGraphConfig = {
+//   channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
+//   colors: ["blue", "orange", "red", "green", "magenta"],
+//   title: 'Waves',
+//   yAxisLabel: 'Power (dB)',
+// }
+//
+// const feelRelaxConcGraphConfig = {
+//   channelNames: ["relaxation", "concentration"],
+//   colors: ["blue", "red"],
+//   title: 'State of mind',
+//   yAxisLabel: 'Measure of state',
+// }
+//
+// const feelValAroGraphConfig = {
+//   channelNames: ["arousal", "valence"],
+//   colors: ["blue", "red"],
+//   title: 'Emotion',
+//   yAxisLabel: 'Measure of emotion',
+// }
 
 $(document).ready( function() {
   let graphConfig = null;
@@ -57,64 +54,45 @@ $(document).ready( function() {
     yTicks: 5,
     secondsInScreen: 10,
     dxZoom: 1,
-    });
+  });
 
   const recvMsg = function(e){
     if(!graph.isReady) return;
 
-    let arr = e.data.split(",").map(parseFloat);
+    // let arr = e.data.split(",").map(parseFloat);
 
-    if (arr[0] < 0) { // Ignore negative time
-      console.log("ERROR: received negative time");
-      return;
-    }
+    // FIXME: this should be checked on update() method
+    // if (arr[0] < 0) { // Ignore negative time
+    //   console.log("ERROR: received negative time");
+    //   return;
+    // }
 
-    while(arr.length < graphConfig.nChannels + 1){ // Fill with 0s if received less channels
-      arr.push(0.0);
-    }
+    // FIXME: graphConfig is deprecated, but this is still needed
+    // while(arr.length < graphConfig.nChannels + 1){ // Fill with 0s if received less channels
+    //   arr.push(0.0);
+    // }
 
-    graph.update(arr);
+    graph.update(JSON.parse(e.data));
   }
 
   const recvConfig = function (e){
-      switch(e.data) {
-        case "eeg":
-          graphConfig = eegGraphConfig;
-          break;
-
-        case "waves":
-          graphConfig = wavesGraphConfig;
-          break;
-
-        case "feel":
-          graphConfig = feelRelaxConcGraphConfig;
-          break;
-
-        case "feelValAro":
-          graphConfig = feelValAroGraphConfig;
-          break;
-
-        default:
-          console.log("Type of graph received from server not recognized: ", e.data);
-          return;
-      }
-      graph.selectType(graphConfig);
-      graph.initEmptyData();
-    }
+    graph.setGraphType(JSON.parse(e.data));
+    graph.initEmptyData();
+  }
 
   const stream = new Connection({
-      url: DATA_URL,
-      statusText: "#status-text",
-      statusIcon: "#status-icon",
-      recvMsg,
-      recvConfig,
-    });
+    url: DATA_URL,
+    statusText: "#status-text",
+    statusIcon: "#status-icon",
+    recvMsg,
+    recvConfig,
+  });
 
-  $("#btn-start-conn").click( function(){
+  $("#btn-start-conn").click(function(){
     stream.start();
   });
 
-  $("#btn-close-conn").click( function(){
+  $("#btn-close-conn").click(function(){
     if(!graph.isReady) return;
     stream.close();
     graph.initEmptyData();

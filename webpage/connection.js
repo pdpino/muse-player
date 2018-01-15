@@ -118,7 +118,7 @@ class Connection{
       console.log("Connected to the server");
     });
 
-    this.stream.addEventListener('config', (e) => {
+    this.stream.addEventListener('initialize', (e) => {
       this.recvConfig(e);
     });
 
