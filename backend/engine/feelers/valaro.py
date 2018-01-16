@@ -2,7 +2,7 @@ import numpy as np
 from backend import tf, info
 from . import base
 
-class FeelerValAro(base.Feeler):
+class FeelerValAro(base.BaseFeeler):
     """Map frequencies to Valence and Arousal map.
 
     The formulas used are:
@@ -20,7 +20,17 @@ class FeelerValAro(base.Feeler):
     """
 
     def __init__(self, window=256, srate=256):
-        self.config_data = "feelValAro"
+        self.config_data = {
+            'categories': [{
+                'name': 'Valence',
+                'color': '#a50f15'
+            }, {
+                'name': 'Arousal',
+                'color': '#3690c0'
+            }],
+            'yAxisLabel': 'Measure of emotion',
+            'title': 'Emotion'
+        }
 
         # Channel numbers
         self._tp9 = info.get_channel_number('TP9')
@@ -32,9 +42,6 @@ class FeelerValAro(base.Feeler):
         self.arr_freqs = tf.get_freqs_resolution(window, srate)
         self._alpha_filter = info.get_freqs_filter(self.arr_freqs, 8, 13)
         self._beta_filter = info.get_freqs_filter(self.arr_freqs, 13, 30)
-
-        # HACK: use formatter
-        self.yield_string = "data: {}, {}, {}\n\n"
 
     def calculate(self, power):
         """Transform power into a relaxation and concentration status."""
@@ -58,5 +65,11 @@ class FeelerValAro(base.Feeler):
 
         return [arousal, valence]
 
-    def generate(self, timestamp, feeling):
-        yield self.yield_string.format(timestamp, feeling[0], feeling[1])
+    def pack_data(self, timestamp, feeling):
+        return [{
+            'name': 'Arousal',
+            'value': feeling[0]
+        }, {
+            'name': 'Valence',
+            'value': feeling[1]
+        }]

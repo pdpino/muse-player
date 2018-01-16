@@ -2,14 +2,13 @@ import numpy as np
 from backend import tf, info
 from . import base
 
-class FeelerRelaxConc(base.Feeler):
+class FeelerRelaxConc(base.BaseFeeler):
     """Feels relaxation and concentration.
 
     alpha from ear channels is relaxation
     beta from forehead channels is concentration"""
 
     def __init__(self, window=256, srate=256):
-        # self.config_data = "feel" # DEPRECATED
         self.config_data = {
             'categories': [{
                 'name': 'Concentration',
@@ -17,7 +16,9 @@ class FeelerRelaxConc(base.Feeler):
             }, {
                 'name': 'Relaxation',
                 'color': '#3690c0'
-            }]
+            }],
+            'yAxisLabel': 'Measure of state', # REVIEW: change key names?
+            'title': 'State of mind'
         }
 
         # Band filters
@@ -28,10 +29,6 @@ class FeelerRelaxConc(base.Feeler):
         # Data to normalize
         self.min_feeling = None
         self.max_feeling = None
-
-
-        # HACK: use formatter
-        # self.yield_string = "data: {}, {}, {}\n\n" # DEPRECATED
 
     def calculate(self, power):
         """Transform power into a relaxation and concentration status."""
@@ -48,10 +45,6 @@ class FeelerRelaxConc(base.Feeler):
 
         return [relaxation, concentration]
 
-    # DEPRECATED
-    # def generate(self, timestamp, feeling):
-    #     yield self.yield_string.format(timestamp, feeling[0], feeling[1])
-
     def normalize_range(self, value):
         """Move the values to between 0 and 1"""
         # return (value - self.min_feeling) / (self.max_feeling - self.min_feeling)
@@ -61,7 +54,7 @@ class FeelerRelaxConc(base.Feeler):
 
     def pack_data(self, timestamp, feeling):
         """Pack concentration and relaxation data."""
-        print(feeling)
+        # print(feeling)
 
         # Save first normalization
         # if self.max_feeling is None or self.min_feeling is None:
@@ -79,8 +72,8 @@ class FeelerRelaxConc(base.Feeler):
         relaxation = self.normalize_range(feeling[0])
         concentration = self.normalize_range(feeling[1])
 
-        if relaxation > 2 or concentration > 2 or relaxation < 0 or concentration < 0:
-            return None
+        # if relaxation > 2 or concentration > 2 or relaxation < 0 or concentration < 0:
+        #     return None
 
         # Square to accentuate
         relaxation = relaxation ** 2
@@ -91,7 +84,7 @@ class FeelerRelaxConc(base.Feeler):
         relaxation /= total
         concentration /= total
 
-        print(relaxation, concentration)
+        # print(relaxation, concentration)
 
         return [{
             'name': 'Concentration',

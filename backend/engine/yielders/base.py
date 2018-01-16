@@ -8,15 +8,16 @@ class BaseYielder:
     def __init__(self):
         self.config_data = dict()
 
-    def json_to_string(self, json_dict):
+    def data_to_string(self, json_dict):
         """Transform a dict of data into a sendable string."""
         return 'data:' + json.dumps(json_dict) + '\n\n'
 
     def has_start_message(self):
+        # REVIEW: deprecate this?
         return True
 
     def start_message(self):
-        return "event: initialize\n" + self.json_to_string(self.config_data)
+        return "event: initialize\n" + self.data_to_string(self.config_data)
 
     def generate(self, timestamp, data):
         """Template method."""
@@ -24,13 +25,19 @@ class BaseYielder:
         if packed_data is None:
             return
 
-        yield self.json_to_string(packed_data)
+        packed_data.append({
+            'name': 'timestamp',
+            'value': timestamp
+        })
+
+        yield self.data_to_string(packed_data)
 
     def pack_data(self, timestamp, data):
         """Override this method to pack your data into a dict accordingly.
 
         The method must receive a timestamp and data,
-        and must return a json-dumpable object
+        and must return a json-dumpable object.
+        Don't include the timestamp in the object returned, its included later by generate method (the timestamp is passed in case is needed by pack_data())
 
         If returns None there is no yielding in that step"""
         raise(BaseException("Abstract method to pack the data"))
