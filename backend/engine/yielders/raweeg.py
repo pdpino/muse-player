@@ -26,7 +26,7 @@ class EEGRawYielder(base.BaseYielder):
                 'name': 'TP10',
                 'color': 'green'
             }, {
-                'name': 'Right-Aux',
+                'name': 'Right Aux',
                 'color': 'cyan'
             }],
             'yAxisLabel': 'Raw signal (mV)',
@@ -66,7 +66,7 @@ class EEGRawYielder(base.BaseYielder):
             'name': 'TP10',
             'value': tp10
         }, {
-            'name': 'Right-Aux',
+            'name': 'Right Aux',
             'value': right_aux
         }]
 

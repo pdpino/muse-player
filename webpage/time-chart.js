@@ -213,29 +213,30 @@ class TimeChart {
    * Set the tickboxes and names for the legend, given the channel names
    */
   _setLegend(){
-    $("#legend-form").empty(); // drop old controllers
+    $('#legend-form').empty(); // drop old controllers
 
     // Add checkbox for each channel
     let ticksID = {};
-    this.channels.forEach((channel) => {
-      ticksID[channel.name] = channel.name.concat("-tick");
+    this.channels.forEach((channel, index) => {
+      ticksID[channel.name] = 'ch'.concat(index).concat('-tick');
       const inputTag = "<input id='".concat(ticksID[channel.name]).concat("' type='checkbox' checked/>");
 
       // Add square with color
-      $("#legend-form").append(
+      $('#legend-form').append(
         $('<svg>')
           .attr('class', 'legend-rect-container')
           .append(
             $('<rect>')
               .attr('class','legend-rect')
-              .css("fill", channel.color)
+              .css('fill', channel.color)
             )
       );
 
       // Add input
-      $("#legend-form").append(' ', inputTag, ' ', channel.name, '<br>');
+      $('#legend-form').append(' ', inputTag, ' ', channel.name, '<br>');
 
-      ticksID[channel.name] = "#".concat(ticksID[channel.name]); // Generate id-like tag
+      // Generate id-like tag
+      ticksID[channel.name] = '#'.concat(ticksID[channel.name]);
     });
 
     // HACK: Refresh svg
