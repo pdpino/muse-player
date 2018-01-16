@@ -20,24 +20,30 @@ class BaseYielder:
         return "event: initialize\n" + self.data_to_string(self.config_data)
 
     def generate(self, timestamp, data):
-        """Template method."""
-        packed_data = self.pack_data(timestamp, data)
-        if packed_data is None:
-            return
+        """Provide a template to generate data.
 
+        First pack the data (can be one or many packages)
+        Then pack the timestamp (the specific class can choose a way to do this, or not do this)
+        Finally yield it"""
+        for packed_data in self.pack_data(timestamp, data):
+            self.pack_timestamp(timestamp, packed_data)
+            yield self.data_to_string(packed_data)
+
+    def pack_timestamp(self, timestamp, packed_data):
+        """Append timestamp to a package of data.
+
+        This method can be overriden by a dummy method to not pack the timestamp on the data"""
         packed_data.append({
             'name': 'timestamp',
             'value': timestamp
         })
 
-        yield self.data_to_string(packed_data)
-
     def pack_data(self, timestamp, data):
-        """Override this method to pack your data into a dict accordingly.
+        """Override this method to pack your data into a dict accordingly. Must be a generator
 
         The method must receive a timestamp and data,
-        and must return a json-dumpable object.
+        and must yield a json-dumpable object (or multiple).
         Don't include the timestamp in the object returned, its included later by generate method (the timestamp is passed in case is needed by pack_data())
 
-        If returns None there is no yielding in that step"""
+        Use yield None or return (only when catching specific case) if nothing has to be yielded in that step"""
         raise(BaseException("Abstract method to pack the data"))

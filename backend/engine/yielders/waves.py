@@ -20,13 +20,13 @@ class WaveYielder(base.BaseYielder):
         self.waves_names = info.get_waves_names(waves)
 
         # String to yield
-        self.str_format = "data: {}" # One more for the time
+        self.yield_string = "data: {}" # One more for the time
         self.n_waves = len(self.waves_names)
         for i in range(self.n_waves):
-            self.str_format += ", {}"
-        self.str_format += "\n\n"
+            self.yield_string += ", {}"
+        self.yield_string += "\n\n"
 
-    def generate(self, t, power):
+    def generate(self, timestamp, power):
         all_waves = []
 
         # REFACTOR: change name of function, follow standard across yielders
@@ -36,4 +36,4 @@ class WaveYielder(base.BaseYielder):
             all_waves.append(wave)
 
         # Yield
-        yield self.str_format.format(t, *all_waves)
+        yield self.yield_string.format(timestamp, *all_waves)

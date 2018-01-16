@@ -21,7 +21,7 @@ class WaveProcessor(base.BaseProcessor):
 
         self.generator = generator
 
-    def generate(self, t_init, timestamp, new_data):
+    def generate(self, timestamp, new_data):
         """Make a TF analysis of the data and delegates to a processor."""
         # Apply fft
         power = tf.apply_fft(new_data) # shape: (n_chs, n_freqs)
@@ -34,7 +34,4 @@ class WaveProcessor(base.BaseProcessor):
         if effective_power is None:
             return
 
-        # Normalize time
-        t_normalized = timestamp - t_init
-
-        yield from self.generator.generate(t_normalized, effective_power)
+        yield from self.generator.generate(timestamp, effective_power)

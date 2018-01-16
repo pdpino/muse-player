@@ -66,7 +66,7 @@ class FeelerValAro(base.BaseFeeler):
         return [arousal, valence]
 
     def pack_data(self, timestamp, feeling):
-        return [{
+        yield [{
             'name': 'Arousal',
             'value': feeling[0]
         }, {

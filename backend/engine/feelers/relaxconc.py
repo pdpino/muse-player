@@ -86,7 +86,7 @@ class FeelerRelaxConc(base.BaseFeeler):
 
         # print(relaxation, concentration)
 
-        return [{
+        yield [{
             'name': 'Concentration',
             'value': concentration
         }, {

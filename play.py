@@ -117,7 +117,7 @@ def main():
         eeg_buffer = engine.buffers.EEGBuffer()
 
         # Generator yields raw EEG
-        generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
+        generator = engine.EEGRawYielder(args.stream_mode, stream_n=args.stream_n)
 
     elif args.stream == 'waves':
         # Use a window buffer
@@ -173,7 +173,7 @@ def main():
     elif args.stream is None:
         eeg_buffer = engine.buffers.EEGBuffer()
 
-        generator = engine.EEGRawYielder(args.stream_mode, args=(args.stream_n,))
+        generator = engine.EEGRawYielder(args.stream_mode, stream_n=args.stream_n)
     else:
         basic.perror("Stream type not recognized: {}".format(args.stream))
 
