@@ -58,20 +58,6 @@ $(document).ready( function() {
 
   const recvMsg = function(e){
     if(!graph.isReady) return;
-
-    // let arr = e.data.split(",").map(parseFloat);
-
-    // FIXME: this should be checked on update() method
-    // if (arr[0] < 0) { // Ignore negative time
-    //   console.log("ERROR: received negative time");
-    //   return;
-    // }
-
-    // FIXME: graphConfig is deprecated, but this is still needed
-    // while(arr.length < graphConfig.nChannels + 1){ // Fill with 0s if received less channels
-    //   arr.push(0.0);
-    // }
-
     graph.update(JSON.parse(e.data));
   }
 
