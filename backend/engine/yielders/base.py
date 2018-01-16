@@ -8,13 +8,9 @@ class BaseYielder:
     def __init__(self):
         self.config_data = dict()
 
-    def data_to_string(self, json_dict):
-        """Transform a dict of data into a sendable string."""
-        return 'data:' + json.dumps(json_dict) + '\n\n'
-
-    def has_start_message(self):
-        # REVIEW: deprecate this?
-        return True
+    def data_to_string(self, data):
+        """Transform sendable data into a sendable string."""
+        return "data:" + json.dumps(data) + "\n\n"
 
     def start_message(self):
         return "event: initialize\n" + self.data_to_string(self.config_data)
@@ -32,10 +28,11 @@ class BaseYielder:
     def pack_timestamp(self, timestamp, packed_data):
         """Append timestamp to a package of data.
 
-        This method can be overriden by a dummy method to not pack the timestamp on the data"""
+        This method can be overriden by a dummy method to not pack the timestamp on the data
+        If you pack the timestamp in other place (not this method), be sure to follow the format"""
         packed_data.append({
-            'name': 'timestamp',
-            'value': timestamp
+            "name": "timestamp",
+            "value": timestamp
         })
 
     def pack_data(self, timestamp, data):

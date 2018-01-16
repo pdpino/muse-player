@@ -2,35 +2,6 @@
 
 const DATA_URL = "http://localhost:8001/stream";
 
-// DEPRECATED: TODO: pass them to server available configurations
-// const eegGraphConfig = {
-//   channelNames: ["TP9", "AF7", "AF8", "TP10", "Right Aux"],
-//   colors: ["black", "red", "blue", "green", "cyan"],
-//   title: 'EEG electrodes',
-//   yAxisLabel: 'Raw signal (mV)',
-// }
-//
-// const wavesGraphConfig = {
-//   channelNames: ["delta", "theta", "alpha", "beta", "gamma"],
-//   colors: ["blue", "orange", "red", "green", "magenta"],
-//   title: 'Waves',
-//   yAxisLabel: 'Power (dB)',
-// }
-//
-// const feelRelaxConcGraphConfig = {
-//   channelNames: ["relaxation", "concentration"],
-//   colors: ["blue", "red"],
-//   title: 'State of mind',
-//   yAxisLabel: 'Measure of state',
-// }
-//
-// const feelValAroGraphConfig = {
-//   channelNames: ["arousal", "valence"],
-//   colors: ["blue", "red"],
-//   title: 'Emotion',
-//   yAxisLabel: 'Measure of emotion',
-// }
-
 $(document).ready( function() {
   let graphConfig = null;
 

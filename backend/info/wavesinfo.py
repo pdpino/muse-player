@@ -28,11 +28,11 @@ def get_waves_names(choose=None):
         return [w for w in list(_waves) if w in choose]
 
 def iter_waves(waves=None):
-    """Iterate over the waves names and limits."""
-    for w in list(waves or _waves):
-        min_freq = _waves[w][0]
-        max_freq = _waves[w][1]
-        yield w, min_freq, max_freq
+    """Iterate over the waves names and freqs limits."""
+    for wave_name in list(waves or _waves):
+        min_freq = _waves[wave_name][0]
+        max_freq = _waves[wave_name][1]
+        yield wave_name, min_freq, max_freq
 
 def filter_freqs(freqs, min_freq, max_freq):
     """Return filtered freqs given two borders."""

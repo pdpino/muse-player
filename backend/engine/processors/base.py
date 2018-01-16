@@ -3,9 +3,6 @@ class BaseProcessor:
 
     To call start_message() the instance must have a self.generator attribute (which is a generator)."""
 
-    def has_start_message(self):
-        return self.generator.has_start_message()
-
     def start_message(self):
         return self.generator.start_message()
 

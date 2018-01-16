@@ -20,31 +20,31 @@ Usual subsections for code:
 ***
 
 ## Project
-### Refactors
-* Refactor filesys
-* Refactor yielders?
-* Comply with moodplay format in yielders
-* Refactor src/ to fix relative imports
 
-### Pending
-* Improve Muse module + PR barachant repo
-
-### Next
+* Refactor code
+* PR barachant
 * Artifact removal in real time
   - search/read papers
+  - implement
 * Email evic people
-
-### Others (old)
 * Order offline tools, prepare pipeline to receive data, apply formulas, show results
 * Prepare user protocol
 * Update README with current tools
 * muse-direct
 
 ## Software
+### Refactors
+* FIXME: js client has NaN error in d3, only with the first of the graph, only the first time that it connects to the server
+
+* Refactor src/ to fix relative imports
+* Refactor player: create class to handle the player stuff
+
+### Pending
+* Improve Muse module + PR barachant repo
+
 
 #### Server, play.py
 * REVIEW architecture! should the server work without the need of a client making a request? (currently this activates the generator)
-* (Depends on moodplay) use Formatter to yield things, comply with moodplay standards to send JSON
 * Consider moving the time normalization to the engine, so no one else has to handle it
 * Design calibrators
   - Consider an option to reset calibrators

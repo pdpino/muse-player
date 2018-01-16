@@ -25,8 +25,7 @@ class EEGEngine:
     def outgoing_data(self):
         """Generator that yields the outgoing data."""
 
-        if self.generator.has_start_message():
-            yield self.generator.start_message()
+        yield self.generator.start_message()
 
         # Mark initial time
         t_init = self.eeg_buffer.peek_last_time()
