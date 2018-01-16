@@ -8,7 +8,7 @@ class FeelProcessor(base.BaseProcessor):
     TODO
     """
 
-    def __init__(self, feeler, regulator, feeling_names):
+    def __init__(self, feeler, regulator):
         """Constructor."""
 
         # TODO: get the feeling_names from the feeler
@@ -23,7 +23,7 @@ class FeelProcessor(base.BaseProcessor):
         self.generator = self.feeler # The generator is the feeler
 
         # Collection of feelings
-        self.collector = collectors.FeelCollector(feeling_names)
+        self.collector = collectors.FeelCollector(feeler.get_names())
         self.export = self.collector.export # HACK: this shouldnt be done this way
 
     def generate(self, timestamp, power):

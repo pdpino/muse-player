@@ -1,7 +1,7 @@
 """Module that provides functionality to manage the data"""
-import basic
 import os
 import shutil
+from backend import basic
 
 def _smart_concat(base, something, separator):
     """Concatenates base separator and something smartly (without repeating the separator)."""

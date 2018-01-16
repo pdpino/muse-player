@@ -2,8 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from backend import info
-import basic
+from backend import basic, info
 from .base import *
 
 def _plot_tsplot(times, arr, n_samples, wave_name):

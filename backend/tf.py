@@ -4,8 +4,7 @@ All the different methods provided (morlet wavelet convolution, stfft, etc)
 should return a dataframe, using the _new_tf_df() function."""
 import numpy as np
 import pandas as pd
-import basic
-from backend import info
+from backend import basic, info
 
 def normalize_power(power, baseline):
     """Receive a power and a baseline and apply the normalization."""

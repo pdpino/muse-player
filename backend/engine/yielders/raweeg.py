@@ -1,4 +1,4 @@
-import basic
+from backend import basic
 from . import base
 
 class EEGRawYielder(base.BaseYielder):

@@ -1,8 +1,7 @@
 """ ."""
 import numpy as np
 import matplotlib.pyplot as plt
-from backend import info
-import basic
+from backend import basic, info
 from .base import *
 
 def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None, max_freq=None):

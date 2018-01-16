@@ -1,7 +1,6 @@
 """ ."""
 import matplotlib.pyplot as plt
-from backend import info
-import basic
+from backend import basic, info
 
 def plot_feelings(t, df, fname, marks_t=None, marks_m=None, lines=False):
     """Plot feelings."""

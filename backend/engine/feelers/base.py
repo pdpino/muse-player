@@ -7,6 +7,10 @@ class BaseFeeler(base.BaseYielder):
 
     NOTE: for less (or better) coupling the feeler should *use* a yielder, instead of *extending* from a yielder, but this way you create just one class for each type of feeling that you want to be able to calculate"""
 
+    def get_names(self):
+        """Return the names of the feelings."""
+        return ["feeling1", "feeling2"]
+
     def calculate(power):
         """Transform power into feeling. (Abstract)
 

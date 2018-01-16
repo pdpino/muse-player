@@ -43,8 +43,11 @@ class FeelerValAro(base.BaseFeeler):
         self._alpha_filter = info.get_freqs_filter(self.arr_freqs, 8, 13)
         self._beta_filter = info.get_freqs_filter(self.arr_freqs, 13, 30)
 
+    def get_names(self):
+        return [info.colname_arousal, info.colname_valence]
+
     def calculate(self, power):
-        """Transform power into a relaxation and concentration status."""
+        """Transform power into a valence and arousal status."""
 
         get_band = lambda channel, band_filter: np.mean(power[channel, band_filter])
 

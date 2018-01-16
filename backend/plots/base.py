@@ -2,8 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from backend import info
-import basic
+from backend import basic, info
 
 def plot_show(maximize=True):
     """Wrapper to show the plot by maximizing the window size."""

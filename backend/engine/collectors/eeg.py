@@ -1,8 +1,7 @@
 import threading
 import numpy as np
 import pandas as pd
-import basic
-from backend import info
+from backend import info, basic
 
 class EEGCollector:
     """Collects the eeg into one big list.

@@ -1,7 +1,6 @@
-from backend import info
-import pandas as pd
 import numpy as np
-import basic
+import pandas as pd
+from backend import basic, info
 
 class FeelCollector:
     """Collect feelings calculated in time."""

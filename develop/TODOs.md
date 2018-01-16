@@ -45,13 +45,12 @@ Usual subsections for code:
 
 #### Server, play.py
 * REVIEW architecture! should the server work without the need of a client making a request? (currently this activates the generator)
-* Consider moving the time normalization to the engine, so no one else has to handle it
 * Design calibrators
   - Consider an option to reset calibrators
 
 * Pending:
   - Add stream mode configuration for waves (select channel)
-  - Check TODOs and REVIEWs in code
+
 * Refactors:
   - `arr_freqs` is in many places in wave yielding (in `play.py`)
   - Move configuration of streaming to objects or functions (in `play.py`)

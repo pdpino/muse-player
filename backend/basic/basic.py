@@ -12,12 +12,6 @@ def perror(text, exit_code=1, force_continue=False, **kwargs):
     if exit_code != 0 and not force_continue:
         sys.exit(exit_code)
 
-def assure_startswith(word, prefix):
-    """Assure that a string starts with a given prefix"""
-    if not word.startswith(prefix):
-        word = prefix + word
-    return word
-
 def sec2hr(t):
     """Transform the seconds in H:M
     Adapted from: http://stackoverflow.com/a/33504562"""

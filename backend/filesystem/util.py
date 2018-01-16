@@ -1,5 +1,5 @@
 """Utility functions for this module."""
-import basic
+from backend import basic
 
 def _compare_channels(real_chs, wanted_chs):
     """Compare the existing channels with the wanted ones, return the intersection and notifies the difference."""

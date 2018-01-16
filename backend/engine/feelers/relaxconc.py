@@ -30,6 +30,9 @@ class FeelerRelaxConc(base.BaseFeeler):
         self.min_feeling = None
         self.max_feeling = None
 
+    def get_names(self):
+        return [info.colname_relaxation, info.colname_concentration]
+
     def calculate(self, power):
         """Transform power into a relaxation and concentration status."""
 

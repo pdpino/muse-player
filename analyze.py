@@ -4,8 +4,7 @@
 import argparse
 import pandas as pd
 import numpy as np
-from backend import filesystem, tf, parsers, info, signals
-import basic
+from backend import basic, filesystem, tf, parsers, info, signals
 
 def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=None, marks_m=None, testing=False, filtering=False, normalize=True, baseline=None, overwrite=True, window=None, step=None, n_cycles=None):
     """Calculate TF analysis and save to file.
@@ -61,9 +60,9 @@ def calc_tf_analysis(times, df, channels, fname, method, fsave=None, marks_t=Non
     if baseline is None:
         baseline = find_baseline(marks_t, marks_m)
         if not baseline is None:
-            basic.report("Found a baseline in the marks")
+            print("\tFound a baseline in the marks")
         else:
-            basic.report("No baseline found in the marks")
+            print("\tNo baseline found in the marks")
 
     # Name to save
     fsave = fsave or fname
