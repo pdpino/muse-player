@@ -62,9 +62,9 @@ def parse_args():
         group_sconn = parser.add_argument_group(title="Stream connection", description=None)
         group_sconn.add_argument('--ip', default="localhost", type=str,
                             help="Host ip to do the streaming")
-        group_sconn.add_argument('--port', default=8889, type=int,
+        group_sconn.add_argument('--port', default=8001, type=int,
                             help="Port to send the data to")
-        group_sconn.add_argument('--url', default="/data/muse", type=str,
+        group_sconn.add_argument('--url', default="/stream", type=str,
                             help="Path in the client to send the data, so it will be sent to 'http://ip:port/url'")
 
         group_proc_data = parser.add_argument_group(title="Processed Data")

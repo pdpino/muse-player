@@ -11,7 +11,7 @@ def main():
     CORS(app) # para que cliente pueda acceder a este puerto
 
     # Connect data to send
-    @app.route('/data/muse')
+    @app.route('/stream')
     def stream_test_data():
         """Stream dummy data."""
         # Parameters # TASK: use argparse
@@ -34,7 +34,7 @@ def main():
 
         return Response(data_generator(), mimetype="text/event-stream")
 
-    app.run(host='localhost', port=8889)
+    app.run(host='localhost', port=8001)
 
     return 0
 
