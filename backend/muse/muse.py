@@ -6,49 +6,52 @@ import bitstring
 import pygatt
 import threading
 
-
 class Muse():
     """Muse 2016 headband"""
 
-    def __init__(self, address=None, callback=None, callback_other=None, push_info=True, eeg=True, other=True, accelero=False,
-                 giro=False, norm_factor=None, norm_sub=None):
+    def __init__(self, address=None, callback_eeg=None, callback_control=None, callback_telemetry=None, callback_acc=None, callback_gyro=None, norm_factor=None, norm_sub=None):
         """Initialize
 
         Parameters:
-        address --
-        callback --
-        push_info -- bool, subscribe to info messages from muse and push them in screen
-        eeg -- bool, subscribe to eeg streaming
-        accelero -- bool, subscribe to accelerometer messages
-        giro -- bool, subscribe to giroscope messages
+        address -- MAC address for device
+
+        callback_eeg -- function(timestamp, data) that handles incoming eeg data
+
+        callback_control -- function(codes, messages) that handles incoming control data
+
+        callback_telemetry -- function(timestamp, battery, temperature) that handles incoming telemetry data
+
+        callback_acc -- function(timestamp, samples) that handles incoming accelerometer samples
+        callback_gyro -- function(timestamp, samples) that handles incoming gyroscope samples
+        The imu (acc and gyro) 'samples' is a list of 3 samples, each is a dict with keys "x", "y" and "z"
+
         norm_factor -- Normalize factor. The eeg data is multiplied by this value, after substracting norm_sub
         norm_sub -- Normalize substractor. The eeg data gets this value substracted
         """
 
+        # TODO: deprecate bools, use only callbacks
+
 
         self.address = address
-        self.callback = callback
-        self.callback_other = callback_other
-        self.push_info = push_info
-        self.other = other
-        self.eeg = eeg
-        self.accelero = accelero
-        self.giro = giro
+        self.callback_eeg = callback_eeg
+        self.callback_control = callback_control
+        self.callback_telemetry = callback_telemetry
+        self.callback_acc = callback_acc
+        self.callback_gyro = callback_gyro
+        self.enable_eeg = not callback_eeg is None
+        self.enable_control = not callback_control is None
+        self.enable_telemetry = not callback_telemetry is None
+        self.enable_acc = not callback_acc is None
+        self.enable_gyro = not callback_gyro is None
+
         self.norm_factor = 0.48828125 if norm_factor is None else norm_factor # default values used by barachant
         self.norm_sub = 2048 if norm_sub is None else norm_sub # default values used by barachant
 
-        if push_info:
+        if self.enable_control:
             # Lock to use the messages variables, you may want to print the last message while still receiving messages!
-            self._lock_msg = threading.Lock()
-            self._init_msg() # Current messages variables
-
-
-
-        # DEBUG: reverse engineering bluetooth conn
-        self.lista = []
-
-
-
+            # REVIEW: is the lock necesary??
+            self._lock_control = threading.Lock()
+            self._init_control()
 
 
     """Connection methods"""
@@ -89,26 +92,20 @@ class Muse():
         self.device = self.adapter.connect(self.address)
 
 
-        # Subscribe to messages
-        if self.push_info:
-            self._subscribe_admin()
-
-        # Subscribe to other # DEBUG
-        if self.other:
-            # self._subscribe_other()
-            pass
-
-        # subscribes to EEG stream
-        if self.eeg:
+        if self.enable_eeg:
             self._subscribe_eeg()
 
-        # subscribes to Accelerometer
-        if self.accelero:
-            raise(NotImplementedError('Accelerometer not implemented'))
+        if self.enable_control:
+            self._subscribe_control()
 
-        # subscribes to Giroscope
-        if self.giro:
-            raise(NotImplementedError('Giroscope not implemented'))
+        if self.enable_telemetry:
+            self._subscribe_telemetry()
+
+        if self.enable_acc:
+            self._subscribe_acc()
+
+        if self.enable_gyro:
+            self._subscribe_gyro()
 
         if not preset is None:
             self._set_preset(preset)
@@ -138,6 +135,12 @@ class Muse():
             # num1, num2: preset in ASCII
             # 0x0a: '\n'
 
+    def ask_config(self):
+        """Send a message to Muse to ask for the configuration.
+
+        Only useful is control is enabled (to receive the answer!)"""
+        self._write_cmd([0x02, 0x73, 0x0a])
+
     def start(self):
         """Start streaming."""
         self._init_sample()
@@ -161,15 +164,16 @@ class Muse():
                 return device['address']
         return None
 
-    def ask_config(self):
-        """Ask for the config info message to Muse."""
-        self._write_cmd([0x02, 0x73, 0x0a])
-
     """Handle EEG methods"""
+
+    def _init_sample(self):
+        """initialize array to store the samples"""
+        self.timestamps = np.zeros(5)
+        self.data = np.zeros((5, 12))
 
     def _subscribe_eeg(self):
         """subscribe to eeg stream."""
-        #### Electrode channels (tested):
+        # Electrode channels
         self.device.subscribe('273e0003-4c4d-454d-96be-f03bac821358', callback=self._handle_eeg) # handle 0x20
         self.device.subscribe('273e0004-4c4d-454d-96be-f03bac821358', callback=self._handle_eeg) # handle 0x23
         self.device.subscribe('273e0005-4c4d-454d-96be-f03bac821358', callback=self._handle_eeg) # handle 0x26
@@ -182,12 +186,12 @@ class Muse():
         Each packet is encoded with a 16bit timestamp followed by 12 time
         samples with a 12 bit resolution.
         """
-        aa = bitstring.Bits(bytes=packet)
+        bit_decoder = bitstring.Bits(bytes=packet)
         pattern = "uint:16,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12, \
                    uint:12,uint:12,uint:12,uint:12,uint:12,uint:12"
         # pattern = "uint:16,int:12,int:12,int:12,int:12,int:12,int:12, \
         #            int:12,int:12,int:12,int:12,int:12,int:12"
-        res = aa.unpack(pattern)
+        res = bit_decoder.unpack(pattern)
         timestamp = res[0]
         data = res[1:]
 
@@ -197,11 +201,6 @@ class Muse():
             # the substractor factor comes from substracting 1024 (=2048*0.488), which is done to center the data (because the hardware is AC coupled)
         data = self.norm_factor * (np.array(data) - self.norm_sub)
         return timestamp, data
-
-    def _init_sample(self):
-        """initialize array to store the samples"""
-        self.timestamps = np.zeros(5)
-        self.data = np.zeros((5, 12))
 
     def _handle_eeg(self, handle, data):
         """Calback for receiving a sample.
@@ -219,226 +218,157 @@ class Muse():
             # affect as timestamps the first timestamps - 12 sample
             timestamps = np.arange(-12, 0) / 256.
             timestamps += np.min(self.timestamps)
-            self.callback(timestamps, self.data)
+            self.callback_eeg(timestamps, self.data)
             self._init_sample()
 
 
-    """Handle Admin messages methods"""
+    """Handle control messages"""
 
-    def _subscribe_admin(self):
-        """Subscribe to administrative channels."""
-        self.device.subscribe('273e0001-4c4d-454d-96be-f03bac821358', callback=self._handle_messages)
-
-    def _init_msg(self):
+    def _init_control(self):
         """Reset the current msg storage"""
-        with self._lock_msg:
+        with self._lock_control:
             self._current_msg = ""
             self._current_codes = []
 
-    def _push_msg(self, codes, msg):
-        """Pushes the message."""
-        # Full print:
-        # print("\tcodes: {}".format(codes))
-        # print("\tmsg: {}".format(msg))
+    def _subscribe_control(self):
+        self.device.subscribe('273e0001-4c4d-454d-96be-f03bac821358', callback=self._handle_control)
 
-        # medium print:
-        print("\treceived: {}".format(msg))
+    # DEPRECATED
+    # def _push_msg(self, codes, msg):
+    #     """Pushes the message."""
+    #     # Full print:
+    #     # print("\tcodes: {}".format(codes))
+    #     # print("\tmsg: {}".format(msg))
+    #
+    #     # medium print:
+    #     print("\treceived: {}".format(msg))
+    #
+    #     # Simple print:
+    #     # print(msg)
 
-        # Simple print:
-        # print(msg)
+    def _handle_control(self, handle, data):
+        """Handle the incoming messages from the 0x000e handle.
 
-    def _handle_messages(self, handle, data):
-        """Handle the incoming messages from the 0x000e handle."""
-        if handle != 14: # Messages have to be from that handle
+        Each message is 20 chars
+        The first is a code (don't know what it means), the rest of them are in ASCII
+
+        Multiple messages together are a json object (or dictionary in python)
+        If a message has a ',' then that line is finished
+        If a message has a '}' then the whole dict is finished.
+
+        Example:
+        {'key': 'value',
+        'key2': 'value2',
+        'key3': 'value3'}
+
+        each line is a message, the 3 messages are a json object.
+        """
+        if handle != 14:
             return
 
         # Decode data
-        aa = bitstring.Bits(bytes=data)
+        bit_decoder = bitstring.Bits(bytes=data)
         pattern = "uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8, \
-                    uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8" # All are chars
-        res = aa.unpack(pattern)
+                    uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
+        chars = bit_decoder.unpack(pattern)
 
         # Save initial number
-        with self._lock_msg:
-            self._current_codes.append(res[0])
+        with self._lock_control:
+            self._current_codes.append(chars[0])
 
         # Iterate over next numbers
-        for a in res[1:]:
-            c = chr(a)
+        for char in chars[1:]:
+            char = chr(char)
 
-            with self._lock_msg:
-                self._current_msg += c
+            with self._lock_control:
+                self._current_msg += char
 
-            if c == ',': # This incoming message ended, but not the whole dict
+            if char == ',': # This incoming message ended, but not the whole dict
                 break
 
-            if c == '}': # Msg ended completely
-                with self._lock_msg:
-                    self._push_msg(self._current_codes, self._current_msg)
+            if char == '}': # Message ended completely
+                with self._lock_control:
+                    self.callback_control(self._current_codes, self._current_msg)
 
-                self._init_msg()
+                self._init_control()
                 break
 
 
-    """Handle other"""
-    def _subscribe_other(self):
-        # DEBUG:
+    """Handle telemetry"""
+    def _subscribe_telemetry(self):
+        self.device.subscribe('273e000b-4c4d-454d-96be-f03bac821358', callback=self._handle_telemetry)
 
-        ### Recibe data cada 10 segundos
-        ### Handle: 0x1a = 26 # Le llegan 160 bits, sera la bateria?
-        # self.device.subscribe('273e000b-4c4d-454d-96be-f03bac821358', callback=self._handle_battery)
+    def _handle_telemetry(self, handle, packet):
+        """Handle the telemetry incoming data"""
 
-        ### No recibe data:
-        # handle 0x1d
-        # self.device.subscribe('273e0002-4c4d-454d-96be-f03bac821358', callback=self.handle_something)
+        if handle != 26: # handle 0x1a
+            return
 
+        bit_decoder = bitstring.Bits(bytes=packet)
+        pattern = "uint:16,uint:16,uint:16,uint:16,uint:16" # The rest is 0 padding
+        data = bit_decoder.unpack(pattern)
 
-        ### Recibe 4-5 veces por segundo # handle 0x11
-        # self.device.subscribe('273e0008-4c4d-454d-96be-f03bac821358', callback=self._handle_11)
+        timestamp = data[0]
+        battery = data[1] / 512
+        fuel_gauge = data[2] * 2.2
+        adc_volt = data[3]
+        temperature = data[4]
 
-        ### Reciben mucha data por segundo: ## ~17 x seg
-        ## handle 0x14
-        self.device.subscribe('273e0009-4c4d-454d-96be-f03bac821358', callback=self._handle_14)
-        ## handle 0x17
-        # self.device.subscribe('273e000a-4c4d-454d-96be-f03bac821358', callback=self._handle_17)
-
-
-    def _handle_battery(self, handle, data):
-        """Handle the battery data"""
-
-        aa = bitstring.Bits(bytes=data)
-        pattern = "uint:16,int:16,int:16,int:16,int:16" # The rest is 0 padding
-        res = aa.unpack(pattern)
-
-        # El uint:16 de timestamp va avanzando de 1 en 1 --> tiene sentido
-        # Los dos uint:16 del final tienen sentido, temperatura y rango de mV
-
-        t = time()
-        string_hex = ''.join('{:02x}'.format(x) for x in data)
-        string_hex = string_hex[4:] # Quitar tiempo
-        self.lista.append([t, *string_hex, *res])
-
-        # self.callback_other(t, res)
-
-        # print(hex(handle))
-        # print("bytes: {}".format(len(data)))
-        # print("bits: {}".format(len(aa)))
-        # print("5 ints: {}".format(res))
-        # print("5 ints: {}".format(res2))
-        # print(data)
-        # print(string_hex)
-        # print("-----------------------")
-
-    def _handle_11(self, handle, data):
-        """ """
-
-        aa = bitstring.Bits(bytes=data)
-        # pattern = "uint:16,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12,uint:12, \
-        #             uint:12,uint:12,uint:12,uint:12,uint:12"
-        pattern = "uint:16,int:12,int:12,int:12,int:12,int:12,int:12,int:12, \
-                    int:12,int:12,int:12,int:12,int:12"
-
-        res = aa.unpack(pattern)
-
-        t = time()
-
-        data = []
-        i = 2
-        while i < len(res):
-            data.append(res[i])
-            i += 2
+        self.callback_telemetry(timestamp, battery, temperature)
 
 
-        string_hex = ''.join('{:02x}'.format(x) for x in data)
-        string_hex = string_hex[4:]
-        self.lista.append([t, *string_hex, *data])
+    """Handle accelerometer and gyroscope"""
+    def _unpack_imu_channel(self, packet, scale=1):
+        """Decode data packet of the accelerometer and gyro channels.
 
-        self.callback_other(t, data)
-        # print("handle: {}, {}".format(hex(handle), handle))
-        # print("bytes: {}".format(len(data)))
-        # print("bits: {}".format(len(aa)))
-        # print("parsed: {}".format(res))
-        # print(data)
-        # print(string_hex) # Juntar todo como string hexadecimal
-        # print("-----------------------")
-        #
-        # print(t)
+        Each packet is encoded with a 16bit timestamp followed by 9 time
+        samples with a 16 bit resolution.
+        """
+        bit_decoder = bitstring.Bits(bytes=packet)
+        pattern = "uint:16,int:16,int:16,int:16,int:16, \
+                   int:16,int:16,int:16,int:16,int:16"
+        data = bit_decoder.unpack(pattern)
 
-    def _unpack(self, data):
-        """Try to unpack as float from 16bit, zero pad doesnt work """
-        zeros = bytearray(b"\x00\x00") # zero padding
-        nums = []
-        i = 4 # Omitir el timestamp
-        while i + 2 < len(data):
-            b = struct.unpack('f', zeros + data[i:i+2])
-            print(b)
-            nums.append(b)
-            i += 2
+        timestamp = data[0]
+        samples = [{
+            "x": scale * data[index],
+            "y": scale * data[index + 1],
+            "z": scale * data[index + 2]
+        } for index in [1, 4, 7]]
 
-        print(nums)
+        return timestamp, samples
 
-        return nums
+    def _subscribe_acc(self):
+        self.device.subscribe('273e000a-4c4d-454d-96be-f03bac821358', callback=self._handle_acc)
 
-    def _handle_14(self, handle, data):
-        """ """
+    def _handle_acc(self, handle, packet):
+        """Handle incoming accelerometer data.
 
-        aa = bitstring.Bits(bytes=data)
-        # pattern = "uint:16,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,\
-        #             uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
-        # pattern = "uint:16,int:12,int:12,int:12,int:12,int:12,int:12, \
-        #             int:12,int:12,int:12,int:12,int:12,int:12"
-        pattern = "uint:16,uint:16,uint:16,uint:16,uint:16,uint:16,uint:16, \
-                    uint:16,uint:16,uint:16"
-        res = aa.unpack(pattern)
+        ~17 x second"""
+        if handle != 23: # handle 0x17
+            return
 
-        t = time()
-        string_hex = ''.join('{:02x}'.format(x) for x in data)
-        string_hex = string_hex[4:] # Quitar tiempo
-        string_big = []
-        i = 0
-        while i + 4 <= len(string_hex):
-            string_big.append(string_hex[i:i+4])
-            i += 4
-        # self.lista.append([t, *string_big, *res])
-        self.lista.append([t, aa.bin])
+        timestamp, samples = self._unpack_imu_channel(packet, scale=0.0000610352)
 
-        self.callback_other(t, res[1:])
+        self.callback_acc(timestamp, samples)
 
-        # print("handle: {}, {}".format(hex(handle), handle))
-        # print("bytes: {}".format(len(data)))
-        # print("bits: {}".format(len(aa)))
-        # print("parsed: {}".format(res))
-        # print(data)
-        # print(string_hex) # Juntar todo como string hexadecimal
-        # print(string_read) # Pasar a char
-        # print("-----------------------")
-        #
-        # print(t)
+    def _subscribe_gyro(self):
+        self.device.subscribe('273e0009-4c4d-454d-96be-f03bac821358', callback=self._handle_gyro)
 
-    def _handle_17(self, handle, data):
-        """ """
+    def _handle_gyro(self, handle, packet):
+        """Handle incoming gyroscope data.
 
-        aa = bitstring.Bits(bytes=data)
-        # pattern = "uint:16,int:8,int:8,int:8,int:8,int:8,int:8,int:8,int:8,int:8,\
-        #             uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
-        pattern = "uint:16,uint:16,uint:16,uint:16,uint:16,uint:16,uint:16, \
-                    uint:16,uint:16,uint:16"
-        res = aa.unpack(pattern)
+        ~17 x second"""
+        if handle != 20: # handle 0x14
+            return
 
-        t = time()
-        string_hex = ''.join('{:02x}'.format(x) for x in data)
-        string_hex = string_hex[4:] # Quitar tiempo
-        self.lista.append([t, *string_hex, *res])
+        timestamp, samples = self._unpack_imu_channel(packet, scale=0.0074768)
 
-        self.callback_other(t, res[1:])
+        self.callback_gyro(timestamp, samples)
 
-        # print("handle: {}, {}".format(hex(handle), handle))
-        # print("bytes: {}".format(len(data)))
-        # print("bits: {}".format(len(aa)))
-        # print("parsed: {}".format(res))
-        # print(data)
-        # print(string_hex) # Juntar todo como string hexadecimal
-        # print(string_read) # Pasar a char
-        # print("-----------------------")
-        #
-        # print(t)
+#### REVIEW:
+# handle 0x1d # no recibe data
+# self.device.subscribe('273e0002-4c4d-454d-96be-f03bac821358', callback=self.handle_something)
+
+# handle 0x11 # recibe 4-5 veces por segundo
+# self.device.subscribe('273e0008-4c4d-454d-96be-f03bac821358', callback=self._handle_11)

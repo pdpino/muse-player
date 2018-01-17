@@ -12,7 +12,7 @@ class MuseFaker:
     """Fake a muse device by streaming random data."""
 
     def __init__(self, **config):
-        self.callback = config['callback']
+        self.callback_eeg = config['callback_eeg']
         self._is_running = False
 
         # values hardcoded, they are from the muse configuration
@@ -78,9 +78,7 @@ class MuseFaker:
             timestamps = np.linspace(current_time, next_time, self.n_samples)
             data = self._random_sine_waves(timestamps)
 
-            # print("t: ", timestamps.shape)
-            # print("d: ", data.shape)
-            self.callback(timestamps, data)
+            self.callback_eeg(timestamps, data)
 
             current_time = next_time
             sleep(self.waiting_time)

@@ -91,13 +91,20 @@ class MusePlayer:
 
     def initialize_muse(self, muse_address, interface, faker=False, nfactor=None, nsub=None):
         """Initialize muse connection."""
+
+        def print_control_message(codes, message):
+            print("\t", message)
+
+        def print_telemetry(timestamp, battery, temperature):
+            print("\tbattery: {}%, temperature: {}".format(battery, temperature))
+
         if faker:
-            self.muse = MuseFaker(callback=self.eeg_engine.incoming_data)
+            self.muse = MuseFaker(callback_eeg=self.eeg_engine.incoming_data)
         else:
             self.muse = Muse(address=muse_address,
-                        callback=self.eeg_engine.incoming_data,
-                        # callback_other=other_buffer.incoming_data, # DEBUG: see other data
-                        push_info=True, # DEBUG: push info msgs from muse (to ask config, see battery percentage)
+                        callback_eeg=self.eeg_engine.incoming_data,
+                        # callback_control=print_control_message,
+                        # callback_telemetry=print_telemetry,
                         norm_factor=nfactor, norm_sub=nsub)
         self.muse.connect(interface=interface)
 
