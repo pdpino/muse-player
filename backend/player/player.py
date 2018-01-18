@@ -96,10 +96,11 @@ class MusePlayer:
         """Initialize the engine."""
 
         # HACK: the EEG buffer should do it (for now)
-        # don't use peek_last_time altough!!
+        # don't use peek_last_time although!!
         acc_buffer = engine.buffers.EEGBuffer()
 
-        generator = engine.yielders.AccYielder()
+        acc_yielder = engine.yielders.AccYielder()
+        generator = engine.processors.AccProcessor(acc_yielder)
 
         self.acc_engine = engine.ImuEngine("Accelerometer", acc_buffer, generator)
 

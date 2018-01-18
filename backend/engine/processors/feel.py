@@ -11,8 +11,6 @@ class FeelProcessor(base.BaseProcessor):
     def __init__(self, feeler, regulator):
         """Constructor."""
 
-        # TODO: get the feeling_names from the feeler
-
         # Regulator
         self.regulator = regulator
 

@@ -330,11 +330,20 @@ class Muse():
         data = bit_decoder.unpack(pattern)
 
         timestamp = data[0]
-        samples = [{
-            "x": scale * data[index],
-            "y": scale * data[index + 1],
-            "z": scale * data[index + 2]
-        } for index in [1, 4, 7]]
+
+        # Dict-like:
+        # samples = [{
+        #     "x": scale * data[index],
+        #     "y": scale * data[index + 1],
+        #     "z": scale * data[index + 2]
+        # } for index in [1, 4, 7]]
+
+        # List-like
+        samples = [[
+            scale * data[index],        # x
+            scale * data[index + 1],    # y
+            scale * data[index + 2]     # z
+        ] for index in [1, 4, 7]]
 
         return timestamp, samples
 

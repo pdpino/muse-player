@@ -10,9 +10,9 @@ class AccYielder(base.BaseYielder):
     def pack_data(self, timestamp, new_data):
         """Pack the accelerometer data."""
         yield {
-            'x': 0,
-            'y': 0,
-            'z': 0
+            'x': new_data[0],
+            'y': new_data[1],
+            'z': new_data[2]
         }
 
     def pack_timestamp(self, timestamp, packed_data):
