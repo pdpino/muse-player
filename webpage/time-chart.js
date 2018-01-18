@@ -422,7 +422,7 @@ class TimeChart {
     }, {});
 
     if (parsedData.timestamp < 0) {
-      console.log("ERROR: received negative time");
+      console.log("ERROR: received negative time: ", parsedData.timestamp);
       return null;
     }
 

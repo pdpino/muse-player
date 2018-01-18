@@ -13,6 +13,11 @@ footer{
   padding-bottom: 1em;
 }
 
+/* Accelerometer data */
+#acc-headers div {
+  font-weight: bold;
+}
+
 /* Graph */
 #graph-container {
   /*display: inline-block;*/
@@ -25,7 +30,7 @@ footer{
   font-size: 20px;
 }
 
-/*Panel control*/
+/* Control panel */
 .panel-graph{
   padding: 0.5em;
   text-align: center;
@@ -44,7 +49,7 @@ footer{
   font-weight:bold;
 }
 
-/*Rectangulo de leyenda*/
+/* Legend container */
 .legend-rect-container{
   height: 12px;
   width: 12px;
@@ -56,7 +61,7 @@ footer{
 
 
 
-/*Graph of d3*/
+/* Graph of d3 */
 path {
   stroke: steelblue;
   stroke-width: 2;

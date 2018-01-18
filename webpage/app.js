@@ -47,7 +47,12 @@ $(document).ready( function() {
 
   const streamAcc = new Connection({
     url: "http://localhost:8001/acc",
-    recvMsg: (e) => console.log("DATA RECEIVED: ", e.data),
+    recvMsg: (e) => {
+      let data = JSON.parse(e.data);
+      $("#acc-data-x").text(data.x.toFixed(3));
+      $("#acc-data-y").text(data.y.toFixed(3));
+      $("#acc-data-z").text(data.z.toFixed(3));
+    },
     recvConfig: (e) => {}, // console.log("CONFIG RECEIVED: ", e.data),
   });
 
