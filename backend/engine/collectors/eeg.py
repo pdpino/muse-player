@@ -29,10 +29,6 @@ class EEGCollector:
             t_end = self._full_time[-1][-1]
             t_init = self._full_time[0][0]
 
-            print(self._full_time[0][0])
-            print(self._full_time[-1][-1])
-
-
         elapsed_time = t_end - t_init
         return basic.sec2hr(elapsed_time)
 
