@@ -13,6 +13,10 @@ footer{
   padding-bottom: 1em;
 }
 
+.panel {
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
 /* Accelerometer data */
 #acc-headers div {
   font-weight: bold;
