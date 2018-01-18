@@ -39,7 +39,6 @@ class EEGEngine:
                 sleep(0.1)
                 continue
 
-            # Normalize time
-            timestamp -= t_init
+            normalized_timestamp = timestamp - t_init
 
-            yield from self.generator.generate(timestamp, new_data)
+            yield from self.generator.generate(normalized_timestamp, new_data)
