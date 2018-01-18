@@ -20,7 +20,7 @@ class MuseFaker:
         self.n_samples = 12
         self.n_channels = 5
 
-        self.waiting_time = 1 / srate
+        self.waiting_time = 1 / (srate/self.n_samples)
 
     def connect(self, **kwargs):
         self.generate_thread = threading.Thread(target=self._generate_random_data, daemon=True)
