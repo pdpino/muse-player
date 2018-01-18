@@ -91,7 +91,7 @@ class Connection{
     // Change in screen
     this._setStatus(StatusEnum.DISCONNECTED);
 
-    console.log("Connection closed with the server");
+    console.log("Connection closed with the server ", this.url);
   }
 
   /**
@@ -115,7 +115,7 @@ class Connection{
 
     this.stream.addEventListener('open', (e) => {
       this._setStatus(StatusEnum.CONNECTED);
-      console.log("Connected to the server");
+      console.log("Connected to the server ", this.url);
     });
 
     this.stream.addEventListener('initialize', (e) => {
@@ -128,8 +128,8 @@ class Connection{
 
     this.stream.addEventListener('error', (e) => {
       // TODO: send alert to the user
-      if(this._isConnecting()) console.log("Can't connect to the server");
-      else console.log("Error in the connection with the server");
+      if(this._isConnecting()) console.log("Can't connect to ", this.url);
+      else console.log("Error in the connection with ", this.url);
 
       this.close();
     });

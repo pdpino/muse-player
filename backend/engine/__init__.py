@@ -30,7 +30,7 @@ The processors may have inside calibrators and/or calculators to do the hard wor
 
 """
 
-from .engine import *
+from .engines import *
 from .buffers import *
 from .processors import *
 from .yielders import *

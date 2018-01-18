@@ -90,13 +90,14 @@ def main():
     player = MusePlayer()
 
     player.initialize_command_handler()
-    player.initialize_engine(args.stream, args.regulator,
+    player.initialize_eeg_engine(args.stream, args.regulator,
         eeg_mode=args.eeg_mode,
         eeg_n=args.eeg_n,
         waves_selected=args.waves,
         accum_samples=args.accum_samples)
+    player.initialize_acc_engine()
     player.initialize_muse(args.address, args.interface, args.faker, nfactor=args.nfactor, nsub=args.nsub)
-    player.initialize_flask(args.ip, args.url, args.port)
+    player.initialize_flask(args.ip, args.port, args.url)
 
     player.start(args.time)
 

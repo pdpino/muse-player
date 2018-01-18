@@ -21,7 +21,6 @@ Usual subsections for code:
 
 ## Project
 
-* Refactor code
 * PR barachant
 * Artifact removal in real time
   - search/read papers
@@ -33,25 +32,22 @@ Usual subsections for code:
 * muse-direct
 
 ## Software
-### Refactors
+
+#### Pending
 * FIXME: js client has NaN error in d3, only with the first of the graph, only the first time that it connects to the server
-
-* Refactor src/ to fix relative imports
-* Refactor player: create class to handle the player stuff
-
-### Pending
 * Improve Muse module + PR barachant repo
-
+* Refactor calibrators and accumulators, design first
+* Include acc and gyro in model, send to client
+  - how?? does EventSource supports multiple urls? else it would have to go into current processors (re-design!)
 
 #### Server, play.py
 * REVIEW architecture! should the server work without the need of a client making a request? (currently this activates the generator)
-* Design calibrators
-  - Consider an option to reset calibrators
 
 * Pending:
-  - Add stream mode configuration for waves (select channel)
+  - Add stream mode configuration for waves (select channel, select waves is done)
 
 * Refactors:
+  - Refactor src/ to fix relative imports
   - `arr_freqs` is in many places in wave yielding (in `play.py`)
   - Move configuration of streaming to objects or functions (in `play.py`)
   - Separate `tf` in submodules (`convolution`, `sttft` and `common`)

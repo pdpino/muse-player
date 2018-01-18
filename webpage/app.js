@@ -45,17 +45,27 @@ $(document).ready( function() {
     recvConfig,
   });
 
+  const streamAcc = new Connection({
+    url: "http://localhost:8001/acc",
+    recvMsg: (e) => console.log("DATA RECEIVED: ", e.data),
+    recvConfig: (e) => {}, // console.log("CONFIG RECEIVED: ", e.data),
+  });
+
   $("#btn-start-conn").click(function(){
     stream.start();
+    streamAcc.start();
   });
 
   $("#btn-close-conn").click(function(){
+    streamAcc.close();
+
     if(!graph.isReady) return;
     stream.close();
     graph.initEmptyData();
   });
 
   stream.start();
+  streamAcc.start();
 
   console.log("All set");
 });
