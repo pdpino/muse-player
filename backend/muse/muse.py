@@ -116,7 +116,7 @@ class Muse():
         cmd -- list of bytes"""
         self.device.char_write_handle(0x000e, cmd, False)
 
-    def _set_preset(self, preset, verbose=False):
+    def _set_preset(self, preset):
         """Send a set-preset message to Muse."""
         if preset < 20 or preset > 22:
             print("Invalid preset: {}, must be between 20 and 23".format(preset))
@@ -138,7 +138,7 @@ class Muse():
     def ask_config(self):
         """Send a message to Muse to ask for the configuration.
 
-        Only useful is control is enabled (to receive the answer!)"""
+        Only useful if control is enabled (to receive the answer!)"""
         self._write_cmd([0x02, 0x73, 0x0a])
 
     def start(self):
