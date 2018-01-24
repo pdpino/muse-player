@@ -21,10 +21,15 @@ Usual subsections for code:
 
 ## Project
 
-* PR barachant
-* Artifact removal in real time
-  - search/read papers
-  - implement
+* Artifact removal offline
+  - read CT Lin paper again
+  - read info on topoplots, which colors are the most important? (most positives or most negatives?)
+  - check that the mixing is well done
+
+* Show all data in Js client (acc, gyro, battery, etc)
+  - refactor player to send better
+  - design interface
+
 * Email evic people
 * Order offline tools, prepare pipeline to receive data, apply formulas, show results
 * Prepare user protocol
@@ -35,10 +40,7 @@ Usual subsections for code:
 
 #### Pending
 * FIXME: js client has NaN error in d3, only with the first of the graph, only the first time that it connects to the server
-* Improve Muse module + PR barachant repo
 * Refactor calibrators and accumulators, design first
-* Include acc and gyro in model, send to client
-  - how?? does EventSource supports multiple urls? else it would have to go into current processors (re-design!)
 
 #### Server, play.py
 * REVIEW architecture! should the server work without the need of a client making a request? (currently this activates the generator)
@@ -52,8 +54,10 @@ Usual subsections for code:
   - Move configuration of streaming to objects or functions (in `play.py`)
   - Separate `tf` in submodules (`convolution`, `sttft` and `common`)
   - In `buffers`: evaluate changing deque to queue (used for messaging between threads, is already thread-safe?)
+
 * Next:
-  - Send marks to the client
+  - Send marks to the client (after the refactor should be easy)
+
 * Wishlist:
   - Architecture to save dumps to not overload memory
   - make 2 calibrations with one command
@@ -80,19 +84,12 @@ Usual subsections for code:
 * Pre-process (before TF analysis)
   + Notch filter in 50Hz
   + high-pass filter at 0.5 or 1Hz ???
-  + ignore data over 100uV (noise)
+  + ignore data over 100uV (noise) ?
 * Ideas:
   + Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
 
-#### Muse driver
-* Accelerometer and other data. What to do? Options:
-  - decompile library code (`libmuse_android.so`)
-  - analyze bytes from handle 14, decode in different formats (uint12, float16, etc)
-  - map linearly from (u)ints to a certain space, e.g. [0, 1]. That way you see the fluctuation of the value. If it makes sense, this may be the transformation used by muse
-  - In the battery data, compare the value from one of the handles subscribed to the returned by muse when asked for the status (see INFO, bluetooth packets, key="bp")
-
 #### Classes and books
-* Watch laplacian video (to end chapter)
+* Watch laplacian video (to end the chapter)
 
 #### Conventions, documentation and others
 * Document engine and processors classes (and interfaces?)
