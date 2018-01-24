@@ -104,7 +104,7 @@ class MusePlayer:
 
         self.acc_engine = engine.ImuEngine("Accelerometer", acc_buffer, generator)
 
-    def initialize_muse(self, muse_address, interface, faker=False, nfactor=None, nsub=None):
+    def initialize_muse(self, muse_address, interface, faker=False, nfactor=None, nsub=None, enable_control=False):
         """Initialize muse connection."""
 
         def print_control_message(codes, message):
@@ -113,12 +113,17 @@ class MusePlayer:
         def print_telemetry(timestamp, battery, temperature):
             print("\tbattery: {}%, temperature: {}".format(battery, temperature))
 
+        if enable_control:
+            callback_control = print_control_message
+        else:
+            callback_control = None
+
         if faker:
             self.muse = MuseFaker(callback_eeg=self.eeg_engine.incoming_data)
         else:
             self.muse = Muse(address=muse_address,
                         callback_eeg=self.eeg_engine.incoming_data,
-                        # callback_control=print_control_message,
+                        callback_control=callback_control,
                         # callback_telemetry=print_telemetry,
                         callback_acc=self.acc_engine.incoming_data,
                         norm_factor=nfactor, norm_sub=nsub)

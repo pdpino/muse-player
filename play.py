@@ -28,6 +28,10 @@ def parse_args():
         parser.add_argument('--accum_samples', type=int, default=10,
                             help="Choose amount of samples to accumulate")
 
+        group_muse = parser.add_argument_group(title="Muse connection")
+        group_muse.add_argument('--control', action="store_true",
+                            help="If present, enable control messages")
+
         group_bconn = parser.add_argument_group(title="Bluetooth connection")
         group_bconn.add_argument('-i', '--interface', default=None, type=str,
                             help="Bluetooth interface, e.g: hci0, hci1")
@@ -96,7 +100,7 @@ def main():
         waves_selected=args.waves,
         accum_samples=args.accum_samples)
     player.initialize_acc_engine()
-    player.initialize_muse(args.address, args.interface, args.faker, nfactor=args.nfactor, nsub=args.nsub)
+    player.initialize_muse(args.address, args.interface, args.faker, nfactor=args.nfactor, nsub=args.nsub, enable_control=args.control)
     player.initialize_flask(args.ip, args.port, args.url)
 
     player.start(args.time)
