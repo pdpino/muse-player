@@ -28,6 +28,6 @@ class MarksFileHandler(base.BaseFileHandler):
         """Read a marks file."""
         df = pd.read_csv(filename)
         timestamps = list(df[info.times_column])
-        messages = list(df[info.messages_column])
+        messages = list(map(str, df[info.messages_column]))
 
         return timestamps, messages
