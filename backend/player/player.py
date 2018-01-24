@@ -195,7 +195,7 @@ class MusePlayer:
         self.muse.stop()
         self.muse.disconnect() # FIXME: sometimes a thread gets stuck here
 
-        self.is_playing = True
+        self.is_playing = False
 
         print("Stopped receiving data, received for {}".format(self.eeg_collector.get_running_time()))
 
@@ -218,7 +218,7 @@ class MusePlayer:
             feelings = self.feel_processor.export()
             if not feelings is None:
                 filesystem.save_feelings(fname, feelings, folder=subfolder)
-        except UnboundLocalError as e:
+        except:
             pass
 
 
