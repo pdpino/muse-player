@@ -16,12 +16,13 @@ def plot_show(maximize=True):
 
     plt.show()
 
-def plot_marks(marks_t, marks_m, ignore_calibration=False, alternate_colors=False, alternate_lines=False):
+def plot_marks(marks_t, marks_m, ignore_calibration=False, alternate_colors=False, alternate_lines=False, show_legend=True):
     """Plot marks in time.
 
     ignore_calibration -- bool, calibration marks are ignored
     alternate_colors -- bool, alternate colors in different marks
-    alternate_line -- bool, alternate line types on different marks"""
+    alternate_line -- bool, alternate line types on different marks
+    show_legend -- bool, show a legend with the mark messages"""
     if marks_t is None or marks_m is None:
         return
 
@@ -64,7 +65,8 @@ def plot_marks(marks_t, marks_m, ignore_calibration=False, alternate_colors=Fals
 
         plt.axvline(mark_time, linestyle=linestyle, color=color, label=mark_label)
 
-    plt.legend(loc='upper center')
+    if show_legend:
+        plt.legend(loc='upper center')
 
 def plot_histogram(wave, dist_fn=None, dist_args=None, title=None):
     """Plot an histogram of the data, plus an adjusted distribution if provided."""
