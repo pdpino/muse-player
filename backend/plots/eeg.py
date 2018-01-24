@@ -13,10 +13,11 @@ def plot_eeg(timestamps, df, channels=None, fname="", marks_t=None, marks_m=None
         if subplots:
             plt.subplot(4, 1, i) # HACK: hardcoded for 4 channels
             i += 1
+            plt.title(channel, fontsize=10)
         plt.plot(timestamps, df[channel].as_matrix(), label=channel)
 
         if subplots: # OPTIMIZE
-            plot_marks(marks_t, marks_m)
+            plot_marks(marks_t, marks_m) #, show_legend=False)
 
         plt.xlabel('Time (s)')
         plt.ylabel('Amplitude')
@@ -25,8 +26,8 @@ def plot_eeg(timestamps, df, channels=None, fname="", marks_t=None, marks_m=None
         plot_marks(marks_t, marks_m, show_legend=False)
         plt.legend()
 
-    if not fname is None:
-        title += "from {}".format(fname)
+    if fname:
+        title += " from {}".format(fname)
 
     plt.suptitle(title, fontsize=20)
     plot_show()
