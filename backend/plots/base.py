@@ -84,4 +84,3 @@ def plot_histogram(wave, dist_fn=None, dist_args=None, title=None):
 
     plt.title(title)
     plot_show()
-    plt.show()

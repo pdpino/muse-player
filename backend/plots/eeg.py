@@ -30,4 +30,3 @@ def plot_eeg(timestamps, df, channels=None, fname="", marks_t=None, marks_m=None
 
     plt.suptitle(title, fontsize=20)
     plot_show()
-    plt.show()

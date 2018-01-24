@@ -66,4 +66,3 @@ def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None
 
     # Show
     plot_show()
-    plt.show()

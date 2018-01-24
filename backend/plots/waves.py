@@ -80,7 +80,6 @@ def plot_waves(waves, ch, fname, marks_t=None, marks_m=None, choose_waves=None, 
 
     plt.suptitle("Waves from {}".format(fname), fontsize=20)
     plot_show()
-    plt.show()
 
 def plot_waves_in_marks(all_waves, channels, fname, choose_waves=None):
     """Plot waves in the marks intervals."""
@@ -122,4 +121,3 @@ def plot_waves_in_marks(all_waves, channels, fname, choose_waves=None):
     plt.suptitle("Waves in the marks interval, from {}".format(fname), fontsize=20)
 
     plot_show()
-    plt.show()

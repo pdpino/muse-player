@@ -22,4 +22,3 @@ def plot_feelings(t, df, fname, marks_t=None, marks_m=None, lines=False):
     plt.suptitle("Feelings from {}".format(fname), fontsize=20)
     plt.legend()
     plot_show()
-    plt.show()
