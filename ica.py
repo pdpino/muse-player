@@ -13,6 +13,9 @@ def parse_int_range(nums):
     Example:
     '<3, 45, 48-51, 77' --> [1, 2, 3, 45, 48, 49, 50, 51, 77]
     """
+    if not nums:
+        return []
+
     numbers = []
     for x in map(str.strip,nums.split(',')):
         if x.isdigit():
@@ -52,6 +55,9 @@ def apply_ica(fname, plot_eeg=False, plot_sources=False):
     # Data as matrix
     eeg = df.as_matrix()
 
+    # Center the data
+    eeg -= np.mean(eeg, axis=0)
+
     # Apply FastICA
     fast_ica = FastICA()
     fast_ica.fit(eeg)
@@ -63,22 +69,27 @@ def apply_ica(fname, plot_eeg=False, plot_sources=False):
         plots.plot_eeg(timestamps, df_sources, title="Sources", subplots=True)
 
     # Mixing matrix
-    A = fast_ica.mixing_
+    A = fast_ica.mixing_ # components_
     n_channels, n_components = A.shape # 4, 4
 
     # Plot ica
     fig, axes = plt.subplots(4, 2, gridspec_kw={ "width_ratios": [1, 6] })
     for index in range(4):
         # plot ica
-        mne.viz.plot_topomap(A[:, index], pos=info, show=False, axes=axes[index, 0])
+        im, cn = mne.viz.plot_topomap(A[:, index], pos=info, show=False, axes=axes[index, 0])
+        plt.colorbar(im) # plot its color bar
 
         # plot its source right next to it
         plt.sca(axes[index, 1])
         plt.plot(timestamps, sources[:, index])
 
+        # Plot marks
         plots.base.plot_marks(marks_timestamps, marks_messages, show_legend=False)
 
-    plt.suptitle("Independent Components on {}".format(fname))
+        # Calculate variance
+        # print(np.var(sources[:, index]))
+
+    plt.suptitle("Independent Components from {}".format(fname))
     # plt.tight_layout()
     plots.base.plot_show()
 
@@ -87,8 +98,9 @@ def apply_ica(fname, plot_eeg=False, plot_sources=False):
     delete_ics = parse_int_range(input("Select the component (s) to delete (0-3): "))
 
     for delete_ic in delete_ics:
-        # Override mixing matrix # HACK: is there a better way to do this?
-        fast_ica.mixing_[:, delete_ic] = 0
+        if delete_ic < 4 and delete_ic >= 0:
+            # Override column in mixing matrix # HACK: is there a better way to do this?
+            fast_ica.mixing_[:, delete_ic] = 0
 
     # Mix sources again
     filtered_eeg = fast_ica.inverse_transform(sources)
@@ -97,10 +109,8 @@ def apply_ica(fname, plot_eeg=False, plot_sources=False):
     filtered_df = pd.DataFrame(filtered_eeg, columns=channels)
 
     # Plot it
-    plots.plot_eeg(timestamps, filtered_df, marks_t=marks_timestamps, marks_m=marks_messages, subplots=True, title="Filtered eeg", fname=fname)
-
-
-
+    plots.plot_eeg(timestamps, filtered_df, marks_t=marks_timestamps, marks_m=marks_messages,
+        subplots=True, title="Filtered eeg (removed {})".format(delete_ics), fname=fname)
 
 def parse_args():
     parser = argparse.ArgumentParser()

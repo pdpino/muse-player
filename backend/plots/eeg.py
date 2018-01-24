@@ -17,7 +17,7 @@ def plot_eeg(timestamps, df, channels=None, fname="", marks_t=None, marks_m=None
         plt.plot(timestamps, df[channel].as_matrix(), label=channel)
 
         if subplots: # OPTIMIZE
-            plot_marks(marks_t, marks_m) #, show_legend=False)
+            plot_marks(marks_t, marks_m, show_legend=False)
 
         plt.xlabel('Time (s)')
         plt.ylabel('Amplitude')
