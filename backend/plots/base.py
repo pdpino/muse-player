@@ -17,7 +17,11 @@ def plot_show(maximize=True):
     plt.show()
 
 def plot_marks(marks_t, marks_m, ignore_calibration=False, alternate_colors=False, alternate_lines=False):
-    """Plot marks in time."""
+    """Plot marks in time.
+
+    ignore_calibration -- bool, calibration marks are ignored
+    alternate_colors -- bool, alternate colors in different marks
+    alternate_line -- bool, alternate line types on different marks"""
     if marks_t is None or marks_m is None:
         return
 
@@ -32,7 +36,7 @@ def plot_marks(marks_t, marks_m, ignore_calibration=False, alternate_colors=Fals
     # # Then use color=cm(i/n)
 
     def choose_same_or_alternate(options, alternate=True):
-        """Return a lambda function that return options[0] all the time or cylce through options, depending on same"""
+        """Return a lambda function that return options[0] all the time or cylce through options, depending on alternate parameter"""
         if alternate:
             return lambda i: options[i % len(options)]
         else:
