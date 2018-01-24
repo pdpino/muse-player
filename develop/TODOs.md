@@ -7,7 +7,6 @@ Sections:
   - Javascript client (`app.js`)
   - Offline analysis
   - EEG data
-  - Muse driver
   - Classes and books
   - Conventions, documentation and others
 
@@ -21,7 +20,7 @@ Usual subsections for code:
 
 ## Project
 
-* Artifact removal offline
+* Artifact removal (offline; real time?)
   - read CT Lin paper again
   - read info on topoplots, which colors are the most important? (most positives or most negatives?)
   - check that the mixing is well done
