@@ -16,6 +16,8 @@ class EEGFileHandler(base.BaseFileHandler):
         # TODO: Check that the first column is csv
         eeg_df.to_csv(filename, float_format='%f')
 
+        return True
+
     @classmethod
     def load_data(cls, filename, channels):
         """Read the eeg from csv, assure the channels and return the dataframe.

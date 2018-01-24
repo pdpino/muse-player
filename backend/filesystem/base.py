@@ -92,9 +92,12 @@ class BaseFileHandler():
         """
         cls.assure_folder()
         full_filename = cls.get_fname(filename, **kwargs)
-        cls.save_data(full_filename, *data_args)
+        was_saved = cls.save_data(full_filename, *data_args)
 
-        print("{} file saved to {}".format(cls.name, full_filename))
+        if was_saved:
+            print("{} file saved to {}".format(cls.name, full_filename))
+        else:
+            print("{} file was not saved".format(cls.name))
 
         if kwargs.get("ret_fname", False):
             return full_filename

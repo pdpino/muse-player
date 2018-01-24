@@ -14,9 +14,11 @@ class FeelFileHandler(base.BaseFileHandler):
     def save_data(cls, filename, df):
         """Save a feelings dataframe to a .csv"""
         if df is None: # REVIEW: necessary?
-            return
+            return False
 
         df.to_csv(filename, float_format='%f')
+
+        return True
 
     @classmethod
     def load_data(cls, filename):

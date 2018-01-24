@@ -19,6 +19,7 @@ class TFFileHandler(base.BaseFileHandler):
     def save_data(cls, filename, power_df):
         """Save a tf file."""
         power_df.to_csv(filename)
+        return True
 
     @classmethod
     def load_data(cls, filename):
