@@ -2,15 +2,18 @@
 import matplotlib.pyplot as plt
 from .base import *
 
-def plot_eeg(t, df, ch_names, fname, marks_t=None, marks_m=None, subplots=False):
+def plot_eeg(timestamps, df, channels=None, fname="", marks_t=None, marks_m=None, subplots=False, title="Raw eeg"):
     """Plot raw channels."""
 
+    if channels is None:
+        channels = list(df.columns)
+
     i = 1
-    for ch in ch_names:
+    for channel in channels:
         if subplots:
             plt.subplot(2, 2, i) # HACK: hardcoded for 4 channels
             i += 1
-        plt.plot(t, df[ch].as_matrix(), label=ch)
+        plt.plot(timestamps, df[channel].as_matrix(), label=channel)
 
         if subplots: # OPTIMIZE
             plot_marks(marks_t, marks_m)
@@ -21,7 +24,10 @@ def plot_eeg(t, df, ch_names, fname, marks_t=None, marks_m=None, subplots=False)
     if not subplots:
         plot_marks(marks_t, marks_m)
 
-    plt.suptitle("Raw eeg from {}".format(fname), fontsize=20)
+    if not fname is None:
+        title += "from {}".format(fname)
+
+    plt.suptitle(title, fontsize=20)
     plt.legend()
     plot_show()
     plt.show()
