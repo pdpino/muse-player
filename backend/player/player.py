@@ -25,7 +25,7 @@ class MusePlayer:
 
         def ask_muse_config():
             """Send a signal to the muse to get configuration status."""
-            self.muse.ask_config()
+            self.muse.ask_control()
             sleep(0.5) # let it print # REVIEW: wait for printing explicitly?
 
         self.commands.add_command("-c", ask_muse_config, None, None, cmd_help="Get muse configuration status")

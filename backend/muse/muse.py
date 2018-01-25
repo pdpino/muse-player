@@ -135,7 +135,7 @@ class Muse():
             # num1, num2: preset in ASCII
             # 0x0a: '\n'
 
-    def ask_config(self):
+    def ask_control(self):
         """Send a message to Muse to ask for the configuration.
 
         Only useful if control is enabled (to receive the answer!)"""

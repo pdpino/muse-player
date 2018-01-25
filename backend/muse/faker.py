@@ -36,7 +36,7 @@ class MuseFaker:
         self._is_running = False
         self.generate_thread.join()
 
-    def ask_config(self):
+    def ask_control(self):
         print("This is a Fake muse!")
 
     def _random_sine_waves(self, timestamps):
