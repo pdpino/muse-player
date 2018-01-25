@@ -110,6 +110,8 @@ class Muse():
         if not preset is None:
             self._set_preset(preset)
 
+        # self._subscribe_other()
+
     def _write_cmd(self, cmd):
         """Wrapper to write a command to the Muse device.
 
@@ -136,10 +138,14 @@ class Muse():
             # 0x0a: '\n'
 
     def ask_control(self):
-        """Send a message to Muse to ask for the configuration.
+        """Send a message to Muse to ask for the control status.
 
         Only useful if control is enabled (to receive the answer!)"""
         self._write_cmd([0x02, 0x73, 0x0a])
+
+    def ask_device_info(self):
+        """Send a message to Muse to ask for the device info."""
+        self._write_cmd([0x03, 0x76, 0x31, 0x0a])
 
     def start(self):
         """Start streaming."""
@@ -353,9 +359,26 @@ class Muse():
 
         self.callback_gyro(timestamp, samples)
 
-#### REVIEW:
-# handle 0x1d # no recibe data
-# self.device.subscribe('273e0002-4c4d-454d-96be-f03bac821358', callback=self.handle_something)
 
-# handle 0x11 # recibe 4-5 veces por segundo
-# self.device.subscribe('273e0008-4c4d-454d-96be-f03bac821358', callback=self._handle_11)
+    def _subscribe_other(self):
+        """DEBUG: subscribe other channels.
+
+        Still decoding what they mean"""
+        # handle 0x1d # no recibe data
+        # self.device.subscribe('273e0002-4c4d-454d-96be-f03bac821358', callback=self._handle_something)
+
+        # handle 0x11 # recibe 4-5 veces por segundo
+        # self.device.subscribe('273e0008-4c4d-454d-96be-f03bac821358', callback=self._handle_something)
+        # could be jaw clenches, blinks, headband status (correctly receiving or not)
+
+    def _handle_something(self, handle, packet):
+        bit_decoder = bitstring.Bits(bytes=packet)
+        pattern = "uint:16,int:16,int:16,int:16,int:16, \
+                   int:16,int:16,int:16,int:16,int:16"
+        data = bit_decoder.unpack(pattern)
+
+        packet_index = data[0]
+
+        print("RECEIVED")
+        print("{}: '{}'".format(packet_index, data[1:]))
+        print("-"*50)
