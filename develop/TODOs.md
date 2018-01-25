@@ -21,13 +21,14 @@ Usual subsections for code:
 ## Project
 
 * Artifact removal (offline; real time?)
-  - read CT Lin paper again
-  - read info on topoplots, which colors are the most important? (most positives or most negatives?)
+  - read info on topoplots, which colors are the most important? (most positives or most negatives?), what happens if I multiply by -1 !!
   - check that the mixing is well done
 
 * Show all data in Js client (acc, gyro, battery, etc)
   - refactor player to send better
   - design interface
+  - decode bluetooth channels left
+  - be sure of acc and gyro data (play with muse direct, wireshark!)
 
 * Email evic people
 * Order offline tools, prepare pipeline to receive data, apply formulas, show results
