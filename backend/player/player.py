@@ -107,7 +107,7 @@ class MusePlayer:
     def initialize_muse(self, muse_address, interface, faker=False, nfactor=None, nsub=None, enable_control=False):
         """Initialize muse connection."""
 
-        def print_control_message(codes, message):
+        def print_control_message(message):
             print("\t", message)
 
         def print_telemetry(timestamp, battery, temperature):

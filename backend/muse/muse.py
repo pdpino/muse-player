@@ -17,7 +17,7 @@ class Muse():
 
         callback_eeg -- function(timestamp, data) that handles incoming eeg data
 
-        callback_control -- function(codes, messages) that handles incoming control data
+        callback_control -- function(messages) that handles incoming control data
 
         callback_telemetry -- function(timestamp, battery, temperature) that handles incoming telemetry data
 
@@ -225,43 +225,29 @@ class Muse():
     """Handle control messages"""
 
     def _init_control(self):
-        """Reset the current msg storage"""
         with self._lock_control:
             self._current_msg = ""
-            self._current_codes = []
 
     def _subscribe_control(self):
         self.device.subscribe('273e0001-4c4d-454d-96be-f03bac821358', callback=self._handle_control)
 
-    # DEPRECATED
-    # def _push_msg(self, codes, msg):
-    #     """Pushes the message."""
-    #     # Full print:
-    #     # print("\tcodes: {}".format(codes))
-    #     # print("\tmsg: {}".format(msg))
-    #
-    #     # medium print:
-    #     print("\treceived: {}".format(msg))
-    #
-    #     # Simple print:
-    #     # print(msg)
-
     def _handle_control(self, handle, data):
         """Handle the incoming messages from the 0x000e handle.
 
-        Each message is 20 chars
-        The first is a code (don't know what it means), the rest of them are in ASCII
+        Each message is 20 bytes
+        The first byte, call it n, is the length of the incoming string.
+        The rest of the bytes are in ASCII, and only n chars are useful
 
         Multiple messages together are a json object (or dictionary in python)
-        If a message has a ',' then that line is finished
         If a message has a '}' then the whole dict is finished.
 
         Example:
         {'key': 'value',
-        'key2': 'value2',
+        'key2': 'really-long
+        -value',
         'key3': 'value3'}
 
-        each line is a message, the 3 messages are a json object.
+        each line is a message, the 4 messages are a json object.
         """
         if handle != 14:
             return
@@ -272,26 +258,18 @@ class Muse():
                     uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8,uint:8"
         chars = bit_decoder.unpack(pattern)
 
-        # Save initial number
+        n_incoming = chars[0]
+
+        incoming_message = "".join(map(chr, chars[1:]))[:n_incoming]
+
         with self._lock_control:
-            self._current_codes.append(chars[0])
+            self._current_msg += incoming_message
 
-        # Iterate over next numbers
-        for char in chars[1:]:
-            char = chr(char)
-
+        if incoming_message[-1] == '}': # Message ended completely
             with self._lock_control:
-                self._current_msg += char
+                self.callback_control(self._current_msg)
 
-            if char == ',': # This incoming message ended, but not the whole dict
-                break
-
-            if char == '}': # Message ended completely
-                with self._lock_control:
-                    self.callback_control(self._current_codes, self._current_msg)
-
-                self._init_control()
-                break
+            self._init_control()
 
 
     """Handle telemetry"""
