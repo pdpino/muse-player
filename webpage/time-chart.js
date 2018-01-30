@@ -91,7 +91,7 @@ class TimeChart {
    * @param {Number} yTicks
    */
   _initEmptyTimeChart(containerID, width, height, xTicks, yTicks){
-    this.margin = {top: 40, right: 10, bottom: 50, left: 60};
+    this.margin = {top: 60, right: 10, bottom: 50, left: 60};
     this.labelPadding = {bottom: 40, left: 40};
     this.width = width - this.margin.left - this.margin.right;
     this.height = height - this.margin.top - this.margin.bottom;

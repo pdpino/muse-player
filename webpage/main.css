@@ -10,7 +10,20 @@ body{
 }
 
 footer{
-  padding-bottom: 1em;
+  /* padding-bottom: 1em; */
+}
+
+footer h2{
+  text-align: right;
+  display: inline-block;
+  float: right;
+  padding-right: 1em;
+}
+
+footer img{
+  float: right;
+  width: 80px;
+  height: 80px;
 }
 
 .panel {
@@ -20,18 +33,6 @@ footer{
 /* Accelerometer data */
 #acc-headers div {
   font-weight: bold;
-}
-
-/* Graph */
-#graph-container {
-  /*display: inline-block;*/
-  /*font-family: Arial, Helvetica, sans-serif;*/
-  /*border: 2px solid black;*/
-  /*padding: 1em;*/
-  /*border-radius: 2px;*/
-}
-#graph_title{
-  font-size: 20px;
 }
 
 /* Control panel */
@@ -63,7 +64,22 @@ footer{
   width: inherit;
 }
 
+/* Graph */
+#graph-container {
+  /*display: inline-block;*/
+  /*font-family: Arial, Helvetica, sans-serif;*/
+  /*border: 2px solid black;*/
+  /*padding: 1em;*/
+  /*border-radius: 2px;*/
+}
 
+text.x.label, text.y.label {
+  font-size: 1em;
+}
+
+#graph-title{
+  font-size: 1.7em;
+}
 
 /* Graph of d3 */
 path {
