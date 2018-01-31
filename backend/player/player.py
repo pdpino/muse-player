@@ -69,6 +69,10 @@ class MusePlayer:
 
             generator = engine.WaveProcessor(wave_yielder)
 
+            # REFACTOR: hardcoded in waves and feelings
+            self.commands.add_command("-1", generator.signal_start_calibrating, info.start_calib_mark, "notification")
+            self.commands.add_command("-2", generator.signal_stop_calibrating, info.stop_calib_mark, "notification")
+
         elif stream_type == "feel":
             self.eeg_buffer = engine.buffers.EEGWindowBuffer()
 
@@ -77,6 +81,9 @@ class MusePlayer:
             self.feel_processor = engine.FeelProcessor(feeler, regulator)
             generator = engine.WaveProcessor(self.feel_processor)
 
+            self.commands.add_command("-1", generator.signal_start_calibrating, info.start_calib_mark, "notification")
+            self.commands.add_command("-2", generator.signal_stop_calibrating, info.stop_calib_mark, "notification")
+
         elif stream_type == "feel_val_aro":
             self.eeg_buffer = engine.buffers.EEGWindowBuffer()
 
@@ -84,6 +91,9 @@ class MusePlayer:
             regulator = self._get_regulator(regulator_type, accum_samples)
             self.feel_processor = engine.FeelProcessor(feeler, regulator)
             generator = engine.WaveProcessor(self.feel_processor)
+
+            self.commands.add_command("-1", generator.signal_start_calibrating, info.start_calib_mark, "notification")
+            self.commands.add_command("-2", generator.signal_stop_calibrating, info.stop_calib_mark, "notification")
 
         else:
             basic.perror("Stream type not recognized: {}".format(stream_type))

@@ -12,10 +12,10 @@ class FeelerRelaxConc(base.BaseFeeler):
         self.config_data = {
             'categories': [{
                 'name': 'Concentration',
-                'color': '#a50f15'
+                'color': '#e6550d' #'#a50f15'
             }, {
                 'name': 'Relaxation',
-                'color': '#3690c0'
+                'color': '#31a354' # '#3690c0'
             }],
             'yAxisLabel': 'Measure of state', # REVIEW: change key names?
             'title': 'State of mind'
@@ -54,6 +54,15 @@ class FeelerRelaxConc(base.BaseFeeler):
         min_value = -5
         max_value = 5
         return (value - min_value) / (max_value - min_value)
+
+    def pack_timestamp(self, timestamp, packed_data):
+        """Override method to not pack any timestamp
+
+        Moodplay needs no timestamp, so this method is needed
+        Muse-player web client needs timestamp, so this method can't be here
+        FIXME!
+        """
+        pass
 
     def pack_data(self, timestamp, feeling):
         """Pack concentration and relaxation data."""

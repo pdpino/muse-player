@@ -25,16 +25,24 @@ Usual subsections for code:
   - check that the mixing is well done
 
 * Show all data in Js client (acc, gyro, battery, etc)
-  - refactor player to send better
+  - refactor player to send better (major architecture refactor on `engine`)
   - design interface
   - decode bluetooth channels left
   - be sure of acc and gyro data (play with muse direct, wireshark!)
 
+* Search literature on:
+  - getting features from signals (motor imagery, moving stuff, recommending, detecting mental state, etc)
+  - alpha-beta are relaxation-concentration
+  - valence-arousal and EEG (see paper references)
+  - bayesian models on EEG
+  - reinforcement learning on EEG
+
 * Email evic people
-* Order offline tools, prepare pipeline to receive data, apply formulas, show results
-* Prepare user protocol
-* Update README with current tools
-* muse-direct
+
+* Others
+  - Order offline tools, prepare pipeline to receive data, apply formulas, show results
+  - Prepare user protocol
+  - Update README with current tools
 
 ## Software
 

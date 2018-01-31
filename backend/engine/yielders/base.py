@@ -32,7 +32,9 @@ class BaseYielder:
         If you pack the timestamp in other place (not this method), be sure to follow the format"""
         packed_data.append({
             "name": "timestamp",
-            "value": timestamp
+            "value": timestamp,
+            # "color": "black" # HACK: needed for moodplay?
+            # isn't needed for muse-player web client
         })
 
     def pack_data(self, timestamp, data):
