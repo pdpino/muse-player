@@ -28,7 +28,14 @@ class MusePlayer:
             self.muse.ask_control()
             sleep(0.5) # let it print # REVIEW: wait for printing explicitly?
 
+        def ask_muse_device_info():
+            """Send a signal to the muse to get the device info."""
+            self.muse.ask_device_info()
+            sleep(0.5) # let it print # REVIEW: wait for printing explicitly?
+
+
         self.commands.add_command("-c", ask_muse_config, None, None, cmd_help="Get muse configuration status")
+        self.commands.add_command("-v", ask_muse_device_info, None, None, cmd_help="Get muse device info")
 
     def _get_regulator(self, regulator_type, accum_samples=10):
 
