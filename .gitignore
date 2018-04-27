@@ -17,3 +17,7 @@ rickshaw*
 
 # Lock files
 .~lock*
+
+# Python environment
+.python-env
+.active-env
