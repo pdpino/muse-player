@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from backend import basic, info
 from .base import *
 
-def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None, max_freq=None):
+def plot_tf_contour(powers, ch, fname="", marks_t=None, marks_m=None, min_freq=None, max_freq=None, maximize=True):
     """Plot a contour plot with the power.
 
     powers -- list of dataframes, one per channel; columns are frequencies, index are times
@@ -65,4 +65,4 @@ def plot_tf_contour(powers, ch, fname, marks_t=None, marks_m=None, min_freq=None
     plt.suptitle("TF analysis from {}".format(fname))
 
     # Show
-    plot_show()
+    plot_show(maximize)

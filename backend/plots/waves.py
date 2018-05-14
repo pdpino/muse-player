@@ -40,8 +40,11 @@ def _plot_tsplot(times, arr, n_samples, wave_name):
     # (because in kwargs there is already a label argument, the one provided here)
     # (is a hack, could be done better)
 
-def plot_waves(waves, ch, fname, marks_t=None, marks_m=None, choose_waves=None, n_samples=None):
-    """Receive a list of waves (pd.DataFrame), one for each channel."""
+def plot_waves(waves, ch, fname="", marks_t=None, marks_m=None, choose_waves=None, n_samples=None, maximize=True):
+    """Receive a list of waves (pd.DataFrame), one for each channel.
+
+    waves -- waves-dataframe or list of those
+    ch -- channel name (s)"""
 
     if n_samples is None:
         plot_function = lambda times, wave, wave_name: plt.plot(times, wave, color=info.get_wave_color(wave_name), label=wave_name)
@@ -79,7 +82,7 @@ def plot_waves(waves, ch, fname, marks_t=None, marks_m=None, choose_waves=None, 
         _do_plot_waves(waves, ch, marks_t, marks_m)
 
     plt.suptitle("Waves from {}".format(fname), fontsize=20)
-    plot_show()
+    plot_show(maximize)
 
 def plot_waves_in_marks(all_waves, channels, fname, choose_waves=None):
     """Plot waves in the marks intervals."""

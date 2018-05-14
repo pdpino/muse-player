@@ -26,12 +26,12 @@ def _normalize_tf_df(times, power, norm=False, baseline=None):
 
     bl_init_index = find_nearest(bl_init_time)
     bl_end_index = find_nearest(bl_end_time)
-    print("Baseline length: {}".format(bl_end_index - bl_init_index))
+    # print("Baseline length: {}".format(bl_end_index - bl_init_index))
 
     # Real time:
     bl_init_rt = times[bl_init_index]
     bl_end_rt = times[bl_end_index]
-    print("Baseline time: ({}, {})".format(bl_init_rt, bl_end_rt))
+    # print("Baseline time: ({}, {})".format(bl_init_rt, bl_end_rt))
 
     # Get size
     n_rows, n_cols = power.shape
@@ -239,7 +239,7 @@ def get_wave(power, freqs, min_freq, max_freq):
     return np.mean(power[:, info.get_freqs_filter(freqs, min_freq, max_freq)], axis=1)
     # OPTIMIZE: get_freqs_filter is being called on the same data over and over (the filters are the same for the waves)
 
-def get_waves(power):
+def get_waves(power, choose_waves=None):
     """Receive a power matrix or a list of powers and get the waves. Function used offline"""
 
     def _do_get_wave(power):
@@ -261,11 +261,11 @@ def get_waves(power):
             return np.mean(power[filtered_freqs], axis=1)
 
         # Dataframe to save all waves
-        waves = pd.DataFrame()
-        for w, min_freq, max_freq in info.iter_waves():
-            waves[w] = _get_wave(min_freq, max_freq)
+        waves_df = pd.DataFrame()
+        for w, min_freq, max_freq in info.iter_waves(choose_waves):
+            waves_df[w] = _get_wave(min_freq, max_freq)
 
-        return waves
+        return waves_df
 
     if type(power) is list:
         all_waves = []
