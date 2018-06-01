@@ -19,7 +19,7 @@ def parse_args():
                             help="Seconds to record data (aprox). If none, stop listening only when interrupted")
         parser.add_argument('--faker', action="store_true", help="Simulate a fake muse. Used for testing")
         parser.add_argument('--save', action="store_true", help="Save a .csv with the raw eeg data")
-
+        parser.add_argument('--moodplay', action="store_true", help="Adapt neccesary things to stream to moodplay")
         parser.add_argument('--stream', nargs='?', choices=['eeg', 'waves', 'feel', 'feel_val_aro'], const='eeg', help="Stream data to a client") # REFACTOR: use config dictionaries somewhere else
 
         # REFACTOR: this shouldnt be here
@@ -82,10 +82,8 @@ def parse_args():
         args.url = prefix + args.url
 
     # Cap the amount of data to yield
-    if args.eeg_n > 12:
-        args.eeg_n = 12
-    elif args.eeg_n <= 0:
-        args.eeg_n = 1
+    args.eeg_n = min(args.eeg_n, 12)
+    args.eeg_n = max(args.eeg_n, 1)
 
     return args
 
@@ -101,7 +99,8 @@ def main():
         eeg_n=args.eeg_n,
         waves_selected=args.waves,
         waves_channel=args.waves_channel,
-        accum_samples=args.accum_samples)
+        accum_samples=args.accum_samples,
+        moodplay=args.moodplay)
     player.initialize_acc_engine()
     player.initialize_muse(args.address, args.interface, args.faker, nfactor=args.nfactor, nsub=args.nsub, enable_control=args.control)
     player.initialize_flask(args.ip, args.port, args.url)

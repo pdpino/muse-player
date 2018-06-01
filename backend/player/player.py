@@ -52,7 +52,7 @@ class MusePlayer:
 
         return regulator
 
-    def initialize_eeg_engine(self, stream_type, regulator_type, eeg_mode=None, eeg_n=None, waves_selected=None, waves_channel=0, accum_samples=None):
+    def initialize_eeg_engine(self, stream_type, regulator_type, eeg_mode=None, eeg_n=None, waves_selected=None, waves_channel=0, accum_samples=None, moodplay=False):
         """Initialize the EEG engine."""
         self.stream_enabled = not stream_type is None
 
@@ -82,7 +82,7 @@ class MusePlayer:
         elif stream_type == "feel":
             self.eeg_buffer = engine.buffers.EEGWindowBuffer()
 
-            feeler = engine.feelers.FeelerRelaxConc()
+            feeler = engine.feelers.FeelerRelaxConc(moodplay=moodplay)
             regulator = self._get_regulator(regulator_type, accum_samples)
             self.feel_processor = engine.FeelProcessor(feeler, regulator)
             generator = engine.WaveProcessor(self.feel_processor)

@@ -8,7 +8,11 @@ class FeelerRelaxConc(base.BaseFeeler):
     alpha from ear channels is relaxation
     beta from forehead channels is concentration"""
 
-    def __init__(self, window=256, srate=256):
+    def __init__(self, window=256, srate=256, moodplay=False):
+        """
+
+        moodplay -- boolean indicating if streaming to moodplay instead of muse-player
+        """
         self.config_data = {
             'categories': [{
                 'name': 'Concentration',
@@ -29,6 +33,11 @@ class FeelerRelaxConc(base.BaseFeeler):
         # Data to normalize
         self.min_feeling = None
         self.max_feeling = None
+
+        # Don't pack timestamp when streaming to moodplay
+        self.moodplay = moodplay
+        if self.moodplay:
+            self.pack_timestamp = self._dont_pack_timestamp
 
     def get_names(self):
         return [info.colname_relaxation, info.colname_concentration]
@@ -53,14 +62,14 @@ class FeelerRelaxConc(base.BaseFeeler):
         # return (value - self.min_feeling) / (self.max_feeling - self.min_feeling)
         min_value = -5
         max_value = 5
-        return (value - min_value) / (max_value - min_value)
+        new_value = (value - min_value) / (max_value - min_value)
+        return new_value / 5
 
-    def pack_timestamp(self, timestamp, packed_data):
-        """Override method to not pack any timestamp
+    def _dont_pack_timestamp(self, timestamp, packed_data):
+        """Override method to not pack any timestamp.
 
-        Moodplay needs no timestamp, so this method is needed
-        Muse-player web client needs timestamp, so this method can't be here
-        FIXME!
+        This fixes that moodplay needs that a timestamp does not come
+        REVIEW: move this to BaseFeeler? be able to set self.no_timestamp = True
         """
         pass
 
@@ -80,21 +89,18 @@ class FeelerRelaxConc(base.BaseFeeler):
         #     elif feel < self.min_feeling:
         #         self.min_feeling = feel
 
-        # Normalize between 0 and 1
+        # Normalize between -5 and 5
         relaxation = self.normalize_range(feeling[0])
         concentration = self.normalize_range(feeling[1])
 
-        # if relaxation > 2 or concentration > 2 or relaxation < 0 or concentration < 0:
-        #     return None
 
         # Square to accentuate
-        relaxation = relaxation ** 2
-        concentration = concentration ** 2
+        # relaxation = relaxation ** 2
+        # concentration = concentration ** 2
 
-        # Normalize to add up to 1
-        total = relaxation + concentration
-        relaxation /= total
-        concentration /= total
+        # Softmax
+        if self.moodplay:
+            relaxation, concentration = calculate_softmax(relaxation, concentration)
 
         # print(relaxation, concentration)
 
@@ -105,3 +111,13 @@ class FeelerRelaxConc(base.BaseFeeler):
             'name': 'Relaxation',
             'value': relaxation
         }]
+
+
+def calculate_softmax(x, y):
+    e_x = np.exp(x)
+    e_y = np.exp(y)
+    total_exp = e_x + e_y
+
+    x_norm = e_x / total_exp
+    y_norm = e_y / total_exp
+    return x_norm, y_norm
