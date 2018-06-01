@@ -39,6 +39,9 @@ def get_channel_numbers():
     return dict(_ch_numbers)
 
 def get_channel_name(channel_number):
+    if channel_number is None:
+        print('WARNING: channel is none', channel_number)
+        return 'Channel'
     if channel_number >= len(_ch_names):
         print('WARNING: no channel with number', channel_number)
         return 'Channel {}'.format(channel_number)

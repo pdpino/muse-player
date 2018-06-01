@@ -61,7 +61,7 @@ def parse_args():
         group_waves_data = parser.add_argument_group(title="Waves streamed data", description="Only useful with '--stream waves'")
         group_waves_data.add_argument('--waves', choices=info.get_waves_names(), type=str, nargs="+",
                             help="Select waves to stream")
-        group_waves_data.add_argument('--waves_channel', type=int,
+        group_waves_data.add_argument('--waves_channel', type=int, default=0,
                             help="Select waves to stream")
 
         # group_feeling = parser.add_argument_group(title="Feeling calculation")

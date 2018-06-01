@@ -16,6 +16,9 @@ class WaveYielder(base.BaseYielder):
         # Select waves # DEFAULT to all std waves
         self.waves_names = info.get_waves_names(waves or ['delta', 'theta', 'alpha', 'beta', 'gamma'])
 
+        if channel is None:
+            channel = 0
+
         channel_name = info.get_channel_name(channel)
 
         self.config_data = {
