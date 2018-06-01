@@ -91,7 +91,6 @@ class Muse():
 
         self.device = self.adapter.connect(self.address)
 
-
         if self.enable_eeg:
             self._subscribe_eeg()
 
@@ -106,11 +105,6 @@ class Muse():
 
         if self.enable_gyro:
             self._subscribe_gyro()
-
-        if not preset is None:
-            self._set_preset(preset)
-
-        # self._subscribe_other()
 
     def _write_cmd(self, cmd):
         """Wrapper to write a command to the Muse device.
@@ -164,20 +158,48 @@ class Muse():
         "hw": hardware version?
         "bn": build number?
         "fw": firmware version?
-        "bl": 
+        "bl":
         "pv": protocol version?
         "rc": return status, if 0 is OK
         """
         self._write_cmd([0x03, 0x76, 0x31, 0x0a])
 
+    def ask_reset(self):
+        """Undocumented command reset for '*1'
+        The message received is a singleton with:
+        "rc": return status, if 0 is OK
+        """
+        self._write_cmd([0x03, 0x2a, 0x31, 0x0a])
+
     def start(self):
         """Start streaming."""
         self._init_sample()
+        self.resume()
+
+    def resume(self):
+        """Resume streaming, sending 'd' command"""
         self._write_cmd([0x02, 0x64, 0x0a])
 
     def stop(self):
         """Stop streaming."""
         self._write_cmd([0x02, 0x68, 0x0a])
+
+    def select_preset(self, preset=21):
+        """Setting preset for headband configuration
+
+        See details on https://goo.gl/FPN1ib
+        For 2016 headband, possible choice are 'p20' and 'p21'.
+        Untested but possible values are 'p22' and 'p23'
+        Default is 'p21'."""
+
+        if preset == 20:
+            self._write_cmd([0x04, 0x70, 0x32, 0x30, 0x0a])
+        elif preset == 22:
+            self._write_cmd([0x04, 0x70, 0x32, 0x32, 0x0a])
+        elif preset == 23:
+            self._write_cmd([0x04, 0x70, 0x32, 0x33, 0x0a])
+        else:
+            self._write_cmd([0x04, 0x70, 0x32, 0x31, 0x0a])
 
     def disconnect(self):
         """Disconnect from device."""
