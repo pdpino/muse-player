@@ -90,6 +90,29 @@ def plot_freqs(args):
     plt.xlim(1, 40)
     plt.show()
 
+def plot_power_law():
+    """Plot power law plot. Power vs frequency."""
+    k = 3
+    a = 700
+
+    t = np.linspace(4, 40, 100)
+    p = a*pow(t, -k)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+
+    _ = plt.plot(t, p)
+
+    for f in [4, 8, 13, 30]:
+        plt.axvline(x=f, color='black', linestyle='dotted')
+
+    ax.set_yscale('log')
+
+    plt.ylabel('Log power')
+    plt.xlabel('Frequency (Hz)')
+
+    plt.show()
+
 if __name__ == '__main__':
     args = parse_args()
 
