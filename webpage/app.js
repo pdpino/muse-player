@@ -58,11 +58,11 @@ $(document).ready( function() {
 
   $("#btn-start-conn").click(function(){
     stream.start();
-    streamAcc.start();
+    // streamAcc.start();
   });
 
   $("#btn-close-conn").click(function(){
-    streamAcc.close();
+    // streamAcc.close();
 
     if(!graph.isReady) return;
     stream.close();
@@ -70,7 +70,7 @@ $(document).ready( function() {
   });
 
   stream.start();
-  streamAcc.start();
+  // streamAcc.start();
 
   console.log("All set");
 });
