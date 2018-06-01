@@ -52,7 +52,7 @@ class MusePlayer:
 
         return regulator
 
-    def initialize_eeg_engine(self, stream_type, regulator_type, eeg_mode=None, eeg_n=None, waves_selected=None, accum_samples=None):
+    def initialize_eeg_engine(self, stream_type, regulator_type, eeg_mode=None, eeg_n=None, waves_selected=None, waves_channel=0, accum_samples=None):
         """Initialize the EEG engine."""
         self.stream_enabled = not stream_type is None
 
@@ -70,9 +70,8 @@ class MusePlayer:
             # Create wave yielder
             window = 256 # HACK: values for the yielder hardcoded
             srate = 256
-            channel = 0
             arr_freqs = tf.get_freqs_resolution(window, srate)
-            wave_yielder = engine.yielders.WaveYielder(arr_freqs, channel=channel, waves=waves_selected)
+            wave_yielder = engine.yielders.WaveYielder(arr_freqs, channel=waves_channel, waves=waves_selected)
 
             generator = engine.WaveProcessor(wave_yielder)
 

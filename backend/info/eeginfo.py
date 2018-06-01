@@ -37,3 +37,9 @@ def get_channel_number(channel_name):
 def get_channel_numbers():
     """Return a copy of the dict that has the channel numbers."""
     return dict(_ch_numbers)
+
+def get_channel_name(channel_number):
+    if channel_number >= len(_ch_names):
+        print('WARNING: no channel with number', channel_number)
+        return 'Channel {}'.format(channel_number)
+    return _ch_names[channel_number]

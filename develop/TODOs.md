@@ -47,15 +47,16 @@ Usual subsections for code:
 ## Software
 
 #### Pending
+* First refactor to do: use logger (warnings, errors, etc)
 * `backend/engine/feelers/relaxconc` urgent FIXME: `pack_timestamp` method must be present to stream to moodplay, and must NOT be present to stream to muse-player.
 * FIXME: js client has NaN error in d3, only with the first of the graph, only the first time that it connects to the server
-* Refactor calibrators and accumulators, design first
+* Resolve calibrators and accumulators, design well
 
 #### Server, play.py
-* REVIEW architecture! should the server work without the need of a client making a request? (currently this activates the generator)
+* REVIEW architecture! should the server work without the need of a client making a request? (currently this activates the generator) (yes it should, maybe you want to save the data without streaming it)
 
 * Pending:
-  - Add stream mode configuration for waves (select channel, select waves is done)
+  - Add stream mode configuration for waves (select channel and waves is done). Be able to select mean, median, multiple channels, etc
 
 * Refactors:
   - Refactor src/ to fix relative imports
@@ -83,7 +84,7 @@ Usual subsections for code:
 
 #### Offline analysis and tools
 * Refactors:
-  - two main scripts: `analyze` and `plot`. The first makes all the calculations and the second makes the plots.
+  - two main scripts: `analyze` and `plot`. The first makes all the calculations and the second makes the plots. Update: maybe move analyze to other repository?
 * Pending:
   - add axis label for colour in contourplot
 * Wishlist:
@@ -98,7 +99,7 @@ Usual subsections for code:
   + Review EEG101 course source code (https://github.com/NeuroTechX/eeg-101), search for filters to data coming from muse
 
 #### Classes and books
-* Watch laplacian video (to end the chapter)
+* Watch laplacian video (to finish the chapter)
 
 #### Conventions, documentation and others
 * Document engine and processors classes (and interfaces?)

@@ -16,13 +16,15 @@ class WaveYielder(base.BaseYielder):
         # Select waves # DEFAULT to all std waves
         self.waves_names = info.get_waves_names(waves or ['delta', 'theta', 'alpha', 'beta', 'gamma'])
 
+        channel_name = info.get_channel_name(channel)
+
         self.config_data = {
             'categories': [{
                 'name': wave_name,
                 'color': info.get_wave_color(wave_name)
-            } for wave_name in self.waves_names ],
+            } for wave_name in self.waves_names],
             'yAxisLabel': 'Power (dB)',
-            'title': 'Waves'
+            'title': 'Waves from channel {}'.format(channel_name)
         }
 
         self.arr_freqs = arr_freqs
