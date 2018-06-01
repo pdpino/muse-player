@@ -47,6 +47,7 @@ Usual subsections for code:
 ## Software
 
 #### Pending
+* `backend/engine/feelers/relaxconc` urgent FIXME: `pack_timestamp` method must be present to stream to moodplay, and must NOT be present to stream to muse-player.
 * FIXME: js client has NaN error in d3, only with the first of the graph, only the first time that it connects to the server
 * Refactor calibrators and accumulators, design first
 
