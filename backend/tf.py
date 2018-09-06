@@ -51,9 +51,14 @@ def _normalize_tf_df(times, power, norm=False, baseline=None):
     return np.log10(power)
     # NOTE: is not mult by 10 because it goes to numbers to big
 
-def _new_tf_df(times, freqs, power):
+def _new_tf_df(times, freqs, power, return_df=True):
     """Create a Time-Frequency Dataframe."""
-    return pd.DataFrame(power, index=times, columns=freqs)
+    # REVIEW: instead of use an if, you could use decorators to return dataframes
+    # (is this more efficient?)
+    if return_df:
+        return pd.DataFrame(power, index=times, columns=freqs)
+    else:
+        return power
 
 
 ### STFFT
@@ -103,7 +108,7 @@ def get_freqs_resolution(window, srate):
     # srate/2 is the nyquist frequency, the max freq u can get
     return np.linspace(0, srate/2, n_freqs)
 
-def stfft(times, eeg_data, baseline=None, norm=True, window=None, step=None, srate=None):
+def stfft(times, eeg_data, baseline=None, norm=True, window=None, step=None, srate=None, return_df=True):
     """Apply the Short Time Fast Fourier Transform to eeg data.
 
     Parameters:
@@ -155,7 +160,7 @@ def stfft(times, eeg_data, baseline=None, norm=True, window=None, step=None, sra
     # Normalization
     power = _normalize_tf_df(arr_times, power, norm, baseline=baseline)
 
-    return _new_tf_df(arr_times, arr_freqs, power)
+    return _new_tf_df(arr_times, arr_freqs, power, return_df=return_df)
 
 
 ### Convolution
