@@ -20,7 +20,12 @@ def parse_args():
         parser.add_argument('--faker', action="store_true", help="Simulate a fake muse. Used for testing")
         parser.add_argument('--save', action="store_true", help="Save a .csv with the raw eeg data")
         parser.add_argument('--moodplay', action="store_true", help="Adapt neccesary things to stream to moodplay")
-        parser.add_argument('--stream', nargs='?', choices=['eeg', 'waves', 'feel', 'feel_val_aro'], const='eeg', help="Stream data to a client") # REFACTOR: use config dictionaries somewhere else
+        parser.add_argument('--stream',
+                            nargs='?',
+                            choices=['eeg', 'waves', 'feel', 'feel_val_aro', 'lz'],
+                            const='eeg',
+                            help="Stream data to a client")
+                            # REFACTOR: use config dictionaries somewhere else
 
         # REFACTOR: this shouldnt be here
         parser.add_argument('--regulator', choices=['accum', 'calib'],
@@ -70,6 +75,12 @@ def parse_args():
         # group_feeling.add_argument('--feel_interval', type=float, default=1,
         #                     help="Interval in seconds to grab feeling data")
 
+        group_lz = parser.add_argument_group(
+            title="LZ",
+            description="Lempel Ziv params. Only useful with '--stream lz'")
+        group_lz.add_argument('--lz_secs', type=float,
+                            help="Seconds to use in LZ window")
+
         parsers.add_file_args(parser) # File arguments
         return parser
 
@@ -94,15 +105,22 @@ def main():
     player = MusePlayer()
 
     player.initialize_command_handler()
-    player.initialize_eeg_engine(args.stream, args.regulator,
-        eeg_mode=args.eeg_mode,
-        eeg_n=args.eeg_n,
-        waves_selected=args.waves,
-        waves_channel=args.waves_channel,
-        accum_samples=args.accum_samples,
-        moodplay=args.moodplay)
+    player.initialize_eeg_engine(args.stream,
+                                 args.regulator,
+                                 eeg_mode=args.eeg_mode,
+                                 eeg_n=args.eeg_n,
+                                 waves_selected=args.waves,
+                                 waves_channel=args.waves_channel,
+                                 accum_samples=args.accum_samples,
+                                 lz_secs=args.lz_secs,
+                                 moodplay=args.moodplay)
     player.initialize_acc_engine()
-    player.initialize_muse(args.address, args.interface, args.faker, nfactor=args.nfactor, nsub=args.nsub, enable_control=args.control)
+    player.initialize_muse(args.address,
+                           args.interface,
+                           args.faker,
+                           nfactor=args.nfactor,
+                           nsub=args.nsub,
+                           enable_control=args.control)
     player.initialize_flask(args.ip, args.port, args.url)
 
     player.start(args.time)

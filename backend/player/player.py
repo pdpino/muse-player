@@ -52,7 +52,16 @@ class MusePlayer:
 
         return regulator
 
-    def initialize_eeg_engine(self, stream_type, regulator_type, eeg_mode=None, eeg_n=None, waves_selected=None, waves_channel=0, accum_samples=None, moodplay=False):
+    def initialize_eeg_engine(self,
+                              stream_type,
+                              regulator_type,
+                              eeg_mode=None,
+                              eeg_n=None,
+                              waves_selected=None,
+                              waves_channel=0,
+                              accum_samples=None,
+                              lz_secs=2,
+                              moodplay=False):
         """Initialize the EEG engine."""
         self.stream_enabled = not stream_type is None
 
@@ -100,6 +109,16 @@ class MusePlayer:
 
             self.commands.add_command("-1", generator.signal_start_calibrating, info.start_calib_mark, "notification")
             self.commands.add_command("-2", generator.signal_stop_calibrating, info.stop_calib_mark, "notification")
+
+        elif stream_type == "lz":
+            # HACK: sampling rate hardcoded
+            srate = 256
+            window = int(srate*lz_secs)
+
+            self.eeg_buffer = engine.buffers.EEGWindowBuffer(window=window, step=window)
+
+            lz_yielder = engine.LZYielder()
+            generator = engine.LZProcessor(lz_yielder)
 
         else:
             basic.perror("Stream type not recognized: {}".format(stream_type))

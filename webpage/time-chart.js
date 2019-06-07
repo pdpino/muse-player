@@ -31,8 +31,11 @@ class TimeChart {
     this._initEmptyTitle();
     this._addEventsXAxis(config.xZoomBtn[0], config.xZoomBtn[1]);
     this._addEventsYAxis(config.yZoomBtn, config.yMoveBtn, config.yHomeBtn);
-    this._initAutoUpdateYCheckbox(config.yAutoUpdate);
     this._updateXAxis(config.secondsInScreen);
+
+    this.htmlIds = {
+      yAutoUpdate: config.yAutoUpdate,
+    };
 
     // Select recalculateYAxisFunction
     this.recalculateYAxisFunction = (this.UPDATE_Y_USE_ALL_DATA) ?
@@ -197,12 +200,14 @@ class TimeChart {
   /**
    * Connect event to toggle auto update y axis
    */
-  _initAutoUpdateYCheckbox(checkboxSelector){
+  _initAutoUpdateYCheckbox(startValue){
     const graph = this;
-    $(checkboxSelector).click(function(){
+    $(this.htmlIds.yAutoUpdate).click(function(){
       graph.autoUpdateYAxis = this.checked;
     });
-    graph.autoUpdateYAxis = true; // DEFAULT: start enabled
+
+    this.autoUpdateYAxis = startValue;
+    $(this.htmlIds.yAutoUpdate).prop('checked', startValue);
   }
 
 
@@ -481,6 +486,11 @@ class TimeChart {
     this._setLegend();
     this._setTitle(config.title);
     this._setAxisLabels(config.xAxisLabel, config.yAxisLabel);
+    this._initAutoUpdateYCheckbox(config.yAutoUpdate);
+
+    if ('yMin' in config && 'yMax' in config) {
+      this._updateYAxis(config.yMin, config.yMax);
+    }
 
     this.isReady = true;
   }
@@ -558,16 +568,6 @@ class TimeChart {
 
     this.data.push(parsedData);
 
-    this.channelNames.forEach((channelName) => {
-      if(!this.enablePath[channelName]) return;
-
-      this.paths[channelName].attr("d", this.lines[channelName](this.data))
-        .attr("transform", null)
-        .transition()
-        .duration(1000)
-        .ease("linear");
-    });
-
     // Update Y Axis
     // this.autoUpdateYAxis = false;
     if(this.autoUpdateYAxis){
@@ -582,17 +582,39 @@ class TimeChart {
     }
 
     // Update X Axis
+    if (shift) {
+      const lastTimestamp = this.data[this.data.length - 1].timestamp;
+      let firstIn = 0;
+      for (let i = 0; i < this.data.length; i++) {
+        const timestamp = this.data[i].timestamp;
+        if (lastTimestamp - timestamp <= this.secondsInScreen) {
+          firstIn = i;
+          break;
+        }
+      }
+      this.data.splice(0, firstIn);
+    }
+
     let xRange = d3.extent(this.data, function(d) { return d.timestamp; });
-    // if(xRange[1] - xRange[0] < this.secondsInScreen){ xRange[1] = xRange[0] + this.secondsInScreen; } // Que el xRange minimo sea secondsInScreen
+    // Uncomment this to make the secondsInScreen the minimum xRange
+    // if(xRange[1] - xRange[0] < this.secondsInScreen){
+    //   xRange[1] = xRange[0] + this.secondsInScreen;
+    // }
     this.xRange.domain(xRange);
 
     this.svg.select(".x.axis").call(this.xAxis);
 
-    if(shift){
-      while(this.data[this.data.length - 1].timestamp - this.data[0].timestamp > this.secondsInScreen){
-        this.data.shift();
-      }
-    }
+
+    // Update lines
+    this.channelNames.forEach((channelName) => {
+      if(!this.enablePath[channelName]) return;
+
+      this.paths[channelName].attr("d", this.lines[channelName](this.data))
+        .attr("transform", null)
+        .transition()
+        .duration(1000)
+        .ease("linear");
+    });
   }
 
 }

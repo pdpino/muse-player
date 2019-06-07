@@ -27,7 +27,8 @@ class WaveYielder(base.BaseYielder):
                 'color': info.get_wave_color(wave_name)
             } for wave_name in self.waves_names],
             'yAxisLabel': 'Power (dB)',
-            'title': 'Waves from channel {}'.format(channel_name)
+            'title': 'Waves from channel {}'.format(channel_name),
+            'yAutoUpdate': True,
         }
 
         self.arr_freqs = arr_freqs

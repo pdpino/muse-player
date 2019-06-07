@@ -22,7 +22,8 @@ class FeelerRelaxConc(base.BaseFeeler):
                 'color': '#31a354' # '#3690c0'
             }],
             'yAxisLabel': 'Measure of state', # REVIEW: change key names?
-            'title': 'State of mind'
+            'title': 'State of mind',
+            'yAutoUpdate': True,
         }
 
         # Band filters

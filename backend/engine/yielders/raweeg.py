@@ -30,7 +30,10 @@ class EEGRawYielder(base.BaseYielder):
                 'color': 'cyan'
             }],
             'yAxisLabel': 'Raw signal (mV)',
-            'title': 'EEG Electrodes'
+            'title': 'EEG Electrodes',
+            'yAutoUpdate': True,
+            'yMin': -100,
+            'yMax': 100,
         }
 
         self.stream_n = kwargs.get("stream_n") or 12 # DEFAULT hardcoded

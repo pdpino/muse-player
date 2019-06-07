@@ -29,7 +29,8 @@ class FeelerValAro(base.BaseFeeler):
                 'color': '#3690c0'
             }],
             'yAxisLabel': 'Measure of emotion',
-            'title': 'Emotion'
+            'title': 'Emotion',
+            'yAutoUpdate': True,
         }
 
         # Channel numbers
