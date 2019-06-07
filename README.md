@@ -31,9 +31,9 @@ Then go to `http://localhost:<port>` and visualize the live muse data.
 
 
 ### Marks (in server)
-When running the server marks can be saved in time:
+When running the server, marks can be saved in time:
 * Type any string in the terminal and hit enter. Example: 'started reading',
-  'finished reading'.
+  'finished reading', etc.
 * Some special commands (needs `--control` option present):
   + `-c` (config) or `-v` (version): sends a command to retrieve configuration
   information from the muse device.
